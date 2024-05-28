@@ -35,15 +35,25 @@
             <!-- Данные будут добавлены динамически -->
         </tbody>
     </table>
+    <div id="error-message" style="color: red;"></div>
 
     <script>
         const sheetId = '2PACX-1vR4RjWBvhMHKBRobS5Lki-jP9_9XE8DpUed12jYb0x6g9ikXHjTA1bmpXFIrd6AxtdOyFW-V8Cvt3J-';
         const apiKey = 'AIzaSyBpphBK8_yNquKj3PREpXqS08jyq9T1_Gs';
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Лист1?key=${apiKey}`;
+        const gid = '1135700112';
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?key=${apiKey}`;
 
         fetch(url)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                if (!data.values || !data.values.length) {
+                    throw new Error('No data found in the sheet');
+                }
                 const rows = data.values;
                 const table = document.getElementById('dataTable');
                 const thead = table.querySelector('thead tr');
@@ -67,7 +77,10 @@
                     tbody.appendChild(tr);
                 });
             })
-            .catch(error => console.error('Error fetching data:', error));
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                document.getElementById('error-message').textContent = `Error fetching data: ${error.message}`;
+            });
 
         function filterData() {
             const input = document.getElementById('filterInput');
