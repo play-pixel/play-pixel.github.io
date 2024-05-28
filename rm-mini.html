@@ -4,22 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Google Sheets Data</title>
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
         .hidden {
             display: none;
         }
@@ -27,19 +14,24 @@
 </head>
 
 <body>
-    <h1>Данные из Google Sheets</h1>
-    <input type="text" id="filterInput" placeholder="Фильтр..." onkeyup="filterData()">
-    <table id="dataTable">
-        <thead>
-            <tr id="headerRow">
-                <!-- Заголовки будут добавлены динамически -->
-            </tr>
-        </thead>
-        <tbody id="dataRows">
-            <!-- Данные будут добавлены динамически -->
-        </tbody>
-    </table>
-    <div id="error-message" style="color: red;"></div>
+    <div class="container mt-5">
+        <h1 class="mb-4">Данные из Google Sheets</h1>
+        <input type="text" id="filterInput" class="form-control mb-4" placeholder="Фильтр..." onkeyup="filterData()">
+        <table id="dataTable" class="table table-striped table-bordered">
+            <thead>
+                <tr id="headerRow">
+                    <!-- Заголовки будут добавлены динамически -->
+                </tr>
+            </thead>
+            <tbody id="dataRows">
+                <!-- Данные будут добавлены динамически -->
+            </tbody>
+        </table>
+        <div id="error-message" class="text-danger"></div>
+    </div>
+
+    <!-- Подключение Bootstrap JS и Popper.js -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR4RjWBvhMHKBRobS5Lki-jP9_9XE8DpUed12jYb0x6g9ikXHjTA1bmpXFIrd6AxtdOyFW-V8Cvt3J-/pub?output=tsv';
