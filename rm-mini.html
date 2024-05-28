@@ -19,6 +19,10 @@
         th {
             background-color: #f2f2f2;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -39,6 +43,7 @@
 
     <script>
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR4RjWBvhMHKBRobS5Lki-jP9_9XE8DpUed12jYb0x6g9ikXHjTA1bmpXFIrd6AxtdOyFW-V8Cvt3J-/pub?output=tsv';
+        const hiddenColumns = [0, 1, 2, 8, 9, 10, 11, 12, 15, 16, 17, 18]; // индексы скрываемых столбцов (нумерация с 0)
 
         fetch(sheetUrl)
             .then(response => {
@@ -54,18 +59,24 @@
                 const tbody = table.querySelector('tbody#dataRows');
 
                 // Добавление заголовков таблицы
-                rows[0].forEach(header => {
+                rows[0].forEach((header, index) => {
                     const th = document.createElement('th');
                     th.textContent = header;
+                    if (hiddenColumns.includes(index)) {
+                        th.classList.add('hidden');
+                    }
                     thead.appendChild(th);
                 });
 
                 // Добавление данных в таблицу
                 rows.slice(1).forEach(row => {
                     const tr = document.createElement('tr');
-                    row.forEach(cell => {
+                    row.forEach((cell, index) => {
                         const td = document.createElement('td');
                         td.textContent = cell;
+                        if (hiddenColumns.includes(index)) {
+                            td.classList.add('hidden');
+                        }
                         tr.appendChild(td);
                     });
                     tbody.appendChild(tr);
@@ -86,7 +97,7 @@
                 let match = false;
 
                 for (let i = 0; i < cells.length; i++) {
-                    if (cells[i].textContent.toLowerCase().includes(filter)) {
+                    if (!hiddenColumns.includes(i) && cells[i].textContent.toLowerCase().includes(filter)) {
                         match = true;
                         break;
                     }
