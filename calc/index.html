@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/CookTimer/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <title>Таймер</title>
+    <style>
+        .timer_result{
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <v-app>
+            <v-main>
+                <v-container>
+                    <v-card class="elevation-4">
+                        <v-toolbar dark color="primary">
+                            <v-toolbar-title>Калькулятор для мультиварки</v-toolbar-title>
+                        </v-toolbar>
+                        <v-card-text>
+                            <v-form>
+                                <v-text-field v-model="hoursMinutsNow" label="Текущее время" readonly></v-text-field>
+                                
+                                <v-select v-model="timeTo" label="Ко скольки приготовить" :items="timeToSelect"></v-select>
+                                <v-select v-model="timeCook" label="Время приготовления" :items="timeCookSelect"></v-select>
+                                <v-select v-model="timeToWait" label="Сколько должна настояться" :items="timeToWaitSelect"></v-select>
+                                <v-btn @click="sum" color="primary" dark>Рассчитать</v-btn>
+                            </v-form>
+                        
+                        </v-card-text>
+                        <v-card-text v-show="showTimerResult">
+                            <div class="timer_result">Выставить таймер на
+                            <strong>{{ resultTimeStr }}</strong></div>
+                            <br>
+                        </v-card-text>
+                    </v-card>
+                </v-container>
+            </v-main>
+        </v-app>    
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.3.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+    const app = new Vue({
+        el: "#app",
+        vuetify: new Vuetify(),  
+        data: () => ({
+            showTimerResult: false,
+            timeTo: '07:00',
+            timeCook: '00:40',
+            timeToWait: '00:25',
+            timeToSelect: ['07:00', '07:15', '07:30', '07:45', '08:00', '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45', '10:00'],
+            timeCookSelect: ['00:20', '00:25', '00:30', '00:35', '00:40', '00:45', '00:50', '00:55'],
+            timeToWaitSelect: ['00:15', '00:25', '00:35', '00:45'],
+            hour: 0,
+            min: 0,
+            resultTimeStr: ''
+        }),
+        computed: {
+            hoursMinutsNow () {
+                const today = luxon.DateTime.local()
+                const h = today.hour
+                const m = today.minute
+                return today.toLocaleString(luxon.DateTime.TIME_24_SIMPLE)
+            },
+            timeNowFull () {
+                return luxon.DateTime.local()
+            },
+            tt () {
+                const timeToHours = +this.timeTo.slice(0, 2)
+                const timeToMinutes = +this.timeTo.slice(3)
+                if (timeToHours < this.timeNowFull.hour) {
+                    return luxon.DateTime.local(this.timeNowFull.year, this.timeNowFull.month, this.timeNowFull.day + 1, timeToHours, timeToMinutes)
+                } else {
+                    return luxon.DateTime.local(this.timeNowFull.year, this.timeNowFull.month, this.timeNowFull.day, timeToHours, timeToMinutes)
+                }
+            }
+        },
+        methods: {
+            sum () {
+                // cook
+                const hourCook = +this.timeCook.slice(0, 2)
+                const minCook = +this.timeCook.slice(3)
+                const cookTime = luxon.DateTime.utc(1970, 1, 1, hourCook, minCook)
+                // wait
+                const hourToWait = +this.timeToWait.slice(0, 2)
+                const minToWait = +this.timeToWait.slice(3)
+                const waitTime = luxon.DateTime.utc(1970, 1, 1, hourToWait, minToWait)
+                // calc
+                const resultTime = luxon.DateTime.fromMillis(this.tt - cookTime - waitTime)
+                const duration = resultTime.diffNow(['hours', 'minutes'])
+                const time = luxon.DateTime.utc(1970, 1, 1, duration.values.hours, Math.floor(duration.values.minutes))
+                this.resultTimeStr = time.toLocaleString(luxon.DateTime.TIME_24_SIMPLE)
+                this.hoursMinutsNow
+                this.showTimerResult = true
+            }
+        }
+    })
+    </script>
+</body>
+</html>
