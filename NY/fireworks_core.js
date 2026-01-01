@@ -20,7 +20,9 @@ class FireworksEngine {
         this.particles = [];
         this.fireworks = [];
         this.animationId = null;
-        this.scale = window.devicePixelRatio || 1;
+        // Ограничиваем scale для производительности на Retina
+        this.scale = Math.min(window.devicePixelRatio || 1, 2);
+        this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         // Счётчик пожеланий
         this.wishesShown = 0;
@@ -192,7 +194,8 @@ class FireworksEngine {
 
     // Снег
     initSnow() {
-        const snowCount = Math.floor(this.width / 15); // Слабый снег
+        // Меньше снежинок на мобильных
+        const snowCount = this.isMobile ? Math.floor(this.width / 30) : Math.floor(this.width / 15);
 
         for (let i = 0; i < snowCount; i++) {
             this.snowflakes.push({
@@ -386,7 +389,8 @@ class FireworksEngine {
             return;
         }
 
-        const particleCount = 115;
+        // Меньше частиц на мобильных для производительности
+        const particleCount = this.isMobile ? 60 : 115;
         const h = hue || this.random(0, 360);
 
         for (let i = 0; i < particleCount; i++) {
