@@ -47,6 +47,8 @@ class FireworksEngine {
         ];
         this.fireworksSounds.forEach(s => s.volume = 0.6);
         this.currentFireworkSound = 0;
+        this.bgMusic = new Audio('sounds/ny.mp3');
+        this.isFadingOut = false;
 
         // Shake
         this.shakeIntensity = 0;
@@ -231,6 +233,47 @@ class FireworksEngine {
     initAudio() {
         this.fireSound.load();
         this.fireworksSounds.forEach(s => s.load());
+        this.bgMusic.load();
+    }
+
+    playBackgroundMusic() {
+        this.bgMusic.volume = 0;
+        this.bgMusic.play().catch(() => { });
+
+        // Плавное появление в начале
+        let fadeIn = setInterval(() => {
+            if (this.bgMusic.volume < 0.4) {
+                this.bgMusic.volume += 0.01;
+            } else {
+                clearInterval(fadeIn);
+            }
+        }, 50);
+
+        // Логика затухания в конце и перезапуска
+        this.bgMusic.ontimeupdate = () => {
+            const timeLeft = this.bgMusic.duration - this.bgMusic.currentTime;
+            if (this.bgMusic.duration > 0 && timeLeft < 3 && !this.isFadingOut) {
+                this.isFadingOut = true;
+                let fadeOut = setInterval(() => {
+                    if (this.bgMusic.volume > 0.01) {
+                        this.bgMusic.volume -= 0.01;
+                    } else {
+                        clearInterval(fadeOut);
+                        this.bgMusic.currentTime = 0;
+                        this.isFadingOut = false;
+                        this.bgMusic.play();
+                        // Снова плавное появление
+                        let nextFadeIn = setInterval(() => {
+                            if (this.bgMusic.volume < 0.4) {
+                                this.bgMusic.volume += 0.01;
+                            } else {
+                                clearInterval(nextFadeIn);
+                            }
+                        }, 50);
+                    }
+                }, 100);
+            }
+        };
     }
 
     playFireSound() {
@@ -394,6 +437,7 @@ class FireworksEngine {
     }
 
     startWishesSequence() {
+        this.playBackgroundMusic();
         let index = 0;
         const interval = setInterval(() => {
             if (index >= this.WISHES.length) {
