@@ -391,8 +391,8 @@ class FireworksEngine {
             return;
         }
 
-        // Меньше частиц на мобильных для производительности
-        const particleCount = this.isMobile ? 25 : 115;
+        // Меньше частиц на мобильных для производительности (в 4 раза)
+        const particleCount = this.isMobile ? 28 : 115;
         const h = hue || this.random(0, 360);
 
         for (let i = 0; i < particleCount; i++) {
