@@ -496,8 +496,8 @@ class FireworksEngine {
 
         const imgData = offCtx.getImageData(0, 0, this.width, this.height).data;
         const coords = [];
-        // Агрессивная оптимизация количества точек текста на мобильных
-        const step = this.isMobile ? 8 : 4;
+        // Агрессивная оптимизация количества точек текста на мобильных (немного увеличили плотность)
+        const step = this.isMobile ? 6 : 4;
 
         for (let y = 0; y < this.height; y += step) {
             for (let x = 0; x < this.width; x += step) {
