@@ -20,9 +20,9 @@ class FireworksEngine {
         this.particles = [];
         this.fireworks = [];
         this.animationId = null;
-        // Ограничиваем scale для производительности на Retina
-        this.scale = Math.min(window.devicePixelRatio || 1, 2);
         this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        // На мобильных отключаем Retina для производительности
+        this.scale = this.isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
         // Счётчик пожеланий
         this.wishesShown = 0;
@@ -87,8 +87,10 @@ class FireworksEngine {
             }
         });
 
-        // Инициализация звёзд
-        this.initStars();
+        // Инициализация звёзд (только на десктопе)
+        if (!this.isMobile) {
+            this.initStars();
+        }
 
         // Инициализация снега
         this.initSnow();
@@ -195,7 +197,7 @@ class FireworksEngine {
     // Снег
     initSnow() {
         // Меньше снежинок на мобильных
-        const snowCount = this.isMobile ? Math.floor(this.width / 30) : Math.floor(this.width / 15);
+        const snowCount = this.isMobile ? Math.floor(this.width / 50) : Math.floor(this.width / 15);
 
         for (let i = 0; i < snowCount; i++) {
             this.snowflakes.push({
@@ -390,7 +392,7 @@ class FireworksEngine {
         }
 
         // Меньше частиц на мобильных для производительности
-        const particleCount = this.isMobile ? 60 : 115;
+        const particleCount = this.isMobile ? 40 : 115;
         const h = hue || this.random(0, 360);
 
         for (let i = 0; i < particleCount; i++) {
@@ -398,12 +400,17 @@ class FireworksEngine {
         }
 
         this.playExplosionSound();
-        this.shakeScreen(3);
+        // Тряска только на десктопе — на мобильных тормозит
+        if (!this.isMobile) {
+            this.shakeScreen(3);
+        }
     }
 
     loop() {
-        // Рисуем звёзды
-        this.drawStars();
+        // Рисуем звёзды (только на десктопе)
+        if (!this.isMobile) {
+            this.drawStars();
+        }
 
         // Очистка с прозрачностью для trails
         this.ctx.save();
