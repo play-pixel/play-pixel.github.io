@@ -8,6 +8,7 @@ class FireworksEngine {
         this.uiLayer = document.getElementById('game-ui');
 
         this.clickCount = 0;
+        this.totalClicks = 0;
         this.TARGET_CLICKS = config.targetClicks || 12;
         this.WISHES = config.wishes || [];
         this.GREETING = config.greeting || "С НОВЫМ\nГОДОМ!\n2026";
@@ -49,6 +50,7 @@ class FireworksEngine {
         this.currentFireworkSound = 0;
         this.bgMusic = new Audio('sounds/ny.mp3');
         this.isFadingOut = false;
+        this.musicStarted = false;
 
         // Shake
         this.shakeIntensity = 0;
@@ -72,6 +74,17 @@ class FireworksEngine {
             this.handleClick({ clientX: touch.clientX, clientY: touch.clientY });
         });
 
+        // Обработка сворачивания/разворачивания вкладки
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Страница скрыта - останавливаем всё
+                this.pause();
+            } else {
+                // Страница снова видна - продолжаем
+                this.resume();
+            }
+        });
+
         // Инициализация звёзд
         this.initStars();
 
@@ -82,6 +95,37 @@ class FireworksEngine {
         this.createWishesCounter();
 
         this.loop();
+    }
+
+    pause() {
+        // Останавливаем анимацию
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+        // Останавливаем музыку
+        if (this.bgMusic && !this.bgMusic.paused) {
+            this.bgMusic.pause();
+        }
+        // Останавливаем интервал пожеланий
+        if (this.wishesInterval) {
+            clearInterval(this.wishesInterval);
+            this.wishesInterval = null;
+        }
+        // Очищаем частицы и фейерверки, чтобы не накапливались
+        this.particles = [];
+        this.fireworks = [];
+    }
+
+    resume() {
+        // Возобновляем анимацию, если она была остановлена
+        if (!this.animationId) {
+            this.loop();
+        }
+        // Возобновляем музыку, если она была запущена
+        if (this.musicStarted && this.bgMusic.paused) {
+            this.bgMusic.play().catch(() => { });
+        }
     }
 
     resize() {
@@ -211,6 +255,25 @@ class FireworksEngine {
             transition: opacity 1s ease-in;
         `;
         document.body.appendChild(this.wishesCounter);
+
+        // Счётчик кликов — отдельный элемент, всегда виден
+        this.clicksCounter = document.createElement('div');
+        this.clicksCounter.id = 'clicks-counter';
+        this.clicksCounter.textContent = '0';
+        this.clicksCounter.style.cssText = `
+            position: fixed;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Montserrat', sans-serif;
+            z-index: 100;
+            pointer-events: none;
+            display: none;
+        `;
+        document.body.appendChild(this.clicksCounter);
     }
 
     updateWishesCounter() {
@@ -233,45 +296,52 @@ class FireworksEngine {
     initAudio() {
         this.fireSound.load();
         this.fireworksSounds.forEach(s => s.load());
-        this.bgMusic.load();
+        // bgMusic загружается отдельно в playBackgroundMusic()
     }
 
     playBackgroundMusic() {
-        this.bgMusic.volume = 0;
-        this.bgMusic.play().catch(() => { });
+        if (this.musicStarted) return;
+        this.musicStarted = true;
 
-        // Плавное появление в начале
-        let fadeIn = setInterval(() => {
-            if (this.bgMusic.volume < 0.4) {
-                this.bgMusic.volume += 0.01;
-            } else {
-                clearInterval(fadeIn);
-            }
-        }, 50);
+        console.log("=== Starting background music ===");
 
-        // Логика затухания в конце и перезапуска
+        this.bgMusic.volume = 0.25;
+        this.bgMusic.currentTime = 0;
+
+        this.bgMusic.play()
+            .then(() => {
+                console.log("Music is playing!");
+            })
+            .catch(err => {
+                console.error("Failed to play music:", err);
+            });
+
+        // Логика плавного затухания в конце и перезапуска
         this.bgMusic.ontimeupdate = () => {
             const timeLeft = this.bgMusic.duration - this.bgMusic.currentTime;
-            if (this.bgMusic.duration > 0 && timeLeft < 3 && !this.isFadingOut) {
+            // За 2 секунды до конца начинаем затухание
+            if (this.bgMusic.duration > 0 && timeLeft < 2 && !this.isFadingOut) {
                 this.isFadingOut = true;
                 let fadeOut = setInterval(() => {
-                    if (this.bgMusic.volume > 0.01) {
-                        this.bgMusic.volume -= 0.01;
+                    if (this.bgMusic.volume > 0.02) {
+                        this.bgMusic.volume -= 0.02;
                     } else {
                         clearInterval(fadeOut);
                         this.bgMusic.currentTime = 0;
                         this.isFadingOut = false;
+                        this.bgMusic.volume = 0;
                         this.bgMusic.play();
-                        // Снова плавное появление
-                        let nextFadeIn = setInterval(() => {
-                            if (this.bgMusic.volume < 0.4) {
-                                this.bgMusic.volume += 0.01;
+                        // Плавное появление
+                        let fadeIn = setInterval(() => {
+                            if (this.bgMusic.volume < 0.25) {
+                                this.bgMusic.volume += 0.02;
                             } else {
-                                clearInterval(nextFadeIn);
+                                this.bgMusic.volume = 0.25;
+                                clearInterval(fadeIn);
                             }
                         }, 50);
                     }
-                }, 100);
+                }, 80);
             }
         };
     }
@@ -438,10 +508,17 @@ class FireworksEngine {
 
     startWishesSequence() {
         this.playBackgroundMusic();
+
+        // Показываем счётчик кликов
+        if (this.clicksCounter) {
+            this.clicksCounter.style.display = 'block';
+        }
+
         let index = 0;
-        const interval = setInterval(() => {
+        this.wishesInterval = setInterval(() => {
             if (index >= this.WISHES.length) {
-                clearInterval(interval);
+                clearInterval(this.wishesInterval);
+                this.wishesInterval = null;
                 setTimeout(() => this.showCredits(), 3000);
                 return;
             }
@@ -484,6 +561,18 @@ class FireworksEngine {
     handleClick(e) {
         this.initAudio();
         this.playFireSound();
+
+        // Обновляем счётчик кликов
+        this.totalClicks++;
+        if (this.clicksCounter) {
+            this.clicksCounter.textContent = this.totalClicks;
+        }
+
+        // Если мы уже в режиме пожеланий или прошли порог кликов, пробуем запустить музыку при клике
+        // Это помогает обойти блокировку аудио браузером
+        if (this.clickCount >= this.TARGET_CLICKS) {
+            this.playBackgroundMusic();
+        }
 
         // Скрываем подсказку при любом клике, если она видна
         if (this.uiLayer && this.clickCount >= this.TARGET_CLICKS) {

@@ -43,7 +43,7 @@ canvas {
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
-    padding-bottom: 50px;
+    padding-bottom: 80px;
     z-index: 10;
 }
 
