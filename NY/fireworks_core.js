@@ -352,16 +352,21 @@ class FireworksEngine {
     }
 
     playFireSound() {
-        const sound = this.fireSound.cloneNode();
-        sound.volume = 0.5;
-        sound.play().catch(() => { });
+        // На мобильных пропускаем часть звуков для производительности
+        if (this.isMobile && Math.random() > 0.3) return;
+
+        // Переиспользуем звук вместо cloneNode (утечка памяти на iOS)
+        this.fireSound.currentTime = 0;
+        this.fireSound.play().catch(() => { });
     }
 
     playExplosionSound() {
-        const originalSound = this.fireworksSounds[this.currentFireworkSound];
+        // На мобильных пропускаем часть звуков
+        if (this.isMobile && Math.random() > 0.5) return;
+
+        const sound = this.fireworksSounds[this.currentFireworkSound];
         this.currentFireworkSound = (this.currentFireworkSound + 1) % 3;
-        const sound = originalSound.cloneNode();
-        sound.volume = 0.6;
+        sound.currentTime = 0;
         sound.play().catch(() => { });
     }
 
@@ -491,7 +496,8 @@ class FireworksEngine {
 
         const imgData = offCtx.getImageData(0, 0, this.width, this.height).data;
         const coords = [];
-        const step = 3;
+        // Агрессивная оптимизация количества точек текста на мобильных
+        const step = this.isMobile ? 8 : 4;
 
         for (let y = 0; y < this.height; y += step) {
             for (let x = 0; x < this.width; x += step) {
@@ -709,7 +715,8 @@ class Particle {
         this.y = y;
         this.hue = hue;
         this.coordinates = [];
-        let count = 5;
+        // На мобильных короче хвост
+        let count = engine.isMobile ? 2 : 5;
         while (count--) {
             this.coordinates.push([this.x, this.y]);
         }
@@ -746,12 +753,19 @@ class Particle {
 
     draw() {
         const ctx = this.engine.ctx;
-        ctx.beginPath();
-        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
-        ctx.lineTo(this.x, this.y);
-        ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+
+        // На мобильных рисуем точки (быстрее), на десктопе — линии с хвостом
+        if (this.engine.isMobile) {
+            ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+            ctx.fillRect(this.x, this.y, 2, 2);
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
     }
 }
 
@@ -799,14 +813,21 @@ class TextParticle {
         const ctx = this.engine.ctx;
         ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${this.alpha})`;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
 
-        if (Math.random() > 0.95) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+        // На мобильных рисуем квадраты вместо кругов — намного быстрее
+        if (this.engine.isMobile) {
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+        } else {
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
+
+            // Искры только на десктопе
+            if (Math.random() > 0.95) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     }
 }
