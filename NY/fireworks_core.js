@@ -53,6 +53,7 @@ class FireworksEngine {
         this.bgMusic = new Audio('sounds/ny.mp3');
         this.isFadingOut = false;
         this.musicStarted = false;
+        this.audioInitialized = false;
 
         // Shake
         this.shakeIntensity = 0;
@@ -584,7 +585,10 @@ class FireworksEngine {
     }
 
     handleClick(e) {
-        this.initAudio();
+        if (!this.audioInitialized) {
+            this.initAudio();
+            this.audioInitialized = true;
+        }
         this.playFireSound();
 
         // Обновляем счётчик кликов
