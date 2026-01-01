@@ -441,6 +441,11 @@ class FireworksEngine {
         this.initAudio();
         this.playFireSound();
 
+        // Скрываем подсказку при любом клике, если она видна
+        if (this.uiLayer && this.clickCount >= this.TARGET_CLICKS) {
+            this.uiLayer.style.display = 'none';
+        }
+
         if (this.clickCount >= this.TARGET_CLICKS) {
             const startX = this.width / 2 + this.random(-200, 200);
             this.fireworks.push(new Firework(startX, this.height, e.clientX, e.clientY, false, this));
@@ -457,7 +462,21 @@ class FireworksEngine {
             setTimeout(() => {
                 this.launchTextFireworks(this.GREETING);
                 if (this.uiLayer) this.uiLayer.style.display = 'none';
-                setTimeout(() => this.startWishesSequence(), 4000);
+
+                // Через 1 секунду снова показываем подсказку, но с новым текстом
+                setTimeout(() => {
+                    if (this.uiLayer) {
+                        const titleDiv = this.uiLayer.querySelector('div');
+                        if (titleDiv) titleDiv.textContent = 'ПРОДОЛЖАЙ НАЖИМАТЬ';
+                        this.uiLayer.style.display = 'block';
+                        this.uiLayer.style.opacity = '1';
+                    }
+                }, 1000);
+
+                setTimeout(() => {
+                    if (this.uiLayer) this.uiLayer.style.display = 'none';
+                    this.startWishesSequence();
+                }, 4000);
             }, 1000);
         }
     }
