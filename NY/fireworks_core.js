@@ -392,7 +392,7 @@ class FireworksEngine {
         }
 
         // Меньше частиц на мобильных для производительности
-        const particleCount = this.isMobile ? 40 : 115;
+        const particleCount = this.isMobile ? 25 : 115;
         const h = hue || this.random(0, 360);
 
         for (let i = 0; i < particleCount; i++) {
@@ -412,16 +412,24 @@ class FireworksEngine {
             this.drawStars();
         }
 
-        // Очистка с прозрачностью для trails
+        // Очистка canvas
         this.ctx.save();
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.isMobile) {
+            // На мобильных полная очистка — быстрее
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            // На десктопе trails эффект
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         this.ctx.restore();
 
-        // Обновляем и рисуем снег
-        this.updateSnow();
-        this.drawSnow();
+        // Снег только на десктопе
+        if (!this.isMobile) {
+            this.updateSnow();
+            this.drawSnow();
+        }
 
         for (let i = this.fireworks.length - 1; i >= 0; i--) {
             this.fireworks[i].draw();
