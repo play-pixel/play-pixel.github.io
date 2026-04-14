@@ -201,6 +201,21 @@
     .scroll-fab-badge { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; }
     .scroll-fab-badge:empty { display:none; }
 
+    /* Admin panel */
+    .admin-toggle { width:32px; height:32px; border:none; background:none; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:8px; opacity:.5; }
+    .admin-toggle:active { opacity:1; }
+    .admin-panel { background:var(--surface); border-bottom:2px solid var(--accent); padding:8px 12px; font-size:12px; flex-shrink:0; font-family:monospace; }
+    .admin-row { display:flex; align-items:center; gap:6px; margin:3px 0; flex-wrap:wrap; }
+    .admin-label { color:var(--text-dim); font-size:11px; }
+    .admin-node { color:var(--accent); font-weight:600; min-width:100px; text-align:center; }
+    .admin-info { color:var(--text); }
+    .admin-btn { width:28px; height:28px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; }
+    .admin-btn:active { background:var(--accent); color:#fff; }
+    .admin-btn-sm { padding:4px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text-dim); cursor:pointer; font-size:11px; }
+    .admin-btn-sm:active { background:var(--accent); color:#fff; }
+    .admin-jump { display:flex; gap:6px; align-items:center; margin-top:4px; }
+    .admin-jump select { flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); font-size:11px; font-family:monospace; }
+
     .hidden { display:none !important; }
   </style>
 </head>
@@ -285,6 +300,33 @@
       <button class="chat-back" id="chatBack">&#8249;</button>
       <div class="chat-hdr-av">Л</div>
       <div class="chat-hdr-info"><div class="chat-hdr-name">Неизвестный номер</div><div class="chat-hdr-status" id="hdrStatus">в сети</div></div>
+      <button class="admin-toggle" id="adminToggle" title="Admin">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+    </div>
+    <!-- Admin panel -->
+    <div class="admin-panel hidden" id="adminPanel">
+      <div class="admin-row">
+        <span class="admin-label">Нода:</span>
+        <button class="admin-btn" id="adminPrev">&#9664;</button>
+        <span class="admin-node" id="adminNodeName">—</span>
+        <button class="admin-btn" id="adminNext">&#9654;</button>
+      </div>
+      <div class="admin-row">
+        <span class="admin-label">Timeline:</span>
+        <span class="admin-info" id="adminTimeline">0/0</span>
+        <span class="admin-label" style="margin-left:12px;">Phase:</span>
+        <span class="admin-info" id="adminPhase">—</span>
+      </div>
+      <div class="admin-row">
+        <span class="admin-label">История:</span>
+        <span class="admin-info" id="adminHistory">0 msgs</span>
+        <button class="admin-btn-sm" id="adminJumpNode" style="margin-left:auto;">Перейти к ноде...</button>
+      </div>
+      <div class="admin-jump hidden" id="adminJump">
+        <select id="adminNodeSelect"></select>
+        <button class="admin-btn-sm" id="adminJumpGo">Go</button>
+      </div>
     </div>
     <div class="chat-area" id="chatArea"></div>
     <!-- Scroll-to-bottom button -->
@@ -768,6 +810,8 @@
     // ── Unified bottom panel ────────
     function updateBottomPanel() {
       const now = Date.now();
+      // Update admin if visible
+      if (!$('adminPanel').classList.contains('hidden')) updateAdminPanel();
 
       if (state.phase === 'choice' && state.choiceNode) {
         if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
@@ -935,6 +979,87 @@
     });
 
     $('scrollFab').onclick = () => scroll();
+
+    // ── Admin panel ─────────────────
+
+    function getAllNodeIds() {
+      return scenario ? Object.keys(scenario.nodes) : [];
+    }
+
+    function getCurrentNodeIdx() {
+      const ids = getAllNodeIds();
+      return ids.indexOf(state.node);
+    }
+
+    function updateAdminPanel() {
+      if (!scenario) return;
+      $('adminNodeName').textContent = state.node || '—';
+      $('adminTimeline').textContent = state.timelineIdx + '/' + state.timeline.length;
+      $('adminPhase').textContent = state.phase;
+      $('adminHistory').textContent = state.history.length + ' msgs';
+    }
+
+    function adminJumpToNode(nodeId) {
+      if (!scenario || !scenario.nodes[nodeId]) return;
+      // Clear future timeline events
+      state.timeline = state.timeline.slice(0, state.timelineIdx);
+      state.phase = 'playing';
+      state.choiceNode = null;
+      state.choiceAvailableAt = null;
+      state.choiceDeadline = null;
+      state.waitUntil = null;
+      state.waitNextNode = null;
+      state.waitChatNode = null;
+      scheduleNode(nodeId, Date.now());
+      save();
+      renderFullHistory();
+    }
+
+    $('adminToggle').onclick = () => {
+      const panel = $('adminPanel');
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden')) updateAdminPanel();
+    };
+
+    $('adminPrev').onclick = () => {
+      const ids = getAllNodeIds();
+      const idx = getCurrentNodeIdx();
+      if (idx > 0) adminJumpToNode(ids[idx - 1]);
+    };
+
+    $('adminNext').onclick = () => {
+      const ids = getAllNodeIds();
+      const idx = getCurrentNodeIdx();
+      if (idx < ids.length - 1) adminJumpToNode(ids[idx + 1]);
+    };
+
+    $('adminJumpNode').onclick = () => {
+      const jumpDiv = $('adminJump');
+      jumpDiv.classList.toggle('hidden');
+      if (!jumpDiv.classList.contains('hidden')) {
+        const sel = $('adminNodeSelect');
+        sel.innerHTML = '';
+        getAllNodeIds().forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = id;
+          if (id === state.node) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+    };
+
+    $('adminJumpGo').onclick = () => {
+      const nodeId = $('adminNodeSelect').value;
+      if (nodeId) {
+        adminJumpToNode(nodeId);
+        $('adminJump').classList.add('hidden');
+      }
+    };
+
+    // Update admin on every tick
+    const origTick = tick;
+    // (handled in setInterval — admin updates in updateBottomPanel)
 
     // ── Events ──────────────────────
     $('startBtn').onclick = () => { state.started=true; save(); go('contactsScreen'); };
