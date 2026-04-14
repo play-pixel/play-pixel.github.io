@@ -355,6 +355,8 @@
           if (!Array.isArray(state.timeline)) state.timeline = [];
           if (!Array.isArray(state.history)) state.history = [];
           if (!Array.isArray(state.choices)) state.choices = [];
+          if (!Array.isArray(state.usedOptionals)) state.usedOptionals = [];
+          if (!Array.isArray(state.knowledgeFlags)) state.knowledgeFlags = [];
           if (typeof state.timelineIdx !== 'number') state.timelineIdx = 0;
           return true;
         }
