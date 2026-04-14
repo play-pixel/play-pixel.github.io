@@ -891,7 +891,8 @@
           "text": "Подожди. Посмотри что написано на стене",
           "next": "path_dark",
           "tag": "dark",
-          "key": true
+          "key": true,
+          "flag": "chose_dark_path"
         },
         {
           "text": "Как ты себя чувствуешь? Не ранена?",
@@ -1237,7 +1238,11 @@
       ],
       "next": null,
       "scene": "climax",
-      "sceneEnd": true
+      "sceneEnd": true,
+      "nextScene": [
+        { "scene": "act2_deeper", "if": { "flags": ["chose_dark_path"] } },
+        { "scene": "act2_safe" }
+      ]
     },
     "act1_cliffhanger_hide": {
       "messages": [
@@ -1283,7 +1288,11 @@
       ],
       "next": null,
       "scene": "climax",
-      "sceneEnd": true
+      "sceneEnd": true,
+      "nextScene": [
+        { "scene": "act2_deeper", "if": { "flags": ["chose_dark_path"] } },
+        { "scene": "act2_safe" }
+      ]
     }
   }
 }
