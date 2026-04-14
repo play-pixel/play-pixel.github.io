@@ -281,8 +281,10 @@
 
         // Drag
         card.addEventListener('mousedown', (e) => {
+          // Select without re-rendering DOM
+          document.querySelectorAll('.scene-card.selected').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
           selectedSceneId = scene.id;
-          renderSceneMap();
           startSceneDrag(e, card, scene.id);
         });
 
