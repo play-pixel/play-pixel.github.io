@@ -43,12 +43,10 @@
 
     /* Canvas area */
     .canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--bg); }
-    .canvas { position:absolute; inset:0; overflow:auto; cursor:grab; }
-    .canvas:active { cursor:grabbing; }
-    .canvas-inner { position:relative; width:4000px; height:3000px; }
+    .canvas-inner { position:absolute; transform-origin:0 0; }
 
     /* SVG connections */
-    .connections { position:absolute; inset:0; pointer-events:none; z-index:1; }
+    .connections { position:absolute; pointer-events:none; z-index:1; transform-origin:0 0; }
 
     /* Nodes on canvas */
     .node-card { position:absolute; width:200px; background:var(--surface); border:1px solid var(--border); border-radius:8px; z-index:2; cursor:move; user-select:none; box-shadow:0 2px 8px rgba(0,0,0,.3); }
@@ -112,13 +110,14 @@
       <div class="node-list" id="nodeList"></div>
     </div>
 
-    <div class="canvas-wrap">
-      <div class="canvas" id="canvas">
-        <svg class="connections" id="svgConnections"></svg>
-        <div class="canvas-inner" id="canvasInner"></div>
-      </div>
+    <div class="canvas-wrap" id="canvasWrap">
+      <svg class="connections" id="svgConnections"></svg>
+      <div class="canvas-inner" id="canvasInner"></div>
       <div class="zoom-controls">
-        <button onclick="autoLayout()">&#8862;</button>
+        <button onclick="zoomIn()">+</button>
+        <button onclick="zoomOut()">&minus;</button>
+        <button onclick="zoomFit()">&#8862;</button>
+        <span id="zoomLabel" style="color:var(--dim);font-size:11px;padding:0 4px;"></span>
       </div>
     </div>
 
@@ -136,11 +135,74 @@
 
     let scenario = null;
     let selectedNode = null;
-    let nodePositions = {}; // {nodeId: {x, y}}
+    let nodePositions = {};
 
-    const GRID = 30;
     const NODE_W = 200;
     const NODE_H = 100;
+
+    // Zoom & Pan
+    let zoom = 1;
+    let panX = 0, panY = 0;
+    let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+
+    function applyTransform() {
+      const inner = document.getElementById('canvasInner');
+      const svg = document.getElementById('svgConnections');
+      const t = `translate(${panX}px,${panY}px) scale(${zoom})`;
+      inner.style.transform = t;
+      svg.style.transform = t;
+      document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+    }
+
+    function zoomIn() { zoom = Math.min(zoom * 1.2, 3); applyTransform(); }
+    function zoomOut() { zoom = Math.max(zoom / 1.2, 0.15); applyTransform(); }
+    function zoomFit() { autoLayout(); }
+
+    // Mouse wheel zoom
+    document.addEventListener('DOMContentLoaded', () => {
+      const wrap = document.getElementById('canvasWrap');
+
+      wrap.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = wrap.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        const oldZoom = zoom;
+        if (e.deltaY < 0) zoom = Math.min(zoom * 1.1, 3);
+        else zoom = Math.max(zoom / 1.1, 0.15);
+
+        // Zoom toward cursor
+        panX = mx - (mx - panX) * (zoom / oldZoom);
+        panY = my - (my - panY) * (zoom / oldZoom);
+        applyTransform();
+      }, { passive: false });
+
+      // Pan with middle mouse or alt+drag
+      wrap.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.node-card') || e.target.closest('.port')) return;
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+        panOrigX = panX;
+        panOrigY = panY;
+        wrap.style.cursor = 'grabbing';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = panOrigX + (e.clientX - panStartX);
+        panY = panOrigY + (e.clientY - panStartY);
+        applyTransform();
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          document.getElementById('canvasWrap').style.cursor = '';
+        }
+      });
+    });
 
     // ── Load ────────────────────────
 
@@ -221,6 +283,24 @@
           };
         });
       });
+
+      // Fit to screen
+      const wrap = document.getElementById('canvasWrap');
+      if (wrap) {
+        const allX = Object.values(nodePositions).map(p => p.x);
+        const allY = Object.values(nodePositions).map(p => p.y);
+        if (allX.length > 0) {
+          const maxX = Math.max(...allX) + NODE_W + 40;
+          const maxY = Math.max(...allY) + NODE_H + 40;
+          const ww = wrap.clientWidth;
+          const wh = wrap.clientHeight;
+          zoom = Math.min(ww / maxX, wh / maxY, 1);
+          zoom = Math.max(zoom, 0.15);
+          panX = 20;
+          panY = 20;
+          applyTransform();
+        }
+      }
 
       renderAll();
     }
