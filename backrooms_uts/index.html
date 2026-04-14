@@ -56,14 +56,16 @@
     .screen.active { display:flex; }
 
     /* ── Start Screen ──────── */
-    #startScreen { align-items:center; justify-content:center; gap:20px; padding:32px; text-align:center; background:var(--surface); }
-    .start-logo { font-size:11px; letter-spacing:6px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
-    .start-title { font-size:28px; font-weight:300; letter-spacing:2px; line-height:1.3; }
-    .start-title span { display:block; font-size:14px; font-weight:400; color:var(--text-dim); letter-spacing:4px; margin-top:6px; }
-    .start-sub { color:var(--text-dim); font-size:13px; line-height:1.7; max-width:280px; }
-    .start-btn { padding:14px 52px; border:none; border-radius:28px; background:var(--accent); color:#fff; font-size:15px; cursor:pointer; margin-top:24px; }
-    .start-btn:active { opacity:.85; }
-    .start-reset { padding:8px 20px; border:none; background:none; color:var(--text-muted); font-size:12px; cursor:pointer; }
+    #startScreen { align-items:center; justify-content:center; gap:0; padding:32px; text-align:center; background:#0a0a0f; color:#e0e0e8; overflow:hidden; position:relative; }
+    #startScreen::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 80%, rgba(59,130,246,.08) 0%, transparent 60%); pointer-events:none; }
+    .start-logo { font-size:10px; letter-spacing:8px; text-transform:uppercase; color:#4a4a5a; margin-bottom:12px; }
+    .start-title { font-size:32px; font-weight:200; letter-spacing:3px; line-height:1.2; color:#fff; }
+    .start-title span { display:block; font-size:13px; font-weight:400; color:#555568; letter-spacing:5px; margin-top:8px; }
+    .start-divider { width:40px; height:1px; background:linear-gradient(90deg,transparent,#333,transparent); margin:28px auto; }
+    .start-sub { color:#6a6a7a; font-size:13px; line-height:1.8; max-width:260px; }
+    .start-btn { padding:15px 56px; border:none; border-radius:28px; background:linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; font-size:15px; font-weight:500; cursor:pointer; margin-top:32px; box-shadow:0 4px 20px rgba(59,130,246,.3); letter-spacing:.5px; }
+    .start-btn:active { opacity:.85; transform:scale(.98); }
+    .start-version { position:absolute; bottom:16px; font-size:10px; color:#2a2a36; letter-spacing:2px; }
 
     /* ── Contacts Screen ─────── */
     .contacts-hdr { padding:12px 16px 0; background:var(--header-bg); }
@@ -228,9 +230,10 @@
   <div class="screen active" id="startScreen">
     <div class="start-logo">backrooms</div>
     <div class="start-title">Untold Stories<span>interactive fiction</span></div>
-    <div class="start-sub">Незнакомый контакт.<br>Она не знает, где она.<br>Ты — единственный, кто ответил.</div>
+    <div class="start-divider"></div>
+    <div class="start-sub">Незнакомцы пишут тебе.<br>Они не знают, где они.<br>Помоги им выбраться.</div>
     <button class="start-btn" id="startBtn">Начать</button>
-    <button class="start-reset" id="resetBtn">Сбросить прогресс</button>
+    <div class="start-version">v0.5</div>
   </div>
 
   <!-- Contacts -->
@@ -242,23 +245,7 @@
         <span>Поиск по чатам и людям</span>
       </div>
     </div>
-    <div class="contacts-list">
-      <div class="contact-item" id="contactLika">
-        <div class="ct-avatar lika">Л</div>
-        <div class="ct-info"><div class="ct-name">Неизвестный номер</div><div class="ct-preview" id="ctPreview">привет?</div></div>
-        <div class="ct-meta"><div class="ct-time" id="ctTime">23:08</div><div class="ct-badge" id="ctBadge">1</div></div>
-      </div>
-      <div class="contact-item locked">
-        <div class="ct-avatar lock">?</div>
-        <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
-        <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>
-      </div>
-      <div class="contact-item locked">
-        <div class="ct-avatar lock">?</div>
-        <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
-        <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>
-      </div>
-    </div>
+    <div class="contacts-list" id="contactsList"></div>
     <div class="tab-bar">
       <div class="tab-item active">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -355,19 +342,60 @@
     const CHOICE_TIMEOUT_TEST = 60;   // 1 minute in test mode
     const TIME_SCALE_TEST = 60;       // 60x speed in test mode (15min → 15sec)
 
-    let scenario = null;
+    let scenario = null; // alias for activeScenario, set on story activation
     let prefs = { theme: 'light', lang: 'ru', testMode: false };
     let currentScreen = 'startScreen';
     let lastRenderedCount = 0;
 
-    let state = {
-      started:false, opened:false,
+    const EMPTY_STORY_STATE = {
       timeline:[], timelineIdx:0,
       history:[], choices:[],
-      phase:'idle', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
-      waitUntil:null, waitNextNode:null, waitChatNode:null, pendingNode:null,
+      phase:'idle', node:'start', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
+      waitUntil:null, waitNextNode:null, waitChatNode:null, waitChatBusyUntil:null, pendingNode:null,
       usedOptionals:[], knowledgeFlags:[]
     };
+
+    let state = {
+      started: false,
+      activeStory: null,       // currently viewed story id
+      stories: {}              // { "lika": { ...EMPTY_STORY_STATE }, ... }
+    };
+
+    let storiesMeta = [];      // loaded from stories.json
+    let activeScenario = null; // loaded scenario for active story
+
+    // Activate a story — copies story fields into state for engine compatibility
+    function activateStory(id) {
+      // Save current story back if switching
+      if (state.activeStory && state.stories[state.activeStory]) {
+        syncToStories();
+      }
+      state.activeStory = id;
+      if (!state.stories[id]) state.stories[id] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE));
+      // Copy story fields into state (engine reads state.timeline etc.)
+      syncFromStories();
+    }
+
+    // Copy active story fields INTO state (for engine)
+    function syncFromStories() {
+      const s = state.stories[state.activeStory];
+      if (!s) return;
+      for (const k of Object.keys(EMPTY_STORY_STATE)) {
+        state[k] = s[k];
+      }
+    }
+
+    // Copy state fields BACK into stories (after engine modifies them)
+    function syncToStories() {
+      const s = state.stories[state.activeStory];
+      if (!s) return;
+      for (const k of Object.keys(EMPTY_STORY_STATE)) {
+        s[k] = state[k];
+      }
+    }
+
+    // Override save to sync back first
+    const _origSave = () => localStorage.setItem(SAVE, JSON.stringify(state));
 
     const $ = id => document.getElementById(id);
     const chatArea = $('chatArea');
@@ -386,32 +414,118 @@
     }
 
     // ── Save / Load ─────────────────
-    function save() { localStorage.setItem(SAVE, JSON.stringify(state)); }
+    function save() { syncToStories(); localStorage.setItem(SAVE, JSON.stringify(state)); }
     function load() {
       try {
         const s = JSON.parse(localStorage.getItem(SAVE));
         if (s) {
-          state = {
-            started:false, opened:false, timeline:[], timelineIdx:0,
-            history:[], choices:[], phase:'idle', choiceNode:null,
-            choiceDeadline:null, waitUntil:null, waitNextNode:null, pendingNode:null,
-            ...s
-          };
-          if (!Array.isArray(state.timeline)) state.timeline = [];
-          if (!Array.isArray(state.history)) state.history = [];
-          if (!Array.isArray(state.choices)) state.choices = [];
-          if (!Array.isArray(state.usedOptionals)) state.usedOptionals = [];
-          if (!Array.isArray(state.knowledgeFlags)) state.knowledgeFlags = [];
-          if (typeof state.timelineIdx !== 'number') state.timelineIdx = 0;
+          // Migrate old format (flat state) to new (stories object)
+          if (!s.stories) {
+            // Old save — wrap into stories.lika
+            const storyFields = {};
+            for (const k of Object.keys(EMPTY_STORY_STATE)) {
+              storyFields[k] = s[k] !== undefined ? s[k] : EMPTY_STORY_STATE[k];
+            }
+            state = {
+              started: s.started || false,
+              activeStory: 'lika',
+              stories: { lika: storyFields }
+            };
+          } else {
+            state = s;
+          }
+          // Ensure structure
+          if (!state.stories) state.stories = {};
+          if (!state.activeStory) state.activeStory = 'lika';
+          // Ensure each story has all fields
+          for (const id of Object.keys(state.stories)) {
+            const st = state.stories[id];
+            for (const k of Object.keys(EMPTY_STORY_STATE)) {
+              if (st[k] === undefined) st[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
+            }
+            if (!Array.isArray(st.timeline)) st.timeline = [];
+            if (!Array.isArray(st.history)) st.history = [];
+            if (!Array.isArray(st.choices)) st.choices = [];
+            if (!Array.isArray(st.usedOptionals)) st.usedOptionals = [];
+            if (!Array.isArray(st.knowledgeFlags)) st.knowledgeFlags = [];
+          }
+          // Activate and sync
+          activateStory(state.activeStory);
           return true;
         }
-      } catch(e) {}
+      } catch(e) { console.error('Load error:', e); }
       return false;
     }
     function resetState() {
       localStorage.removeItem(SAVE);
-      state = { started:false, opened:false, timeline:[], timelineIdx:0, history:[], choices:[], phase:'idle', choiceNode:null, choiceDeadline:null, waitUntil:null, waitNextNode:null, pendingNode:null };
+      state = { started:false, activeStory:null, stories:{} };
+      // Also reset flat fields used by engine
+      for (const k of Object.keys(EMPTY_STORY_STATE)) state[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
       lastRenderedCount = 0;
+      activeScenario = null;
+    }
+
+    // ── Scenario loading ─────────────
+    async function loadScenario(path) {
+      const resp = await fetch('./' + path);
+      return await resp.json();
+    }
+
+    function renderContactList() {
+      const list = $('contactsList');
+      list.innerHTML = '';
+      for (const meta of storiesMeta) {
+        const isLocked = !meta.unlocked && (!meta.unlockAfter || !isStoryComplete(meta.unlockAfter));
+        const item = document.createElement('div');
+        item.className = 'contact-item' + (isLocked ? ' locked' : '');
+
+        const storyState = state.stories[meta.id];
+        const unread = storyState ? storyState.history.length - (storyState._lastSeen || 0) : 0;
+        const lastMsg = storyState ? [...storyState.history].reverse().find(m => m.type === 'text' || m.type === 'player') : null;
+        const preview = lastMsg ? lastMsg.text : (isLocked ? 'История заблокирована' : 'Нажми чтобы начать');
+
+        if (isLocked) {
+          item.innerHTML = `
+            <div class="ct-avatar lock">?</div>
+            <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
+            <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>`;
+        } else {
+          const grad = meta.avatarGradient ? `background:linear-gradient(135deg,${meta.avatarGradient[0]},${meta.avatarGradient[1]})` : '';
+          const timeStr = lastMsg && lastMsg._ts ? fmtTime(lastMsg._ts) : '';
+          item.innerHTML = `
+            <div class="ct-avatar" style="${grad};color:#fff;font-weight:600;">${meta.avatar || '?'}</div>
+            <div class="ct-info"><div class="ct-name">${meta.name}</div><div class="ct-preview">${preview}</div></div>
+            <div class="ct-meta"><div class="ct-time">${timeStr}</div>${unread > 0 ? `<div class="ct-badge">${unread}</div>` : ''}</div>`;
+          item.onclick = () => openStory(meta);
+        }
+
+        list.appendChild(item);
+      }
+    }
+
+    function isStoryComplete(storyId) {
+      const s = state.stories[storyId];
+      return s && s.phase === 'done';
+    }
+
+    async function openStory(meta) {
+      if (!activeScenario || state.activeStory !== meta.id) {
+        scenario = activeScenario = await loadScenario(meta.scenario);
+        activateStory(meta.id);
+      }
+      // Mark as seen
+      state.stories[meta.id]._lastSeen = state.stories[meta.id].history.length;
+      lastSeenHistoryCount = state.history.length;
+
+      // Start story if not yet started
+      if (state.phase === 'idle') {
+        state.phase = 'playing';
+        scheduleNode('start', Date.now());
+        save();
+      }
+
+      go('chatScreen');
+      renderFullHistory();
     }
 
     // ── Nav ─────────────────────────
@@ -976,17 +1090,9 @@
     let lastSeenHistoryCount = 0;
 
     function updateContactList() {
-      const lt = [...state.history].reverse().find(m => m.type === 'text' || m.type === 'player');
-      if (lt) $('ctPreview').textContent = lt.text;
-      // Count unread messages (arrived since last chat open)
-      const unread = state.history.length - lastSeenHistoryCount;
-      const badge = $('ctBadge');
-      if (unread > 0) {
-        badge.textContent = unread;
-        badge.classList.remove('hidden');
-      }
-      // Update time
-      if (lt && lt._ts) $('ctTime').textContent = fmtTime(lt._ts);
+      // Sync current story state before re-rendering
+      syncToStories();
+      renderContactList();
     }
 
     function setStatus(t, c) {
@@ -1183,25 +1289,32 @@
     // (handled in setInterval — admin updates in updateBottomPanel)
 
     // ── Events ──────────────────────
-    $('startBtn').onclick = () => {
+    $('startBtn').onclick = async () => {
       state.started = true;
-      state.opened = true;
-      state.phase = 'playing';
-      scheduleNode('start', Date.now());
+      // Activate first unlocked story
+      const first = storiesMeta.find(s => s.unlocked);
+      if (first) {
+        scenario = activeScenario = await loadScenario(first.scenario);
+        activateStory(first.id);
+        state.phase = 'playing';
+        scheduleNode('start', Date.now());
+      }
       save();
+      renderContactList();
       go('contactsScreen');
     };
-    $('resetBtn').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
+    // Reset moved to settings screen only
 
-    $('contactLika').onclick = () => {
-      if (!state.started) return;
-      lastSeenHistoryCount = state.history.length;
-      $('ctBadge').classList.add('hidden');
-      go('chatScreen');
-      renderFullHistory();
+    // contactLika click handled by renderContactList → openStory
+
+    $('chatBack').onclick = () => {
+      if (state.activeStory && state.stories[state.activeStory]) {
+        state.stories[state.activeStory]._lastSeen = state.history.length;
+      }
+      syncToStories();
+      go('contactsScreen');
+      renderContactList();
     };
-
-    $('chatBack').onclick = () => { go('contactsScreen'); updateContactList(); };
 
     // waitSkip is now dynamically created in renderWaitPanel
 
@@ -1224,12 +1337,25 @@
     // ── Boot ────────────────────────
     (async () => {
       loadPrefs();
-      const resp = await fetch('./data/scenario.json');
-      scenario = await resp.json();
+      // Load stories meta
+      const resp = await fetch('./data/stories.json');
+      const data = await resp.json();
+      storiesMeta = data.stories;
+
       if (load() && state.started) {
+        // Load active story scenario
+        if (state.activeStory) {
+          const meta = storiesMeta.find(s => s.id === state.activeStory);
+          if (meta && meta.scenario) {
+            scenario = activeScenario = await loadScenario(meta.scenario);
+          }
+        }
+        renderContactList();
         go('contactsScreen');
-        if (state.opened) { updateContactList(); $('ctBadge').classList.add('hidden'); tick(); }
-      } else { go('startScreen'); }
+        tick(); // catch up
+      } else {
+        go('startScreen');
+      }
       setInterval(tick, 500);
     })();
   </script>

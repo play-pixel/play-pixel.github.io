@@ -1,0 +1,29 @@
+{
+  "stories": [
+    {
+      "id": "lika",
+      "name": "Неизвестный номер",
+      "avatar": "Л",
+      "avatarGradient": ["#7c3aed", "#3b82f6"],
+      "scenario": "data/story_lika.json",
+      "unlocked": true,
+      "order": 1
+    },
+    {
+      "id": "story2",
+      "name": "???",
+      "avatar": "?",
+      "locked": true,
+      "unlockAfter": "lika",
+      "order": 2
+    },
+    {
+      "id": "story3",
+      "name": "???",
+      "avatar": "?",
+      "locked": true,
+      "unlockAfter": "story2",
+      "order": 3
+    }
+  ]
+}

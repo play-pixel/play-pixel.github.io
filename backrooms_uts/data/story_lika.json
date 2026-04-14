@@ -1,0 +1,422 @@
+{
+  "meta": {
+    "title": "Backrooms: Untold Stories",
+    "version": "0.5.0",
+    "act": 1
+  },
+  "nodes": {
+    "start": {
+      "messages": [
+        { "type": "text", "text": "...", "delay": 0 },
+        { "type": "text", "text": "тест", "delay": 2000 },
+        { "type": "text", "text": "тест тест", "delay": 2000 },
+        { "type": "text", "text": "о!", "delay": 1500 },
+        { "type": "text", "text": "кто-нибудь видит это?", "delay": 3000 },
+        { "type": "text", "text": "привет??", "delay": 4000 },
+        { "type": "text", "text": "пожалуйста ответьте", "delay": 4000 }
+      ],
+      "next": "first_contact_1"
+    },
+    "first_contact_1": {
+      "messages": [],
+      "choices": [
+        { "text": "Привет. Ты мне написала, я не знаю тебя", "next": "fc2_honest", "tag": "honest", "key": true, "default": true },
+        { "text": "Это ты кто? У меня незнакомый номер высветился", "next": "fc2_confused", "tag": "confused", "key": true }
+      ]
+    },
+    "fc2_honest": {
+      "messages": [
+        { "type": "text", "text": "что", "delay": 3000 },
+        { "type": "text", "text": "нет", "delay": 2000 },
+        { "type": "text", "text": "я никому не писала", "delay": 3500 },
+        { "type": "text", "text": "то есть писала, но не тебе", "delay": 4000 },
+        { "type": "text", "text": "я писала маме, подруге, в рабочий чат", "delay": 4000 },
+        { "type": "text", "text": "никто не отвечает", "delay": 3500 },
+        { "type": "text", "text": "а тут ты", "delay": 3000 }
+      ],
+      "next": "fc3"
+    },
+    "fc2_confused": {
+      "messages": [
+        { "type": "text", "text": "подожди", "delay": 3000 },
+        { "type": "text", "text": "у меня тоже. незнакомый номер", "delay": 4000 },
+        { "type": "text", "text": "я писала маме, подруге, в рабочий чат", "delay": 4000 },
+        { "type": "text", "text": "никто не читает. вообще никто", "delay": 3500 },
+        { "type": "text", "text": "а ты прочитал", "delay": 3000 }
+      ],
+      "next": "fc3"
+    },
+    "fc3": {
+      "messages": [
+        { "type": "typing", "duration": 4000 },
+        { "type": "text", "text": "ладно, неважно как", "delay": 0 },
+        { "type": "text", "text": "меня зовут Лика", "delay": 3500 },
+        { "type": "text", "text": "а тебя?", "delay": 2500 }
+      ],
+      "next": "fc3_name"
+    },
+    "fc3_name": {
+      "messages": [],
+      "choices": [
+        { "text": "Не важно как меня зовут. Что случилось?", "next": "fc4_noname", "tag": "noname", "key": true, "default": true },
+        { "text": "Давай без имён. Расскажи что происходит", "next": "fc4_noname", "tag": "anon", "key": true },
+        { "text": "Лика — это полное имя?", "tag": "ask_name", "optional": true,
+          "response": [
+            { "type": "text", "text": "Ангелика", "delay": 2000 },
+            { "type": "text", "text": "только так меня никто не зовёт", "delay": 3000 },
+            { "type": "text", "text": "даже мама", "delay": 2500 }
+          ]
+        }
+      ]
+    },
+    "fc4_noname": {
+      "messages": [
+        { "type": "text", "text": "ок", "delay": 3000 },
+        { "type": "text", "text": "хорошо", "delay": 2500 },
+        { "type": "typing", "duration": 5000 },
+        { "type": "text", "text": "я не знаю как это объяснить нормально", "delay": 0 },
+        { "type": "text", "text": "я шла домой после смены. через подземный переход", "delay": 5000 },
+        { "type": "text", "text": "и", "delay": 3000 },
+        { "type": "text", "text": "провалилась", "delay": 3000 },
+        { "type": "text", "text": "ступенька просто исчезла подо мной", "delay": 4000 }
+      ],
+      "next": "fc5"
+    },
+    "fc5": {
+      "messages": [],
+      "choices": [
+        { "text": "Провалилась? Как в яму?", "next": "fc5_what", "tag": "hole", "key": true, "default": true },
+        { "text": "Ты упала? Тебе нужна скорая?", "next": "fc5_help", "tag": "help", "key": true },
+        { "text": "После какой смены? Ты где работаешь?", "tag": "ask_job", "optional": true, "flag": "knows_courier",
+          "response": [
+            { "type": "text", "text": "курьер", "delay": 2000 },
+            { "type": "text", "text": "на велике. доставка еды", "delay": 3000 },
+            { "type": "text", "text": "это не важно сейчас", "delay": 2500 }
+          ]
+        },
+        { "text": "Подземный переход — где конкретно?", "tag": "ask_location", "optional": true,
+          "response": [
+            { "type": "text", "text": "у метро Академическая", "delay": 2500 },
+            { "type": "text", "text": "переход к торговому центру", "delay": 3000 },
+            { "type": "text", "text": "я там каждый день хожу. тысячу раз проходила", "delay": 4000 }
+          ]
+        }
+      ]
+    },
+    "fc5_what": {
+      "messages": [
+        { "type": "text", "text": "нет, не в яму", "delay": 3500 },
+        { "type": "text", "text": "я не знаю как объяснить", "delay": 4000 },
+        { "type": "text", "text": "я просто... оказалась в другом месте", "delay": 4500 },
+        { "type": "text", "text": "секунду", "delay": 3000 }
+      ],
+      "next": "first_photo"
+    },
+    "fc5_help": {
+      "messages": [
+        { "type": "text", "text": "скорая?", "delay": 3000 },
+        { "type": "text", "text": "я звонила. 112, мама, Наташа. звонки не проходят", "delay": 5000 },
+        { "type": "text", "text": "вообще. только сообщения как-то пролезают", "delay": 4500 },
+        { "type": "text", "text": "и не упала. я... оказалась в другом месте", "delay": 4500 },
+        { "type": "text", "text": "подожди, я покажу", "delay": 3000 }
+      ],
+      "next": "first_photo"
+    },
+    "first_photo": {
+      "messages": [
+        { "type": "typing", "duration": 4000 },
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/f/fb/BackroomsRender2.png", "alt": "бесконечный коридор, флуоресцентные лампы, жёлтые стены, мокрый ковролин", "delay": 0 }
+      ],
+      "next": "after_photo"
+    },
+    "after_photo": {
+      "messages": [
+        { "type": "text", "text": "вот", "delay": 4000 },
+        { "type": "text", "text": "это не фотошоп, не прикол", "delay": 4000 },
+        { "type": "text", "text": "я реально тут", "delay": 3500 },
+        { "type": "text", "text": "пустые комнаты. жёлтый свет. везде ковролин. воняет сыростью", "delay": 5000 },
+        { "type": "text", "text": "и тут никого нет", "delay": 4000 }
+      ],
+      "next": "reaction_choice"
+    },
+    "reaction_choice": {
+      "messages": [],
+      "choices": [
+        { "text": "Это выглядит как... бэкрумс?", "next": "react_backrooms", "tag": "knows", "key": true, "default": true },
+        { "text": "Где это? Ты в каком городе вообще?", "next": "react_where", "tag": "where", "key": true },
+        { "text": "Тебе страшно?", "tag": "ask_fear", "optional": true,
+          "response": [
+            { "type": "text", "text": "мне жутко", "delay": 2500 },
+            { "type": "text", "text": "тут тихо. слишком тихо", "delay": 3500 },
+            { "type": "text", "text": "только лампы гудят. и этот запах", "delay": 4000 },
+            { "type": "text", "text": "пахнет как в старом офисе который закрыли лет десять назад", "delay": 5000 }
+          ]
+        },
+        { "text": "У тебя есть кто-то близкий? Кто будет искать?", "tag": "ask_family", "optional": true, "flag": "knows_family",
+          "response": [
+            { "type": "text", "text": "мама", "delay": 2000 },
+            { "type": "text", "text": "но она в Калуге", "delay": 3000 },
+            { "type": "text", "text": "подруга Наташа. она наверное уже заметила что я не отвечаю", "delay": 5000 },
+            { "type": "text", "text": "парня нет если что", "delay": 3000 },
+            { "type": "text", "text": "кот есть. Шуруп", "delay": 2500 },
+            { "type": "text", "text": "боже, кто его покормит", "delay": 3000 }
+          ]
+        }
+      ]
+    },
+    "react_backrooms": {
+      "messages": [
+        { "type": "text", "text": "что такое бэкрумс", "delay": 4000 }
+      ],
+      "next": "react_explain"
+    },
+    "react_where": {
+      "messages": [
+        { "type": "text", "text": "я была в Москве", "delay": 3500 },
+        { "type": "text", "text": "БЫЛА", "delay": 2500 },
+        { "type": "text", "text": "сейчас я не знаю где я", "delay": 4000 },
+        { "type": "text", "text": "геолокация не работает. GPS не ловит", "delay": 4000 }
+      ],
+      "next": "react_explain"
+    },
+    "react_explain": {
+      "messages": [],
+      "choices": [
+        { "text": "Попробуй найти выход. Иди вдоль стены", "next": "start_explore", "tag": "practical", "key": true, "default": true },
+        { "text": "Не паникуй. Давай разберёмся. Что у тебя с собой?", "next": "inventory_check", "tag": "calm", "key": true },
+        { "text": "А ты вообще спортивная? Выносливая?", "tag": "ask_fitness", "optional": true,
+          "response": [
+            { "type": "text", "text": "я курьер на велике", "delay": 2500 },
+            { "type": "text", "text": "весь день кручу педали по Москве", "delay": 3500 },
+            { "type": "text", "text": "ноги стальные. руки тоже ничего", "delay": 3000 },
+            { "type": "text", "text": "но тут не велик нужен а чудо какое-нибудь", "delay": 4000 }
+          ]
+        }
+      ]
+    },
+    "inventory_check": {
+      "messages": [
+        { "type": "text", "text": "так", "delay": 3000 },
+        { "type": "text", "text": "телефон. батарея 67%", "delay": 4000 },
+        { "type": "text", "text": "ключи от квартиры", "delay": 3000 },
+        { "type": "text", "text": "наушники", "delay": 2500 },
+        { "type": "text", "text": "полбутылки воды", "delay": 3000 },
+        { "type": "text", "text": "всё", "delay": 2500 },
+        { "type": "text", "text": "зарядки нет", "delay": 3500 }
+      ],
+      "next": "start_explore"
+    },
+    "start_explore": {
+      "messages": [
+        { "type": "text", "text": "я прошла наверное пять или шесть комнат пока искала выход", "delay": 5000 },
+        { "type": "text", "text": "они все одинаковые", "delay": 3500 },
+        { "type": "text", "text": "стены, ковролин, двери. некоторые двери заперты", "delay": 4500 },
+        { "type": "text", "text": "телефон показывает 23:14", "delay": 3500 }
+      ],
+      "next": "voice_msg"
+    },
+    "voice_msg": {
+      "messages": [
+        { "type": "voice", "src": "voice_01.ogg", "duration": 4, "transcript": "подожди... ты слышишь? тут что-то... неважно. показалось наверное", "delay": 5000 }
+      ],
+      "next": "explore_decision"
+    },
+    "explore_decision": {
+      "messages": [
+        { "type": "text", "text": "ладно", "delay": 4000 },
+        { "type": "text", "text": "я не могу просто стоять тут", "delay": 3500 },
+        { "type": "text", "text": "впереди два коридора", "delay": 3500 },
+        { "type": "text", "text": "пойду посмотрю, напишу тебе", "delay": 3500 }
+      ],
+      "next": "pause1"
+    },
+    "pause1": {
+      "messages": [
+        { "type": "status", "text": "Лика ушла исследовать...", "delay": 0 }
+      ],
+      "wait": 900,
+      "waitPush": "Лика отправила фото",
+      "next": "corridor_choice",
+      "waitChat": [
+        { "text": "Расскажи про свою работу курьером", "tag": "wc_job",
+          "response": [
+            { "type": "text", "text": "ну что рассказать" },
+            { "type": "text", "text": "кручу педали с 8 утра до 8 вечера" },
+            { "type": "text", "text": "зимой холодно, летом жарко, осенью мокро" },
+            { "type": "text", "text": "но мне нравится. я одна, музыка в наушниках, город" },
+            { "type": "text", "text": "лучше чем в офисе сидеть" }
+          ]
+        },
+        { "text": "Расскажи про кота", "tag": "wc_cat", "requires": "ask_family",
+          "response": [
+            { "type": "text", "text": "Шуруп" },
+            { "type": "text", "text": "рыжий, толстый, наглый" },
+            { "type": "text", "text": "подобрала его два года назад у подъезда" },
+            { "type": "text", "text": "он спал в коробке из-под шурупов" },
+            { "type": "text", "text": "поэтому Шуруп" },
+            { "type": "text", "text": "надеюсь Наташка догадается его покормить" }
+          ]
+        },
+        { "text": "Что ты обычно делаешь вечером?", "tag": "wc_evening",
+          "response": [
+            { "type": "text", "text": "прихожу домой, душ, еда" },
+            { "type": "text", "text": "потом сериал какой-нибудь" },
+            { "type": "text", "text": "сейчас смотрю корейский. про девушку которая видит призраков" },
+            { "type": "text", "text": "ирония да" }
+          ]
+        },
+        { "text": "Ты когда-нибудь была в опасной ситуации?", "tag": "wc_danger",
+          "response": [
+            { "type": "text", "text": "один раз чуть не попала под грузовик на Садовом" },
+            { "type": "text", "text": "и один раз пьяный мужик кинулся на меня когда я везла заказ" },
+            { "type": "text", "text": "убежала на велике" },
+            { "type": "text", "text": "но это всё не то" },
+            { "type": "text", "text": "тут другое. тут непонятно ОТ ЧЕГО бежать" }
+          ]
+        }
+      ]
+    },
+    "corridor_choice": {
+      "messages": [
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg/600px-Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg", "alt": "светлый широкий коридор, лампы работают", "delay": 0 },
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/The_Corridor.jpg/600px-The_Corridor.jpg", "alt": "тёмный узкий коридор", "delay": 2000 },
+        { "type": "text", "text": "два варианта", "delay": 3000 },
+        { "type": "text", "text": "один светлый и широкий, другой тёмный и узкий", "delay": 4500 },
+        { "type": "text", "text": "в тёмном что-то нацарапано на стене, не могу разобрать отсюда", "delay": 5000 },
+        { "type": "text", "text": "куда?", "delay": 3000 }
+      ],
+      "next": "choice_corridor"
+    },
+    "choice_corridor": {
+      "messages": [],
+      "choices": [
+        { "text": "Иди на свет, там безопаснее", "next": "path_light", "tag": "light", "key": true, "default": true },
+        { "text": "Подожди. Посмотри что написано на стене", "next": "path_dark", "tag": "dark", "key": true },
+        { "text": "Как ты себя чувствуешь? Не ранена?", "tag": "ask_health", "optional": true,
+          "response": [
+            { "type": "text", "text": "физически норм", "delay": 2000 },
+            { "type": "text", "text": "коленка немного ноет, ударилась когда падала", "delay": 4000 },
+            { "type": "text", "text": "и пить хочется", "delay": 2500 },
+            { "type": "text", "text": "но воду экономлю", "delay": 2500 }
+          ]
+        },
+        { "text": "Ты раньше слышала про такие места?", "tag": "ask_heard", "optional": true,
+          "response": [
+            { "type": "text", "text": "нет", "delay": 2000 },
+            { "type": "text", "text": "я вообще не из этих. не крипипаста, не хоррор", "delay": 4000 },
+            { "type": "text", "text": "я сериалы смотрю. нормальные. про людей", "delay": 4000 },
+            { "type": "text", "text": "а сейчас я внутри одного видимо", "delay": 3500 }
+          ]
+        }
+      ]
+    },
+    "path_light": {
+      "messages": [
+        { "type": "text", "text": "окей, иду на свет", "delay": 3000 },
+        { "type": "text", "text": "тут просторнее. потолки выше. лампы яркие", "delay": 6000 },
+        { "type": "text", "text": "вроде норм", "delay": 5000 },
+        { "type": "text", "text": "...", "delay": 6000 },
+        { "type": "text", "text": "тупик", "delay": 4000 },
+        { "type": "text", "text": "чёрт. тут стена. просто стена", "delay": 4000 },
+        { "type": "text", "text": "возвращаюсь", "delay": 3500 },
+        { "type": "text", "text": "батарея 61%", "delay": 3000 }
+      ],
+      "next": "after_corridor"
+    },
+    "path_dark": {
+      "messages": [
+        { "type": "text", "text": "секунду", "delay": 3000 },
+        { "type": "typing", "duration": 5000 },
+        { "type": "text", "text": "подошла ближе", "delay": 0 },
+        { "type": "text", "text": "тут нацарапано чем-то острым", "delay": 4500 },
+        { "type": "text", "text": "\"НЕ ХОДИ НА СВЕТ\"", "delay": 4000 },
+        { "type": "text", "text": "свежее. недавно кто-то это написал", "delay": 5000 },
+        { "type": "text", "text": "иду дальше по тёмному", "delay": 4000 },
+        { "type": "typing", "duration": 6000 },
+        { "type": "text", "text": "тут рюкзак", "delay": 0 },
+        { "type": "text", "text": "внутри фонарик и бутылка воды. полупустая", "delay": 5000 },
+        { "type": "text", "text": "кто-то точно был тут до меня", "delay": 4500 }
+      ],
+      "next": "after_corridor"
+    },
+    "after_corridor": {
+      "messages": [
+        { "type": "text", "text": "слушай", "delay": 5000 },
+        { "type": "text", "text": "я кое-что заметила", "delay": 4000 },
+        { "type": "typing", "duration": 3000 },
+        { "type": "text", "text": "комната через которую я прошла пять минут назад", "delay": 0 },
+        { "type": "text", "text": "её больше нет", "delay": 3500 },
+        { "type": "text", "text": "там стена", "delay": 3000 }
+      ],
+      "next": "wall_photo"
+    },
+    "wall_photo": {
+      "messages": [
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Inevitable_end_of_corridor_%282098072225%29.jpg/600px-Inevitable_end_of_corridor_%282098072225%29.jpg", "alt": "сплошная стена на месте бывшего прохода", "delay": 3000 },
+        { "type": "text", "text": "я не сошла с ума", "delay": 4000 },
+        { "type": "text", "text": "тут был проход. Я ПОМНЮ", "delay": 4000 }
+      ],
+      "next": "wet_tracks"
+    },
+    "wet_tracks": {
+      "messages": [
+        { "type": "text", "text": "и ещё", "delay": 5000 },
+        { "type": "typing", "duration": 5000 },
+        { "type": "text", "text": "тут мокрые следы на ковролине", "delay": 0 },
+        { "type": "text", "text": "не мои", "delay": 3500 },
+        { "type": "text", "text": "они ведут в мою сторону", "delay": 4000 }
+      ],
+      "next": "final_choice"
+    },
+    "final_choice": {
+      "messages": [],
+      "choices": [
+        { "text": "Беги. Прямо сейчас.", "next": "act1_end_run", "tag": "run", "key": true, "default": true },
+        { "text": "Не двигайся. Выключи фонарик. Замри.", "next": "act1_end_hide", "tag": "hide", "key": true }
+      ]
+    },
+    "act1_end_run": {
+      "messages": [
+        { "type": "text", "text": "бегу", "delay": 1000 },
+        { "type": "status", "text": "Лика в сети", "delay": 0 }
+      ],
+      "wait": 1200,
+      "waitPush": "Лика печатает...",
+      "next": "act1_cliffhanger_run"
+    },
+    "act1_end_hide": {
+      "messages": [
+        { "type": "text", "text": "ок", "delay": 1500 },
+        { "type": "text", "text": "выключаю", "delay": 2000 },
+        { "type": "status", "text": "Лика оффлайн", "delay": 0 }
+      ],
+      "wait": 1500,
+      "waitPush": "Лика печатает...",
+      "next": "act1_cliffhanger_hide"
+    },
+    "act1_cliffhanger_run": {
+      "messages": [
+        { "type": "text", "text": "я спряталась", "delay": 0 },
+        { "type": "text", "text": "что-то прошло мимо", "delay": 5000 },
+        { "type": "text", "text": "я не видела что", "delay": 4000 },
+        { "type": "text", "text": "но оно дышало", "delay": 4500 },
+        { "type": "text", "text": "батарея 58%", "delay": 4000 },
+        { "type": "status", "text": "Конец демо. Спасибо за игру!", "delay": 0 }
+      ],
+      "next": null
+    },
+    "act1_cliffhanger_hide": {
+      "messages": [
+        { "type": "text", "text": "оно прошло прямо рядом", "delay": 0 },
+        { "type": "text", "text": "я не дышала", "delay": 4000 },
+        { "type": "text", "text": "оно остановилось", "delay": 5000 },
+        { "type": "typing", "duration": 7000 },
+        { "type": "text", "text": "ушло", "delay": 0 },
+        { "type": "text", "text": "у меня руки трясутся", "delay": 5000 },
+        { "type": "text", "text": "батарея 59%", "delay": 4000 },
+        { "type": "status", "text": "Конец демо. Спасибо за игру!", "delay": 0 }
+      ],
+      "next": null
+    }
+  }
+}
