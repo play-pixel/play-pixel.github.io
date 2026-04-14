@@ -183,7 +183,7 @@
       "messages": [
         { "type": "status", "text": "Лика ушла исследовать...", "delay": 0 }
       ],
-      "wait": 15,
+      "wait": 900,
       "waitPush": "Лика отправила фото",
       "next": "corridor_choice"
     },
@@ -275,7 +275,7 @@
         { "type": "text", "text": "бегу", "delay": 1000 },
         { "type": "status", "text": "Лика в сети", "delay": 0 }
       ],
-      "wait": 20,
+      "wait": 1200,
       "waitPush": "Лика печатает...",
       "next": "act1_cliffhanger_run"
     },
@@ -285,7 +285,7 @@
         { "type": "text", "text": "выключаю", "delay": 2000 },
         { "type": "status", "text": "Лика оффлайн", "delay": 0 }
       ],
-      "wait": 25,
+      "wait": 1500,
       "waitPush": "Лика печатает...",
       "next": "act1_cliffhanger_hide"
     },

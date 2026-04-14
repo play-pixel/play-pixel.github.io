@@ -256,6 +256,8 @@
       <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Язык / Language</div>
       <div class="settings-row"><div class="settings-row-label">Язык интерфейса</div><div class="lang-options"><button class="lang-opt active" id="langRu">RU</button><button class="lang-opt" id="langEn">EN</button></div></div>
+      <div class="settings-section">Разработка</div>
+      <div class="settings-row"><div class="settings-row-label">Режим тестирования<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Ускоряет время в 60x. Выбор — 1 мин вместо 1 часа</div></div><label class="toggle"><input type="checkbox" id="testToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Прогресс</div>
       <div class="settings-row"><div class="settings-row-label">Сбросить прогресс</div><button style="padding:8px 16px;border:1px solid var(--border);border-radius:10px;background:none;color:#e74c3c;font-size:13px;cursor:pointer;" id="settingsReset">Сбросить</button></div>
       <div class="settings-version">Backrooms: Untold Stories v0.4.0</div>
@@ -298,10 +300,12 @@
 
     const SAVE = 'backrooms_us_save';
     const PREFS = 'backrooms_us_prefs';
-    const CHOICE_TIMEOUT = 60;
+    const CHOICE_TIMEOUT_REAL = 3600;  // 1 hour in production
+    const CHOICE_TIMEOUT_TEST = 60;   // 1 minute in test mode
+    const TIME_SCALE_TEST = 60;       // 60x speed in test mode (15min → 15sec)
 
     let scenario = null;
-    let prefs = { theme: 'light', lang: 'ru' };
+    let prefs = { theme: 'light', lang: 'ru', testMode: false };
     let currentScreen = 'startScreen';
     let lastRenderedCount = 0;
 
@@ -323,6 +327,7 @@
     function applyTheme() {
       document.body.setAttribute('data-theme', prefs.theme);
       $('themeToggle').checked = prefs.theme === 'dark';
+      $('testToggle').checked = prefs.testMode || false;
     }
 
     // ── Save / Load ─────────────────
@@ -359,6 +364,14 @@
       $(id).classList.add('active');
     }
     function isChatVisible() { return currentScreen === 'chatScreen'; }
+
+    // ── Time helpers ─────────────────
+    function getChoiceTimeout() {
+      return (prefs.testMode ? CHOICE_TIMEOUT_TEST : CHOICE_TIMEOUT_REAL) * 1000;
+    }
+    function scaleWait(seconds) {
+      return prefs.testMode ? (seconds / TIME_SCALE_TEST) * 1000 : seconds * 1000;
+    }
 
     // ── Time formatting ─────────────
     function fmtTime(ts) {
@@ -406,10 +419,10 @@
 
       if (node.choices) {
         state.choiceNode = nodeId;
-        state.choiceDeadline = t + CHOICE_TIMEOUT * 1000;
+        state.choiceDeadline = t + getChoiceTimeout();
         state.phase = 'choice';
       } else if (node.wait) {
-        state.waitUntil = t + node.wait * 1000;
+        state.waitUntil = t + scaleWait(node.wait);
         state.waitNextNode = node.next;
         state.phase = 'wait';
       } else if (node.next) {
@@ -710,7 +723,14 @@
     function updateCountdowns(now) {
       if (state.phase === 'choice' && state.choiceDeadline) {
         const el = $('choiceCountdown');
-        if (el) { const s = Math.max(0, Math.ceil((state.choiceDeadline - now)/1000)); el.textContent = `Лика ждёт ответ... ${s}с`; }
+        if (el) {
+          const s = Math.max(0, Math.ceil((state.choiceDeadline - now)/1000));
+          const m = Math.floor(s / 60);
+          const sec = s % 60;
+          el.textContent = m > 0
+            ? `Лика ждёт ответ... ${m}м ${sec.toString().padStart(2,'0')}с`
+            : `Лика ждёт ответ... ${s}с`;
+        }
       }
       if (state.phase === 'wait' && state.waitUntil) {
         const rem = Math.max(0, state.waitUntil - now);
@@ -756,6 +776,7 @@
     $('tabChatsFromSettings').onclick = () => go('contactsScreen');
     $('settingsBack').onclick = () => go('contactsScreen');
     $('themeToggle').onchange = (e) => { prefs.theme = e.target.checked ? 'dark' : 'light'; applyTheme(); savePrefs(); };
+    $('testToggle').onchange = (e) => { prefs.testMode = e.target.checked; savePrefs(); };
     $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); $('langRu').classList.add('active'); $('langEn').classList.remove('active'); };
     $('langEn').onclick = () => alert('English language coming soon!');
     $('settingsReset').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
