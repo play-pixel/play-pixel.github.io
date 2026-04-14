@@ -318,7 +318,8 @@
       timeline:[], timelineIdx:0,
       history:[], choices:[],
       phase:'idle', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
-      waitUntil:null, waitNextNode:null, pendingNode:null, usedOptionals:[]
+      waitUntil:null, waitNextNode:null, waitChatNode:null, pendingNode:null,
+      usedOptionals:[], knowledgeFlags:[]
     };
 
     const $ = id => document.getElementById(id);
@@ -430,6 +431,7 @@
       } else if (node.wait) {
         state.waitUntil = t + scaleWait(node.wait);
         state.waitNextNode = node.next;
+        state.waitChatNode = node.waitChat ? nodeId : null;
         state.phase = 'wait';
       } else if (node.next) {
         scheduleNode(node.next, t); return;
@@ -461,7 +463,7 @@
       }
       if (state.phase === 'wait' && state.waitUntil && now >= state.waitUntil) {
         const next = state.waitNextNode;
-        state.waitUntil = null; state.waitNextNode = null; state.phase = 'playing';
+        state.waitUntil = null; state.waitNextNode = null; state.waitChatNode = null; state.phase = 'playing';
         if (next) scheduleNode(next, now);
         changed = true;
       }
@@ -504,9 +506,12 @@
       if (!ch.optional || !ch.response) return;
       const now = Date.now();
 
-      // Add player message
+      // Add player message + knowledge flag
       state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
       state.usedOptionals.push(ch.tag);
+      if (ch.flag && !state.knowledgeFlags.includes(ch.flag)) {
+        state.knowledgeFlags.push(ch.flag);
+      }
 
       // Schedule response messages, then return to choice
       let t = now + 1500;
@@ -794,11 +799,79 @@
     }
 
     function updateWaitUI() {
-      if (state.phase !== 'wait' || !state.waitUntil) { $('waitPanel').classList.remove('active'); return; }
-      $('waitPanel').classList.add('active');
-      choicesPanel.classList.add('hidden');
-      $('inputBar').classList.add('hidden');
+      if (state.phase !== 'wait' || !state.waitUntil) {
+        $('waitPanel').classList.remove('active');
+        return;
+      }
+
+      // Check if wait-chat questions are available
+      const node = state.waitChatNode ? scenario.nodes[state.waitChatNode] : null;
+      const waitChats = node && node.waitChat ? node.waitChat.filter(wc =>
+        !state.usedOptionals.includes(wc.tag) &&
+        (!wc.requires || state.knowledgeFlags.includes(wc.requires))
+      ) : [];
+
+      // If there are wait-chat questions AND all timeline events delivered, show them
+      const allDelivered = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > Date.now();
+
+      if (waitChats.length > 0 && allDelivered) {
+        // Show wait-chat in choices panel instead of wait panel
+        $('waitPanel').classList.add('active');
+        $('inputBar').classList.add('hidden');
+        choicesPanel.innerHTML = '';
+        choicesPanel.classList.remove('hidden');
+
+        const timer = document.createElement('div');
+        timer.className = 'choices-countdown';
+        timer.id = 'waitChatTimer';
+        choicesPanel.appendChild(timer);
+
+        waitChats.forEach(wc => {
+          const btn = document.createElement('button');
+          btn.className = 'choice-optional';
+          btn.textContent = wc.text;
+          btn.onclick = () => playerWaitChat(wc);
+          choicesPanel.appendChild(btn);
+        });
+      } else {
+        choicesPanel.classList.add('hidden');
+        $('waitPanel').classList.add('active');
+        $('inputBar').classList.add('hidden');
+      }
+
       setStatus('ушла', '');
+    }
+
+    function playerWaitChat(wc) {
+      if (state.phase !== 'wait') return;
+      const now = Date.now();
+
+      state.history.push({ type:'player', text:wc.text, checks:1, _ts:now });
+      state.usedOptionals.push(wc.tag);
+      if (wc.flag && !state.knowledgeFlags.includes(wc.flag)) {
+        state.knowledgeFlags.push(wc.flag);
+      }
+
+      // Schedule response
+      let t = now + 1500;
+      for (const msg of wc.response) {
+        const text = msg.text || '';
+        const len = text.length;
+        t += 800;
+        const typeTime = Math.max(1500, Math.min(len * 45, 4000));
+        state.timeline.push({ ts:t, type:'typing_start' });
+        t += typeTime;
+        state.timeline.push({ ts:t, type:'typing_end' });
+        state.timeline.push({ ts:t, type:'msg', data:{...msg, type:'text'} });
+        t += Math.max(1500, Math.min(len * 70, 6000));
+      }
+
+      setTimeout(() => {
+        const pm = [...state.history].reverse().find(m => m.type === 'player');
+        if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
+      }, 1000);
+
+      save(); renderUI();
     }
 
     function updateCountdowns(now) {
@@ -816,7 +889,11 @@
       if (state.phase === 'wait' && state.waitUntil) {
         const rem = Math.max(0, state.waitUntil - now);
         const s = Math.ceil(rem/1000);
-        $('waitClk').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+        const timeStr = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+        $('waitClk').textContent = timeStr;
+        // Also update wait-chat timer if visible
+        const wcTimer = $('waitChatTimer');
+        if (wcTimer) wcTimer.textContent = 'Лика вернётся через ' + timeStr;
       }
     }
 

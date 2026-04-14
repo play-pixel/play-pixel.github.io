@@ -83,7 +83,7 @@
       "choices": [
         { "text": "Провалилась? Как в яму?", "next": "fc5_what", "tag": "hole", "key": true, "default": true },
         { "text": "Ты упала? Тебе нужна скорая?", "next": "fc5_help", "tag": "help", "key": true },
-        { "text": "После какой смены? Ты где работаешь?", "tag": "ask_job", "optional": true,
+        { "text": "После какой смены? Ты где работаешь?", "tag": "ask_job", "optional": true, "flag": "knows_courier",
           "response": [
             { "type": "text", "text": "курьер", "delay": 2000 },
             { "type": "text", "text": "на велике. доставка еды", "delay": 3000 },
@@ -148,7 +148,7 @@
             { "type": "text", "text": "пахнет как в старом офисе который закрыли лет десять назад", "delay": 5000 }
           ]
         },
-        { "text": "У тебя есть кто-то близкий? Кто будет искать?", "tag": "ask_family", "optional": true,
+        { "text": "У тебя есть кто-то близкий? Кто будет искать?", "tag": "ask_family", "optional": true, "flag": "knows_family",
           "response": [
             { "type": "text", "text": "мама", "delay": 2000 },
             { "type": "text", "text": "но она в Калуге", "delay": 3000 },
@@ -232,7 +232,45 @@
       ],
       "wait": 900,
       "waitPush": "Лика отправила фото",
-      "next": "corridor_choice"
+      "next": "corridor_choice",
+      "waitChat": [
+        { "text": "Расскажи про свою работу курьером", "tag": "wc_job",
+          "response": [
+            { "type": "text", "text": "ну что рассказать" },
+            { "type": "text", "text": "кручу педали с 8 утра до 8 вечера" },
+            { "type": "text", "text": "зимой холодно, летом жарко, осенью мокро" },
+            { "type": "text", "text": "но мне нравится. я одна, музыка в наушниках, город" },
+            { "type": "text", "text": "лучше чем в офисе сидеть" }
+          ]
+        },
+        { "text": "Расскажи про кота", "tag": "wc_cat", "requires": "ask_family",
+          "response": [
+            { "type": "text", "text": "Шуруп" },
+            { "type": "text", "text": "рыжий, толстый, наглый" },
+            { "type": "text", "text": "подобрала его два года назад у подъезда" },
+            { "type": "text", "text": "он спал в коробке из-под шурупов" },
+            { "type": "text", "text": "поэтому Шуруп" },
+            { "type": "text", "text": "надеюсь Наташка догадается его покормить" }
+          ]
+        },
+        { "text": "Что ты обычно делаешь вечером?", "tag": "wc_evening",
+          "response": [
+            { "type": "text", "text": "прихожу домой, душ, еда" },
+            { "type": "text", "text": "потом сериал какой-нибудь" },
+            { "type": "text", "text": "сейчас смотрю корейский. про девушку которая видит призраков" },
+            { "type": "text", "text": "ирония да" }
+          ]
+        },
+        { "text": "Ты когда-нибудь была в опасной ситуации?", "tag": "wc_danger",
+          "response": [
+            { "type": "text", "text": "один раз чуть не попала под грузовик на Садовом" },
+            { "type": "text", "text": "и один раз пьяный мужик кинулся на меня когда я везла заказ" },
+            { "type": "text", "text": "убежала на велике" },
+            { "type": "text", "text": "но это всё не то" },
+            { "type": "text", "text": "тут другое. тут непонятно ОТ ЧЕГО бежать" }
+          ]
+        }
+      ]
     },
     "corridor_choice": {
       "messages": [
