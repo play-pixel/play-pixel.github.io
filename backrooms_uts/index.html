@@ -199,6 +199,8 @@
     /* Scroll-to-bottom FAB */
     .scroll-fab { position:absolute; bottom:70px; right:16px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
     .scroll-fab svg { width:36px; height:36px; padding:8px; background:var(--surface); border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,.15); color:var(--text-dim); }
+    .scroll-fab.has-unread svg { background:var(--accent); color:#fff; animation:fabPulse 1.5s ease-in-out infinite; }
+    @keyframes fabPulse { 0%,100%{box-shadow:0 2px 8px rgba(59,130,246,.3)} 50%{box-shadow:0 2px 16px rgba(59,130,246,.6)} }
     .scroll-fab-badge { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; }
     .scroll-fab-badge:empty { display:none; }
 
@@ -624,10 +626,18 @@
       if (newMsgs > 0 && userScrolledUp) {
         unreadWhileScrolled += newMsgs;
       }
-      // Show FAB if scrolled up and there's something to see (new msgs or pending choice)
+      // Show FAB if scrolled up
       if (userScrolledUp && (unreadWhileScrolled > 0 || state.phase === 'choice')) {
-        $('scrollFabBadge').textContent = unreadWhileScrolled > 0 ? unreadWhileScrolled : '▼';
-        $('scrollFab').classList.remove('hidden');
+        const fab = $('scrollFab');
+        const badge = $('scrollFabBadge');
+        fab.classList.remove('hidden');
+        if (unreadWhileScrolled > 0) {
+          badge.textContent = unreadWhileScrolled;
+        } else {
+          badge.textContent = '';
+        }
+        // Pulse blue when there's unread content
+        fab.classList.add('has-unread');
       } else if (!userScrolledUp) {
         scroll();
       }
@@ -827,8 +837,6 @@
         if (userScrolledUp) {
           bottomStatus.textContent = '';
           bottomChoices.innerHTML = '';
-          $('scrollFabBadge').textContent = '▼';
-          $('scrollFab').classList.remove('hidden');
           return;
         }
         bottomStatus.textContent = '';
@@ -979,6 +987,7 @@
       userScrolledUp = false;
       unreadWhileScrolled = 0;
       $('scrollFab').classList.add('hidden');
+      $('scrollFab').classList.remove('has-unread');
       requestAnimationFrame(() => {
         chatArea.scrollTop = chatArea.scrollHeight;
       });
@@ -999,6 +1008,7 @@
         userScrolledUp = false;
         unreadWhileScrolled = 0;
         $('scrollFab').classList.add('hidden');
+        $('scrollFab').classList.remove('has-unread');
         // If user just scrolled down to bottom, show pending choices
         if (wasScrolledUp) updateBottomPanel();
       } else {
