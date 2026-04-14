@@ -352,7 +352,7 @@
       history:[], choices:[],
       phase:'idle', node:'start', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
       waitUntil:null, waitNextNode:null, waitChatNode:null, waitChatBusyUntil:null, pendingNode:null,
-      usedOptionals:[], knowledgeFlags:[]
+      usedOptionals:[], knowledgeFlags:[], currentScene:null
     };
 
     let state = {
@@ -468,7 +468,46 @@
     // ── Scenario loading ─────────────
     async function loadScenario(path) {
       const resp = await fetch('./' + path);
-      return await resp.json();
+      const data = await resp.json();
+      return migrateToScenes(data);
+    }
+
+    function migrateToScenes(data) {
+      if (data.scenes) return data;
+      // Old format — wrap all nodes into one scene
+      for (const id of Object.keys(data.nodes)) {
+        if (!data.nodes[id].scene) data.nodes[id].scene = 'act1';
+      }
+      data.scenes = [{ id: 'act1', name: 'Act 1', entry: 'start', order: 1 }];
+      return data;
+    }
+
+    // ── Scene transitions ───────────
+    function resolveSceneTransition(node) {
+      if (!node.sceneEnd || !node.nextScene) return null;
+      if (typeof node.nextScene === 'string') return node.nextScene;
+      // Array of conditions — first match wins
+      for (const rule of node.nextScene) {
+        if (!rule.if) return rule.scene;
+        if (checkCondition(rule.if)) return rule.scene;
+      }
+      return null;
+    }
+
+    function checkCondition(cond) {
+      if (cond.flags) {
+        const op = cond.operator || 'any';
+        const flags = state.knowledgeFlags || [];
+        if (op === 'all') return cond.flags.every(f => flags.includes(f));
+        return cond.flags.some(f => flags.includes(f));
+      }
+      if (cond.choices) {
+        const op = cond.operator || 'any';
+        const choices = state.choices || [];
+        if (op === 'all') return cond.choices.every(c => choices.includes(c));
+        return cond.choices.some(c => choices.includes(c));
+      }
+      return true;
     }
 
     function renderContactList() {
@@ -601,6 +640,18 @@
         state.phase = 'wait';
       } else if (node.next) {
         scheduleNode(node.next, t); return;
+      } else if (node.sceneEnd && node.nextScene) {
+        // Scene transition
+        const nextSceneId = resolveSceneTransition(node);
+        if (nextSceneId && scenario.scenes) {
+          const sceneMeta = scenario.scenes.find(s => s.id === nextSceneId);
+          if (sceneMeta && sceneMeta.entry) {
+            state.currentScene = nextSceneId;
+            scheduleNode(sceneMeta.entry, t + 500);
+            return;
+          }
+        }
+        state.phase = 'done';
       } else {
         state.phase = 'done';
       }
@@ -1304,6 +1355,7 @@
         scenario = activeScenario = await loadScenario(first.scenario);
         activateStory(first.id);
         state.phase = 'playing';
+        state.currentScene = scenario.scenes?.[0]?.id || null;
         scheduleNode('start', Date.now());
       }
       save();

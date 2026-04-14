@@ -78,6 +78,9 @@
     <h1>Dialogue Editor</h1>
     <select id="storySelect"></select>
     <button onclick="doLoad()">Загрузить</button>
+    <span style="color:var(--border);margin:0 4px;">|</span>
+    <span style="font-size:11px;color:var(--dim);">Сцена:</span>
+    <select id="sceneSelect" onchange="onSceneChange()"><option value="">Все</option></select>
     <div class="spacer"></div>
     <div class="info" id="stats">—</div>
     <button onclick="doExport()">Экспорт JSON</button>
@@ -99,9 +102,10 @@
   <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
   <script>
     let scenario = null;
-    let nodeIdMap = {}; // scenario nodeId -> drawflow numeric id
-    let dfIdMap = {};   // drawflow numeric id -> scenario nodeId
+    let nodeIdMap = {};
+    let dfIdMap = {};
     let selectedScenarioNode = null;
+    let selectedScene = ''; // '' = all scenes
 
     const editor = new Drawflow(document.getElementById('drawflow'));
     editor.reroute = true;
@@ -127,7 +131,43 @@
       const path = document.getElementById('storySelect').value;
       const resp = await fetch('./' + path);
       scenario = await resp.json();
+      migrateToScenes(scenario);
+      selectedScene = '';
+      populateSceneSelect();
       buildGraph();
+    }
+
+    function migrateToScenes(data) {
+      if (data.scenes) return;
+      for (const id of Object.keys(data.nodes)) {
+        if (!data.nodes[id].scene) data.nodes[id].scene = 'act1';
+      }
+      data.scenes = [{ id:'act1', name:'Act 1', entry:'start', order:1 }];
+    }
+
+    function populateSceneSelect() {
+      const sel = document.getElementById('sceneSelect');
+      sel.innerHTML = '<option value="">Все сцены</option>';
+      if (!scenario || !scenario.scenes) return;
+      scenario.scenes.sort((a,b) => (a.order||0) - (b.order||0));
+      scenario.scenes.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.order}. ${s.name}`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onSceneChange() {
+      selectedScene = document.getElementById('sceneSelect').value;
+      buildGraph();
+    }
+
+    function getFilteredNodeIds() {
+      if (!scenario) return [];
+      const ids = Object.keys(scenario.nodes);
+      if (!selectedScene) return ids;
+      return ids.filter(id => scenario.nodes[id].scene === selectedScene);
     }
 
     // ── Build Drawflow graph ────
@@ -166,26 +206,36 @@
       document.getElementById('pc').style.display = 'none';
 
       if (!scenario) return;
-      const ids = Object.keys(scenario.nodes);
+      const filteredIds = getFilteredNodeIds();
+      const filteredSet = new Set(filteredIds);
 
-      // BFS for layout
+      // Find entry node for BFS
+      let entryNode = filteredIds[0];
+      if (selectedScene && scenario.scenes) {
+        const sceneMeta = scenario.scenes.find(s => s.id === selectedScene);
+        if (sceneMeta && sceneMeta.entry && filteredSet.has(sceneMeta.entry)) entryNode = sceneMeta.entry;
+      } else if (filteredSet.has('start')) {
+        entryNode = 'start';
+      }
+
+      // BFS for layout (only within filtered nodes)
       const layers = [];
       const visited = new Set();
-      let queue = [ids.includes('start') ? 'start' : ids[0]];
+      let queue = [entryNode];
       while (queue.length) {
         const layer = [], next = [];
         for (const id of queue) {
-          if (visited.has(id)) continue;
+          if (visited.has(id) || !filteredSet.has(id)) continue;
           visited.add(id);
           layer.push(id);
           const n = scenario.nodes[id];
-          if (n.next && !visited.has(n.next)) next.push(n.next);
-          if (n.choices) n.choices.forEach(c => { if (c.next && !visited.has(c.next)) next.push(c.next); });
+          if (n.next && !visited.has(n.next) && filteredSet.has(n.next)) next.push(n.next);
+          if (n.choices) n.choices.forEach(c => { if (c.next && !visited.has(c.next) && filteredSet.has(c.next)) next.push(c.next); });
         }
         if (layer.length) layers.push(layer);
         queue = next;
       }
-      ids.filter(n => !visited.has(n)).forEach(n => layers.push([n]));
+      filteredIds.filter(n => !visited.has(n)).forEach(n => layers.push([n]));
 
       // Create nodes
       const gapX = 300, gapY = 180, startX = 60, startY = 60;
@@ -202,8 +252,8 @@
         });
       });
 
-      // Create connections
-      ids.forEach(id => {
+      // Create connections (only between filtered nodes)
+      filteredIds.forEach(id => {
         const node = scenario.nodes[id];
         const fromDf = nodeIdMap[id];
         if (!fromDf) return;
@@ -259,6 +309,14 @@
 
       let h = '';
       h += `<div class="ps"><label>ID</label><input value="${esc(id)}" id="pId"></div>`;
+
+      // Scene selector
+      let sceneOpts = '<option value="">— нет —</option>';
+      if (scenario.scenes) scenario.scenes.forEach(s => {
+        sceneOpts += `<option value="${s.id}"${node.scene===s.id?' selected':''}>${s.order}. ${s.name}</option>`;
+      });
+      h += `<div class="ps"><label>Сцена</label><select id="pScene">${sceneOpts}</select></div>`;
+
       h += `<div class="ps"><label>Next →</label><input value="${esc(node.next||'')}" id="pNext"></div>`;
 
       // Messages
@@ -324,6 +382,9 @@
       const pNext = document.getElementById('pNext');
       if (pNext) pNext.onchange = () => { node.next = pNext.value || null; refreshNode(id); };
 
+      const pScene = document.getElementById('pScene');
+      if (pScene) pScene.onchange = () => { node.scene = pScene.value || null; refreshNode(id); };
+
       const pWait = document.getElementById('pWait');
       if (pWait) pWait.onchange = () => { node.wait = parseInt(pWait.value); refreshNode(id); };
     }
@@ -358,7 +419,7 @@
       const list = document.getElementById('nodeList');
       list.innerHTML = '';
       if (!scenario) return;
-      Object.keys(scenario.nodes).forEach(id => {
+      getFilteredNodeIds().forEach(id => {
         const node = scenario.nodes[id];
         const type = getType(node);
         const item = document.createElement('div');
