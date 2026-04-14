@@ -740,19 +740,19 @@
       if (newMsgs > 0 && userScrolledUp) {
         unreadWhileScrolled += newMsgs;
       }
-      // Show FAB if scrolled up
-      if (userScrolledUp && (unreadWhileScrolled > 0 || state.phase === 'choice')) {
+      // Show FAB if scrolled up (always — so player can jump back down)
+      if (userScrolledUp) {
         const fab = $('scrollFab');
         const badge = $('scrollFabBadge');
         fab.classList.remove('hidden');
         if (unreadWhileScrolled > 0) {
           badge.textContent = unreadWhileScrolled;
+          fab.classList.add('has-unread');
         } else {
           badge.textContent = '';
+          fab.classList.remove('has-unread');
         }
-        // Pulse blue when there's unread content
-        fab.classList.add('has-unread');
-      } else if (!userScrolledUp) {
+      } else {
         scroll();
       }
     }
@@ -1130,6 +1130,13 @@
         if (wasScrolledUp) updateBottomPanel();
       } else {
         userScrolledUp = true;
+        // Always show FAB when scrolled up so player can jump back down
+        const fab = $('scrollFab');
+        fab.classList.remove('hidden');
+        if (unreadWhileScrolled <= 0) {
+          fab.classList.remove('has-unread');
+          $('scrollFabBadge').textContent = '';
+        }
       }
     });
 
