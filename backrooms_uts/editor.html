@@ -354,14 +354,13 @@
         item.innerHTML = `<span class="sb-dot ${type}"></span><span class="sb-name">${id}</span>`;
         item.onclick = () => {
           selectedScenarioNode = id;
-          renderProps();
-          renderNodeList();
+          // Deselect all nodes first
+          document.querySelectorAll('.drawflow-node.selected').forEach(n => n.classList.remove('selected'));
           // Focus node in drawflow
           const dfId = nodeIdMap[id];
           if (dfId) {
             const el = document.querySelector(`#node-${dfId}`);
             if (el) {
-              editor.dispatch('nodeSelected', dfId);
               el.classList.add('selected');
               // Pan to node
               const x = editor.drawflow.drawflow.Home.data[dfId].pos_x;
@@ -371,6 +370,8 @@
               editor.precanvas.style.transform = `translate(${editor.canvas_x}px, ${editor.canvas_y}px) scale(${editor.zoom})`;
             }
           }
+          renderProps();
+          renderNodeList();
         };
         list.appendChild(item);
       });
