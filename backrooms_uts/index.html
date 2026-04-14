@@ -1001,18 +1001,47 @@
 
     function adminJumpToNode(nodeId) {
       if (!scenario || !scenario.nodes[nodeId]) return;
-      // Clear future timeline events
+      const node = scenario.nodes[nodeId];
+
+      // Clear future timeline
       state.timeline = state.timeline.slice(0, state.timelineIdx);
-      state.phase = 'playing';
       state.choiceNode = null;
       state.choiceAvailableAt = null;
       state.choiceDeadline = null;
       state.waitUntil = null;
       state.waitNextNode = null;
       state.waitChatNode = null;
-      scheduleNode(nodeId, Date.now());
+
+      // Instantly deliver all messages of this node
+      const now = Date.now();
+      state.node = nodeId;
+      for (const msg of node.messages) {
+        if (msg.type === 'typing' || msg.type === 'status') continue;
+        state.history.push({ ...msg, _ts: now });
+      }
+
+      // Set phase based on node type
+      if (node.choices) {
+        state.choiceNode = nodeId;
+        state.choiceAvailableAt = now;
+        state.choiceDeadline = now + getChoiceTimeout();
+        state.phase = 'choice';
+      } else if (node.wait) {
+        state.waitUntil = now + scaleWait(node.wait);
+        state.waitNextNode = node.next;
+        state.waitChatNode = node.waitChat ? nodeId : null;
+        state.phase = 'wait';
+      } else if (node.next) {
+        state.phase = 'playing';
+        // Don't auto-chain — stop here for admin inspection
+        state.node = nodeId;
+      } else {
+        state.phase = 'done';
+      }
+
       save();
       renderFullHistory();
+      updateAdminPanel();
     }
 
     $('adminToggle').onclick = () => {
