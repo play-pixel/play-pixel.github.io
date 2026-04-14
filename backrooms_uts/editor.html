@@ -222,14 +222,13 @@
       }
 
       // Position scenes in a grid
-      const cols = Math.ceil(Math.sqrt(scenes.length));
-      const gapX = 280, gapY = 220, startX = 40, startY = 40;
+      const gapY = 220, startX = 80, startY = 40;
 
       scenes.forEach((scene, idx) => {
         if (!scenePositions[scene.id]) {
           scenePositions[scene.id] = {
-            x: startX + (idx % cols) * gapX,
-            y: startY + Math.floor(idx / cols) * gapY
+            x: startX,
+            y: startY + idx * gapY
           };
         }
         const pos = scenePositions[scene.id];
@@ -253,6 +252,7 @@
 
         const card = document.createElement('div');
         card.className = 'scene-card' + (scene.id === selectedSceneId ? ' selected' : '');
+        card.dataset.sceneId = scene.id;
         card.style.left = pos.x + 'px';
         card.style.top = pos.y + 'px';
 
@@ -296,47 +296,8 @@
         cards.appendChild(card);
       });
 
-      // Draw connections
-      scenes.forEach(scene => {
-        const fromPos = scenePositions[scene.id];
-        if (!fromPos) return;
-        const nodes = nodesByScene[scene.id] || [];
-
-        const targets = new Set();
-        nodes.forEach(n => {
-          if (n.node.sceneEnd && n.node.nextScene) {
-            if (typeof n.node.nextScene === 'string') targets.add(n.node.nextScene);
-            else if (Array.isArray(n.node.nextScene)) n.node.nextScene.forEach(r => targets.add(r.scene));
-          }
-          if (n.node.next && scenario.nodes[n.node.next] && scenario.nodes[n.node.next].scene !== scene.id) {
-            targets.add(scenario.nodes[n.node.next].scene);
-          }
-        });
-
-        targets.forEach(targetId => {
-          const toPos = scenePositions[targetId];
-          if (!toPos) return;
-          const x1 = fromPos.x + 110, y1 = fromPos.y + 160;
-          const x2 = toPos.x + 110, y2 = toPos.y;
-          const cy1 = y1 + 50, cy2 = y2 - 50;
-
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('d', `M${x1},${y1} C${x1},${cy1} ${x2},${cy2} ${x2},${y2}`);
-          path.setAttribute('stroke', 'var(--accent)');
-          path.setAttribute('stroke-width', '2');
-          path.setAttribute('fill', 'none');
-          path.setAttribute('opacity', '0.5');
-          path.setAttribute('marker-end', 'url(#arrowhead)');
-          svg.appendChild(path);
-        });
-      });
-
-      // Arrow marker
-      if (!svg.querySelector('defs')) {
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        defs.innerHTML = `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" opacity="0.6"/></marker>`;
-        svg.prepend(defs);
-      }
+      // Draw connections after DOM renders
+      requestAnimationFrame(() => renderSceneMapConnections());
     }
 
     function startSceneDrag(e, card, sceneId) {
@@ -360,11 +321,12 @@
     }
 
     function renderSceneMapConnections() {
-      // Re-render only SVG connections
       const svg = document.getElementById('sceneMapSvg');
-      svg.querySelectorAll('path').forEach(p => p.remove());
+      svg.querySelectorAll('path, polygon').forEach(p => p.remove());
       if (!scenario || !scenario.scenes) return;
 
+      // Build scene connections set
+      const connections = []; // [{from, to}]
       const nodesByScene = {};
       for (const [id, node] of Object.entries(scenario.nodes)) {
         const s = node.scene || '_none';
@@ -373,8 +335,6 @@
       }
 
       scenario.scenes.forEach(scene => {
-        const fromPos = scenePositions[scene.id];
-        if (!fromPos) return;
         const nodes = nodesByScene[scene.id] || [];
         const targets = new Set();
         nodes.forEach(n => {
@@ -386,21 +346,45 @@
             targets.add(scenario.nodes[n.node.next].scene);
           }
         });
-        targets.forEach(targetId => {
-          const toPos = scenePositions[targetId];
-          if (!toPos) return;
-          const x1 = fromPos.x + 110, y1 = fromPos.y + 160;
-          const x2 = toPos.x + 110, y2 = toPos.y;
-          const cy1 = y1 + 50, cy2 = y2 - 50;
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('d', `M${x1},${y1} C${x1},${cy1} ${x2},${cy2} ${x2},${y2}`);
-          path.setAttribute('stroke', 'var(--accent)');
-          path.setAttribute('stroke-width', '2');
-          path.setAttribute('fill', 'none');
-          path.setAttribute('opacity', '0.5');
-          path.setAttribute('marker-end', 'url(#arrowhead)');
-          svg.appendChild(path);
-        });
+        targets.forEach(t => connections.push({ from: scene.id, to: t }));
+      });
+
+      // Get real card positions and sizes from DOM
+      const cards = document.querySelectorAll('.scene-card');
+      const cardRects = {};
+      cards.forEach(card => {
+        const id = card.dataset.sceneId;
+        if (id) cardRects[id] = { x: parseInt(card.style.left), y: parseInt(card.style.top), w: card.offsetWidth, h: card.offsetHeight };
+      });
+
+      connections.forEach(({ from, to }) => {
+        const a = cardRects[from], b = cardRects[to];
+        if (!a || !b) return;
+
+        const x1 = a.x + a.w / 2;
+        const y1 = a.y + a.h;
+        const x2 = b.x + b.w / 2;
+        const y2 = b.y;
+
+        const dy = Math.abs(y2 - y1);
+        const curve = Math.max(dy * 0.4, 30);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + curve} ${x2},${y2 - curve} ${x2},${y2}`);
+        path.setAttribute('stroke', '#5b9cf5');
+        path.setAttribute('stroke-width', '2.5');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('opacity', '0.6');
+        svg.appendChild(path);
+
+        // Arrowhead triangle
+        const angle = Math.atan2(y2 - (y2 - curve), x2 - x2);
+        const ax = x2, ay = y2;
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        arrow.setAttribute('points', `${ax},${ay} ${ax - 6},${ay - 10} ${ax + 6},${ay - 10}`);
+        arrow.setAttribute('fill', '#5b9cf5');
+        arrow.setAttribute('opacity', '0.6');
+        svg.appendChild(arrow);
       });
     }
 
