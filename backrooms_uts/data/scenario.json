@@ -8,8 +8,12 @@
     "start": {
       "messages": [
         { "type": "text", "text": "...", "delay": 0 },
-        { "type": "text", "text": "привет?", "delay": 3000 },
-        { "type": "text", "text": "кто это", "delay": 4000 }
+        { "type": "text", "text": "тест", "delay": 2000 },
+        { "type": "text", "text": "тест тест", "delay": 2000 },
+        { "type": "text", "text": "о!", "delay": 1500 },
+        { "type": "text", "text": "кто-нибудь видит это?", "delay": 3000 },
+        { "type": "text", "text": "привет??", "delay": 4000 },
+        { "type": "text", "text": "пожалуйста ответьте", "delay": 4000 }
       ],
       "next": "first_contact_1"
     },

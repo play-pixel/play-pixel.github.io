@@ -973,9 +973,20 @@
       // Wait countdown handled in renderWaitPanel
     }
 
+    let lastSeenHistoryCount = 0;
+
     function updateContactList() {
       const lt = [...state.history].reverse().find(m => m.type === 'text' || m.type === 'player');
       if (lt) $('ctPreview').textContent = lt.text;
+      // Count unread messages (arrived since last chat open)
+      const unread = state.history.length - lastSeenHistoryCount;
+      const badge = $('ctBadge');
+      if (unread > 0) {
+        badge.textContent = unread;
+        badge.classList.remove('hidden');
+      }
+      // Update time
+      if (lt && lt._ts) $('ctTime').textContent = fmtTime(lt._ts);
     }
 
     function setStatus(t, c) {
@@ -1172,17 +1183,21 @@
     // (handled in setInterval — admin updates in updateBottomPanel)
 
     // ── Events ──────────────────────
-    $('startBtn').onclick = () => { state.started=true; save(); go('contactsScreen'); };
+    $('startBtn').onclick = () => {
+      state.started = true;
+      state.opened = true;
+      state.phase = 'playing';
+      scheduleNode('start', Date.now());
+      save();
+      go('contactsScreen');
+    };
     $('resetBtn').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
 
     $('contactLika').onclick = () => {
       if (!state.started) return;
+      lastSeenHistoryCount = state.history.length;
       $('ctBadge').classList.add('hidden');
       go('chatScreen');
-      if (!state.opened) {
-        state.opened = true; state.phase = 'playing';
-        scheduleNode('start', Date.now()); save();
-      }
       renderFullHistory();
     };
 
