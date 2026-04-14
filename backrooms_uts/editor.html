@@ -2,210 +2,94 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width">
   <title>Backrooms: Dialogue Editor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    :root {
-      --bg:#1a1a22; --surface:#222230; --panel:#1e1e2a; --border:#2e2e3e;
-      --text:#d0d0dc; --dim:#6a6a7e; --accent:#5b9cf5; --green:#4ade80;
-      --red:#ef4444; --orange:#f59e0b; --purple:#a78bfa;
-    }
+    :root { --bg:#1a1a22; --surface:#222230; --panel:#1e1e2a; --border:#2e2e3e; --text:#d0d0dc; --dim:#6a6a7e; --accent:#5b9cf5; --green:#4ade80; --red:#ef4444; --orange:#f59e0b; --purple:#a78bfa; }
     body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
-    /* Top bar */
     .topbar { display:flex; align-items:center; gap:12px; padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-shrink:0; z-index:10; }
-    .topbar h1 { font-size:14px; font-weight:600; color:var(--accent); flex-shrink:0; }
+    .topbar h1 { font-size:14px; font-weight:600; color:var(--accent); }
     .topbar select, .topbar button { padding:6px 12px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); font-size:12px; cursor:pointer; }
     .topbar button:hover { border-color:var(--accent); }
     .topbar button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
     .topbar .spacer { flex:1; }
     .topbar .info { font-size:11px; color:var(--dim); }
 
-    /* Main layout */
     .main { display:flex; flex:1; overflow:hidden; }
 
-    /* Node list sidebar */
-    .sidebar { width:220px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
-    .sidebar-header { padding:10px 12px; font-size:12px; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-    .sidebar-header button { padding:2px 8px; font-size:18px; line-height:1; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--green); cursor:pointer; }
-    .node-list { flex:1; overflow-y:auto; padding:4px 0; }
-    .node-list-item { padding:8px 12px; font-size:12px; cursor:pointer; border-left:3px solid transparent; display:flex; align-items:center; gap:6px; }
-    .node-list-item:hover { background:var(--surface); }
-    .node-list-item.active { background:var(--surface); border-left-color:var(--accent); }
-    .node-list-item .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .node-list-item .dot.msg { background:var(--accent); }
-    .node-list-item .dot.choice { background:var(--orange); }
-    .node-list-item .dot.wait { background:var(--purple); }
-    .node-list-item .dot.end { background:var(--red); }
-    .node-list-item .name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .node-list-item .arrow { color:var(--dim); font-size:10px; }
+    /* Drawflow overrides */
+    #drawflow { flex:1; background:var(--bg); }
+    .drawflow .connection .main-path { stroke:var(--accent); stroke-width:2; }
+    .drawflow .drawflow-node { background:var(--surface); border:1px solid var(--border); border-radius:8px; min-width:180px; color:var(--text); padding:0; }
+    .drawflow .drawflow-node.selected { border-color:var(--accent); box-shadow:0 0 0 2px rgba(91,156,245,.3); }
+    .drawflow .drawflow-node .input, .drawflow .drawflow-node .output { background:var(--dim); }
+    .drawflow .drawflow-node .input:hover, .drawflow .drawflow-node .output:hover { background:var(--accent); }
+    .drawflow .drawflow-delete { display:none; }
 
-    /* Canvas area */
-    .canvas-wrap { flex:1; position:relative; overflow:hidden; background:var(--bg); }
-    .canvas-inner { position:absolute; transform-origin:0 0; }
+    /* Node content styles */
+    .df-node-header { padding:6px 10px; font-size:11px; font-weight:700; border-bottom:1px solid var(--border); border-radius:7px 7px 0 0; letter-spacing:.5px; }
+    .df-node-header.type-msg { background:rgba(91,156,245,.12); color:var(--accent); }
+    .df-node-header.type-choice { background:rgba(245,158,11,.12); color:var(--orange); }
+    .df-node-header.type-wait { background:rgba(167,139,250,.12); color:var(--purple); }
+    .df-node-header.type-end { background:rgba(239,68,68,.12); color:var(--red); }
+    .df-node-body { padding:6px 10px; font-size:11px; color:var(--dim); max-height:100px; overflow:hidden; line-height:1.5; }
+    .df-node-body .msg-line { color:var(--text); opacity:.8; }
+    .df-node-body .choice-line { color:var(--orange); }
+    .df-node-body .choice-line.opt { color:var(--dim); font-style:italic; }
+    .df-node-body .wait-line { color:var(--purple); }
+    .df-node-footer { padding:4px 10px 6px; font-size:10px; color:var(--dim); border-top:1px solid var(--border); }
 
-    /* SVG connections */
-    .connections { position:absolute; pointer-events:none; z-index:1; transform-origin:0 0; }
-
-    /* Nodes on canvas */
-    .node-card { position:absolute; width:200px; background:var(--surface); border:1px solid var(--border); border-radius:8px; z-index:2; cursor:move; user-select:none; box-shadow:0 2px 8px rgba(0,0,0,.3); }
-    .node-card.selected { border-color:var(--accent); box-shadow:0 0 0 2px rgba(91,156,245,.3); }
-    .node-card-header { padding:6px 10px; font-size:11px; font-weight:600; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; border-radius:7px 7px 0 0; }
-    .node-card-header.msg { background:rgba(91,156,245,.1); color:var(--accent); }
-    .node-card-header.choice { background:rgba(245,158,11,.1); color:var(--orange); }
-    .node-card-header.wait { background:rgba(167,139,250,.1); color:var(--purple); }
-    .node-card-header.end { background:rgba(239,68,68,.1); color:var(--red); }
-    .node-card-body { padding:8px 10px; font-size:11px; color:var(--dim); max-height:120px; overflow:hidden; }
-    .node-card-body .preview { line-height:1.4; }
-    .node-card-body .choice-item { padding:2px 0; color:var(--orange); }
-    .node-card-body .choice-item.optional { color:var(--dim); font-style:italic; }
-    .node-card-footer { padding:4px 10px 6px; font-size:10px; color:var(--dim); border-top:1px solid var(--border); }
-
-    /* Ports (connection dots) */
-    .port { width:10px; height:10px; border-radius:50%; background:var(--dim); border:2px solid var(--surface); position:absolute; cursor:crosshair; z-index:3; }
-    .port.out { bottom:-5px; left:50%; transform:translateX(-50%); }
-    .port.in { top:-5px; left:50%; transform:translateX(-50%); }
-    .port:hover { background:var(--accent); }
-
-    /* Properties panel */
-    .props { width:320px; background:var(--panel); border-left:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; overflow-y:auto; }
-    .props-header { padding:10px 14px; font-size:12px; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); }
+    /* Props panel */
+    .props { width:340px; background:var(--panel); border-left:1px solid var(--border); flex-shrink:0; overflow-y:auto; }
+    .props-header { padding:12px 14px; font-size:12px; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); }
     .props-empty { padding:40px 20px; text-align:center; color:var(--dim); font-size:13px; }
-    .props-section { padding:10px 14px; border-bottom:1px solid var(--border); }
-    .props-section label { display:block; font-size:11px; color:var(--dim); margin-bottom:4px; }
-    .props-section input, .props-section select, .props-section textarea { width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--text); font-size:12px; font-family:inherit; }
-    .props-section textarea { min-height:80px; resize:vertical; }
-    .props-section .row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
-    .props-section .row input { flex:1; }
-    .msg-item { padding:6px 8px; margin:4px 0; background:var(--bg); border-radius:4px; font-size:11px; display:flex; gap:6px; align-items:flex-start; }
-    .msg-item .type { color:var(--accent); font-weight:600; width:40px; flex-shrink:0; }
-    .msg-item .text { flex:1; color:var(--text); }
-    .msg-item .del { color:var(--red); cursor:pointer; font-size:14px; }
-    .btn-sm { padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--dim); font-size:11px; cursor:pointer; }
-    .btn-sm:hover { border-color:var(--accent); color:var(--text); }
-    .btn-sm.danger { color:var(--red); }
-    .btn-sm.danger:hover { border-color:var(--red); }
-
-    /* Zoom controls */
-    .zoom-controls { position:absolute; bottom:16px; right:16px; display:flex; gap:4px; z-index:5; }
-    .zoom-controls button { width:32px; height:32px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .zoom-controls button:hover { border-color:var(--accent); }
+    .ps { padding:10px 14px; border-bottom:1px solid var(--border); }
+    .ps label { display:block; font-size:11px; color:var(--dim); margin-bottom:4px; }
+    .ps input, .ps select, .ps textarea { width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--text); font-size:12px; font-family:inherit; }
+    .ps textarea { min-height:60px; resize:vertical; }
+    .mi { padding:5px 8px; margin:3px 0; background:var(--bg); border-radius:4px; font-size:11px; display:flex; gap:6px; align-items:center; }
+    .mi .t { color:var(--accent); font-weight:600; width:36px; flex-shrink:0; font-size:10px; }
+    .mi .v { flex:1; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mi .d { color:var(--red); cursor:pointer; font-size:14px; padding:0 2px; }
+    .mi .d:hover { color:#ff6666; }
+    .btn-s { padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--dim); font-size:11px; cursor:pointer; margin-top:4px; }
+    .btn-s:hover { border-color:var(--accent); color:var(--text); }
+    .btn-s.red { color:var(--red); } .btn-s.red:hover { border-color:var(--red); }
   </style>
 </head>
 <body>
   <div class="topbar">
     <h1>Dialogue Editor</h1>
     <select id="storySelect"></select>
-    <button onclick="loadStory()">Загрузить</button>
+    <button onclick="doLoad()">Загрузить</button>
     <div class="spacer"></div>
-    <div class="info" id="statsInfo">—</div>
-    <button onclick="exportJSON()">Экспорт JSON</button>
-    <button onclick="copyJSON()" class="primary">Копировать JSON</button>
+    <div class="info" id="stats">—</div>
+    <button onclick="doExport()">Экспорт JSON</button>
+    <button onclick="doCopy()" class="primary">Копировать</button>
   </div>
-
   <div class="main">
-    <div class="sidebar">
-      <div class="sidebar-header">Ноды <button onclick="addNode()">+</button></div>
-      <div class="node-list" id="nodeList"></div>
-    </div>
-
-    <div class="canvas-wrap" id="canvasWrap">
-      <svg class="connections" id="svgConnections"></svg>
-      <div class="canvas-inner" id="canvasInner"></div>
-      <div class="zoom-controls">
-        <button onclick="zoomIn()">+</button>
-        <button onclick="zoomOut()">&minus;</button>
-        <button onclick="zoomFit()">&#8862;</button>
-        <span id="zoomLabel" style="color:var(--dim);font-size:11px;padding:0 4px;"></span>
-      </div>
-    </div>
-
-    <div class="props" id="propsPanel">
+    <div id="drawflow"></div>
+    <div class="props" id="props">
       <div class="props-header">Свойства</div>
-      <div class="props-empty" id="propsEmpty">Выбери ноду для редактирования</div>
-      <div id="propsContent" style="display:none;"></div>
+      <div class="props-empty" id="propsEmpty">Выбери ноду</div>
+      <div id="pc" style="display:none;"></div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
   <script>
-    // ══════════════════════════════════
-    //  Backrooms Dialogue Node Editor
-    // ══════════════════════════════════
-
     let scenario = null;
-    let selectedNode = null;
-    let nodePositions = {};
+    let nodeIdMap = {}; // scenario nodeId -> drawflow numeric id
+    let dfIdMap = {};   // drawflow numeric id -> scenario nodeId
+    let selectedScenarioNode = null;
 
-    const NODE_W = 200;
-    const NODE_H = 100;
+    const editor = new Drawflow(document.getElementById('drawflow'));
+    editor.reroute = true;
+    editor.start();
 
-    // Zoom & Pan
-    let zoom = 1;
-    let panX = 0, panY = 0;
-    let isPanning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
-
-    function applyTransform() {
-      const inner = document.getElementById('canvasInner');
-      const svg = document.getElementById('svgConnections');
-      const t = `translate(${panX}px,${panY}px) scale(${zoom})`;
-      inner.style.transform = t;
-      svg.style.transform = t;
-      document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
-    }
-
-    function zoomIn() { zoom = Math.min(zoom * 1.2, 3); applyTransform(); }
-    function zoomOut() { zoom = Math.max(zoom / 1.2, 0.15); applyTransform(); }
-    function zoomFit() { autoLayout(); }
-
-    // Mouse wheel zoom
-    document.addEventListener('DOMContentLoaded', () => {
-      const wrap = document.getElementById('canvasWrap');
-
-      wrap.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const rect = wrap.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-
-        const oldZoom = zoom;
-        if (e.deltaY < 0) zoom = Math.min(zoom * 1.1, 3);
-        else zoom = Math.max(zoom / 1.1, 0.15);
-
-        // Zoom toward cursor
-        panX = mx - (mx - panX) * (zoom / oldZoom);
-        panY = my - (my - panY) * (zoom / oldZoom);
-        applyTransform();
-      }, { passive: false });
-
-      // Pan with middle mouse or alt+drag
-      wrap.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.node-card') || e.target.closest('.port')) return;
-        isPanning = true;
-        panStartX = e.clientX;
-        panStartY = e.clientY;
-        panOrigX = panX;
-        panOrigY = panY;
-        wrap.style.cursor = 'grabbing';
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!isPanning) return;
-        panX = panOrigX + (e.clientX - panStartX);
-        panY = panOrigY + (e.clientY - panStartY);
-        applyTransform();
-      });
-
-      document.addEventListener('mouseup', () => {
-        if (isPanning) {
-          isPanning = false;
-          document.getElementById('canvasWrap').style.cursor = '';
-        }
-      });
-    });
-
-    // ── Load ────────────────────────
-
+    // ── Load stories ────────────
     async function init() {
       const resp = await fetch('./data/stories.json');
       const data = await resp.json();
@@ -218,436 +102,232 @@
           sel.appendChild(opt);
         }
       });
-      // Auto-load first
-      if (data.stories.length > 0 && data.stories[0].scenario) {
-        sel.value = data.stories[0].scenario;
-        await loadStory();
-      }
+      if (data.stories[0]?.scenario) { sel.value = data.stories[0].scenario; await doLoad(); }
     }
 
-    async function loadStory() {
+    async function doLoad() {
       const path = document.getElementById('storySelect').value;
       const resp = await fetch('./' + path);
       scenario = await resp.json();
-      selectedNode = null;
-      nodePositions = {};
-      autoLayout();
-      renderAll();
+      buildGraph();
     }
 
-    // ── Auto Layout ─────────────────
+    // ── Build Drawflow graph ────
 
-    function autoLayout() {
-      if (!scenario) return;
-      const nodes = Object.keys(scenario.nodes);
-      // BFS from 'start'
-      const visited = new Set();
-      const layers = [];
-      let queue = ['start'];
-      if (!scenario.nodes['start']) queue = [nodes[0]];
-
-      while (queue.length > 0) {
-        const layer = [];
-        const next = [];
-        for (const id of queue) {
-          if (visited.has(id)) continue;
-          visited.add(id);
-          layer.push(id);
-          const node = scenario.nodes[id];
-          if (node.next && !visited.has(node.next)) next.push(node.next);
-          if (node.choices) {
-            node.choices.forEach(c => {
-              if (c.next && !visited.has(c.next)) next.push(c.next);
-            });
-          }
-        }
-        if (layer.length > 0) layers.push(layer);
-        queue = next;
-      }
-
-      // Place unvisited nodes
-      const unvisited = nodes.filter(n => !visited.has(n));
-      if (unvisited.length > 0) layers.push(unvisited);
-
-      // Position
-      const startX = 40;
-      const startY = 40;
-      const gapX = 260;
-      const gapY = 140;
-
-      layers.forEach((layer, li) => {
-        layer.forEach((id, ni) => {
-          nodePositions[id] = {
-            x: startX + li * gapX,
-            y: startY + ni * gapY
-          };
-        });
-      });
-
-      // Fit to screen
-      const wrap = document.getElementById('canvasWrap');
-      if (wrap) {
-        const allX = Object.values(nodePositions).map(p => p.x);
-        const allY = Object.values(nodePositions).map(p => p.y);
-        if (allX.length > 0) {
-          const maxX = Math.max(...allX) + NODE_W + 40;
-          const maxY = Math.max(...allY) + NODE_H + 40;
-          const ww = wrap.clientWidth;
-          const wh = wrap.clientHeight;
-          zoom = Math.min(ww / maxX, wh / maxY, 1);
-          zoom = Math.max(zoom, 0.15);
-          panX = 20;
-          panY = 20;
-          applyTransform();
-        }
-      }
-
-      renderAll();
-    }
-
-    // ── Render ──────────────────────
-
-    function renderAll() {
-      renderNodeList();
-      renderCanvas();
-      renderConnections();
-      renderProps();
-      updateStats();
-    }
-
-    function getNodeType(node) {
+    function getType(node) {
       if (node.choices) return 'choice';
       if (node.wait) return 'wait';
       if (!node.next) return 'end';
       return 'msg';
     }
 
-    function getNodePreview(node) {
-      const msgs = node.messages || [];
-      const textMsgs = msgs.filter(m => m.type === 'text');
-      if (textMsgs.length > 0) return textMsgs[0].text;
-      if (node.choices) return node.choices.length + ' выборов';
-      if (node.wait) return 'Ожидание ' + node.wait + 'с';
-      return '—';
-    }
-
-    function renderNodeList() {
-      const list = document.getElementById('nodeList');
-      list.innerHTML = '';
-      if (!scenario) return;
-
-      Object.keys(scenario.nodes).forEach(id => {
-        const node = scenario.nodes[id];
-        const type = getNodeType(node);
-        const item = document.createElement('div');
-        item.className = 'node-list-item' + (id === selectedNode ? ' active' : '');
-        item.innerHTML = `<span class="dot ${type}"></span><span class="name">${id}</span>`;
-        item.onclick = () => selectNode(id);
-        list.appendChild(item);
-      });
-    }
-
-    function renderCanvas() {
-      const inner = document.getElementById('canvasInner');
-      // Remove old node cards
-      inner.querySelectorAll('.node-card').forEach(el => el.remove());
-      if (!scenario) return;
-
-      Object.keys(scenario.nodes).forEach(id => {
-        const node = scenario.nodes[id];
-        const pos = nodePositions[id] || { x: 0, y: 0 };
-        const type = getNodeType(node);
-
-        const card = document.createElement('div');
-        card.className = 'node-card' + (id === selectedNode ? ' selected' : '');
-        card.style.left = pos.x + 'px';
-        card.style.top = pos.y + 'px';
-        card.dataset.nodeId = id;
-
-        const msgs = (node.messages || []).filter(m => m.type === 'text');
-        let bodyHTML = '';
-        if (msgs.length > 0) {
-          bodyHTML = msgs.slice(0, 3).map(m => `<div class="preview">${m.text}</div>`).join('');
-          if (msgs.length > 3) bodyHTML += `<div class="preview" style="color:var(--dim)">...ещё ${msgs.length - 3}</div>`;
-        }
-        if (node.choices) {
-          bodyHTML += node.choices.map(c =>
-            `<div class="choice-item${c.optional ? ' optional' : ''}">${c.optional ? '?' : '▶'} ${c.text.substring(0, 30)}${c.text.length > 30 ? '...' : ''}</div>`
-          ).join('');
-        }
-        if (node.wait) {
-          const min = Math.round(node.wait / 60);
-          bodyHTML += `<div style="color:var(--purple)">⏱ ${min} мин</div>`;
-        }
-
-        card.innerHTML = `
-          <div class="node-card-header ${type}">${id}${type === 'end' ? ' (END)' : ''}</div>
-          <div class="node-card-body">${bodyHTML || '<em>пусто</em>'}</div>
-          ${node.next ? `<div class="node-card-footer">→ ${node.next}</div>` : ''}
-          <div class="port in" data-node="${id}" data-dir="in"></div>
-          <div class="port out" data-node="${id}" data-dir="out"></div>
-        `;
-
-        card.addEventListener('mousedown', (e) => {
-          if (e.target.classList.contains('port')) return;
-          selectNode(id);
-          startDrag(e, card, id);
+    function nodeHTML(id, node) {
+      const type = getType(node);
+      const msgs = (node.messages || []).filter(m => m.type === 'text');
+      let body = '';
+      msgs.slice(0, 3).forEach(m => { body += `<div class="msg-line">${esc(m.text)}</div>`; });
+      if (msgs.length > 3) body += `<div>...ещё ${msgs.length - 3}</div>`;
+      if (node.choices) {
+        node.choices.forEach(c => {
+          body += `<div class="choice-line${c.optional ? ' opt' : ''}">${c.optional ? '?' : '▶'} ${esc(c.text.substring(0, 35))}</div>`;
         });
-
-        inner.appendChild(card);
-      });
+      }
+      if (node.wait) { body += `<div class="wait-line">⏱ ${Math.round(node.wait/60)} мин</div>`; }
+      let footer = node.next ? `<div class="df-node-footer">→ ${node.next}</div>` : '';
+      return `<div class="df-node-header type-${type}">${esc(id)}${type==='end'?' (END)':''}</div><div class="df-node-body">${body||'—'}</div>${footer}`;
     }
 
-    function renderConnections() {
-      const svg = document.getElementById('svgConnections');
-      svg.innerHTML = '';
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function buildGraph() {
+      editor.clear();
+      nodeIdMap = {};
+      dfIdMap = {};
+      selectedScenarioNode = null;
+      document.getElementById('propsEmpty').style.display = '';
+      document.getElementById('pc').style.display = 'none';
+
       if (!scenario) return;
+      const ids = Object.keys(scenario.nodes);
 
-      Object.keys(scenario.nodes).forEach(id => {
+      // BFS for layout
+      const layers = [];
+      const visited = new Set();
+      let queue = [ids.includes('start') ? 'start' : ids[0]];
+      while (queue.length) {
+        const layer = [], next = [];
+        for (const id of queue) {
+          if (visited.has(id)) continue;
+          visited.add(id);
+          layer.push(id);
+          const n = scenario.nodes[id];
+          if (n.next && !visited.has(n.next)) next.push(n.next);
+          if (n.choices) n.choices.forEach(c => { if (c.next && !visited.has(c.next)) next.push(c.next); });
+        }
+        if (layer.length) layers.push(layer);
+        queue = next;
+      }
+      ids.filter(n => !visited.has(n)).forEach(n => layers.push([n]));
+
+      // Create nodes
+      const gapX = 300, gapY = 180, startX = 60, startY = 60;
+      layers.forEach((layer, li) => {
+        layer.forEach((id, ni) => {
+          const node = scenario.nodes[id];
+          const outputs = countOutputs(node);
+          const html = nodeHTML(id, node);
+          const x = startX + li * gapX;
+          const y = startY + ni * gapY;
+          const dfId = editor.addNode(id, 1, outputs, x, y, id, { scenarioId: id }, html);
+          nodeIdMap[id] = dfId;
+          dfIdMap[dfId] = id;
+        });
+      });
+
+      // Create connections
+      ids.forEach(id => {
         const node = scenario.nodes[id];
-        const from = nodePositions[id];
-        if (!from) return;
-
-        const targets = [];
-        if (node.next) targets.push({ to: node.next, color: '#5b9cf5' });
+        const fromDf = nodeIdMap[id];
+        if (!fromDf) return;
+        let outIdx = 1;
+        if (node.next && nodeIdMap[node.next]) {
+          editor.addConnection(fromDf, nodeIdMap[node.next], `output_${outIdx}`, 'input_1');
+          outIdx++;
+        }
         if (node.choices) {
-          node.choices.forEach(c => {
-            if (c.next) targets.push({ to: c.next, color: c.optional ? '#6a6a7e' : '#f59e0b' });
+          node.choices.filter(c => c.next && nodeIdMap[c.next]).forEach(c => {
+            editor.addConnection(fromDf, nodeIdMap[c.next], `output_${outIdx}`, 'input_1');
+            outIdx++;
           });
         }
-
-        targets.forEach(({ to, color }) => {
-          const toPos = nodePositions[to];
-          if (!toPos) return;
-          const x1 = from.x + NODE_W / 2;
-          const y1 = from.y + NODE_H + 5;
-          const x2 = toPos.x + NODE_W / 2;
-          const y2 = toPos.y - 5;
-          const cy1 = y1 + 40;
-          const cy2 = y2 - 40;
-
-          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          path.setAttribute('d', `M${x1},${y1} C${x1},${cy1} ${x2},${cy2} ${x2},${y2}`);
-          path.setAttribute('stroke', color);
-          path.setAttribute('stroke-width', '2');
-          path.setAttribute('fill', 'none');
-          path.setAttribute('opacity', '0.6');
-          svg.appendChild(path);
-        });
       });
+
+      updateStats();
     }
 
-    // ── Drag ────────────────────────
-
-    function startDrag(e, card, nodeId) {
-      e.preventDefault();
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const pos = nodePositions[nodeId];
-      const origX = pos.x;
-      const origY = pos.y;
-
-      function onMove(ev) {
-        pos.x = origX + (ev.clientX - startX);
-        pos.y = origY + (ev.clientY - startY);
-        card.style.left = pos.x + 'px';
-        card.style.top = pos.y + 'px';
-        renderConnections();
-      }
-
-      function onUp() {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-      }
-
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+    function countOutputs(node) {
+      let n = 0;
+      if (node.next) n++;
+      if (node.choices) n += node.choices.filter(c => c.next).length;
+      return Math.max(n, 1);
     }
 
-    // ── Select & Props ──────────────
+    // ── Selection ───────────────
 
-    function selectNode(id) {
-      selectedNode = id;
-      renderAll();
-      // Scroll node list item into view
-      const item = document.querySelector('.node-list-item.active');
-      if (item) item.scrollIntoView({ block: 'nearest' });
-    }
+    editor.on('nodeSelected', (dfId) => {
+      selectedScenarioNode = dfIdMap[dfId] || null;
+      renderProps();
+    });
+
+    editor.on('nodeUnselected', () => {
+      selectedScenarioNode = null;
+      renderProps();
+    });
+
+    // ── Properties panel ────────
 
     function renderProps() {
       const empty = document.getElementById('propsEmpty');
-      const content = document.getElementById('propsContent');
-
-      if (!selectedNode || !scenario || !scenario.nodes[selectedNode]) {
-        empty.style.display = '';
-        content.style.display = 'none';
-        return;
+      const pc = document.getElementById('pc');
+      if (!selectedScenarioNode || !scenario?.nodes[selectedScenarioNode]) {
+        empty.style.display = ''; pc.style.display = 'none'; return;
       }
+      empty.style.display = 'none'; pc.style.display = '';
+      const id = selectedScenarioNode;
+      const node = scenario.nodes[id];
 
-      empty.style.display = 'none';
-      content.style.display = '';
-
-      const node = scenario.nodes[selectedNode];
-      const type = getNodeType(node);
-
-      let html = '';
-
-      // ID
-      html += `<div class="props-section">
-        <label>ID ноды</label>
-        <input value="${selectedNode}" onchange="renameNode('${selectedNode}', this.value)" />
-      </div>`;
-
-      // Next
-      html += `<div class="props-section">
-        <label>Next →</label>
-        <input value="${node.next || ''}" onchange="scenario.nodes['${selectedNode}'].next = this.value || null; renderAll();" />
-      </div>`;
+      let h = '';
+      h += `<div class="ps"><label>ID</label><input value="${esc(id)}" id="pId"></div>`;
+      h += `<div class="ps"><label>Next →</label><input value="${esc(node.next||'')}" id="pNext"></div>`;
 
       // Messages
-      html += `<div class="props-section">
-        <label>Сообщения (${(node.messages || []).length})</label>`;
-      (node.messages || []).forEach((msg, i) => {
-        html += `<div class="msg-item">
-          <span class="type">${msg.type}</span>
-          <span class="text">${msg.text || msg.alt || msg.transcript || '—'}</span>
-          <span class="del" onclick="removeMsg('${selectedNode}', ${i})">×</span>
-        </div>`;
+      h += `<div class="ps"><label>Сообщения (${(node.messages||[]).length})</label>`;
+      (node.messages||[]).forEach((m, i) => {
+        h += `<div class="mi"><span class="t">${m.type}</span><span class="v">${esc(m.text||m.alt||m.transcript||'—')}</span><span class="d" data-action="delMsg" data-idx="${i}">×</span></div>`;
       });
-      html += `<button class="btn-sm" onclick="addMsg('${selectedNode}')">+ Сообщение</button>
-      </div>`;
+      h += `<button class="btn-s" data-action="addMsg">+ Сообщение</button></div>`;
 
       // Wait
       if (node.wait !== undefined) {
-        html += `<div class="props-section">
-          <label>Ожидание (секунды)</label>
-          <input type="number" value="${node.wait}" onchange="scenario.nodes['${selectedNode}'].wait = parseInt(this.value); renderAll();" />
-        </div>`;
+        h += `<div class="ps"><label>Ожидание (сек)</label><input type="number" value="${node.wait}" id="pWait"></div>`;
       }
 
       // Choices
       if (node.choices) {
-        html += `<div class="props-section">
-          <label>Выборы (${node.choices.length})</label>`;
-        node.choices.forEach((ch, i) => {
-          const tags = [];
-          if (ch.key) tags.push('KEY');
-          if (ch.optional) tags.push('OPT');
-          if (ch.default) tags.push('DEF');
-          html += `<div class="msg-item">
-            <span class="type" style="color:${ch.optional ? 'var(--dim)' : 'var(--orange)'}">${tags.join(' ')}</span>
-            <span class="text">${ch.text.substring(0, 40)}${ch.text.length > 40 ? '...' : ''}</span>
-            <span class="del" onclick="removeChoice('${selectedNode}', ${i})">×</span>
-          </div>`;
+        h += `<div class="ps"><label>Выборы (${node.choices.length})</label>`;
+        node.choices.forEach((c, i) => {
+          const tags = []; if(c.key) tags.push('KEY'); if(c.optional) tags.push('OPT'); if(c.default) tags.push('DEF');
+          h += `<div class="mi"><span class="t" style="color:${c.optional?'var(--dim)':'var(--orange)'}">${tags.join(' ')||'—'}</span><span class="v">${esc(c.text)}</span><span class="d" data-action="delChoice" data-idx="${i}">×</span></div>`;
         });
-        html += `<button class="btn-sm" onclick="addChoice('${selectedNode}')">+ Выбор</button>
-        </div>`;
+        h += `<button class="btn-s" data-action="addChoice">+ Выбор</button></div>`;
       }
 
-      // WaitChat
+      // Wait chat
       if (node.waitChat) {
-        html += `<div class="props-section">
-          <label>Wait-chat вопросы (${node.waitChat.length})</label>`;
-        node.waitChat.forEach((wc, i) => {
-          html += `<div class="msg-item">
-            <span class="type" style="color:var(--purple)">Q</span>
-            <span class="text">${wc.text.substring(0, 40)}</span>
-          </div>`;
+        h += `<div class="ps"><label>Wait-chat (${node.waitChat.length})</label>`;
+        node.waitChat.forEach(wc => {
+          h += `<div class="mi"><span class="t" style="color:var(--purple)">Q</span><span class="v">${esc(wc.text)}</span></div>`;
         });
-        html += `</div>`;
+        h += `</div>`;
       }
 
-      // Actions
-      html += `<div class="props-section">
-        <button class="btn-sm danger" onclick="if(confirm('Удалить ноду ${selectedNode}?')) { delete scenario.nodes['${selectedNode}']; selectedNode=null; renderAll(); }">Удалить ноду</button>
-      </div>`;
+      h += `<div class="ps"><button class="btn-s red" data-action="delNode">Удалить ноду</button></div>`;
+      pc.innerHTML = h;
 
-      content.innerHTML = html;
-    }
-
-    // ── Editing ─────────────────────
-
-    function addNode() {
-      if (!scenario) return;
-      const id = prompt('ID новой ноды:');
-      if (!id || scenario.nodes[id]) return;
-      scenario.nodes[id] = { messages: [], next: null };
-      nodePositions[id] = { x: 100, y: 100 };
-      selectNode(id);
-    }
-
-    function renameNode(oldId, newId) {
-      if (!newId || newId === oldId || scenario.nodes[newId]) return;
-      scenario.nodes[newId] = scenario.nodes[oldId];
-      delete scenario.nodes[oldId];
-      // Update references
-      Object.values(scenario.nodes).forEach(n => {
-        if (n.next === oldId) n.next = newId;
-        if (n.choices) n.choices.forEach(c => { if (c.next === oldId) c.next = newId; });
+      // Bind events
+      pc.querySelectorAll('[data-action]').forEach(el => {
+        el.addEventListener('click', () => {
+          const a = el.dataset.action, idx = parseInt(el.dataset.idx);
+          if (a === 'delMsg') { node.messages.splice(idx, 1); refreshNode(id); }
+          if (a === 'addMsg') { const t = prompt('Текст:'); if(t) { (node.messages=node.messages||[]).push({type:'text',text:t,delay:3000}); refreshNode(id); } }
+          if (a === 'delChoice') { node.choices.splice(idx, 1); refreshNode(id); }
+          if (a === 'addChoice') { const t = prompt('Текст выбора:'); if(t) { (node.choices=node.choices||[]).push({text:t,next:null,tag:'c_'+Date.now(),key:true}); refreshNode(id); } }
+          if (a === 'delNode') { if(confirm('Удалить '+id+'?')) { delete scenario.nodes[id]; buildGraph(); } }
+        });
       });
-      nodePositions[newId] = nodePositions[oldId];
-      delete nodePositions[oldId];
-      selectedNode = newId;
-      renderAll();
+
+      const pNext = document.getElementById('pNext');
+      if (pNext) pNext.onchange = () => { node.next = pNext.value || null; refreshNode(id); };
+
+      const pWait = document.getElementById('pWait');
+      if (pWait) pWait.onchange = () => { node.wait = parseInt(pWait.value); refreshNode(id); };
     }
 
-    function addMsg(nodeId) {
-      const text = prompt('Текст сообщения:');
-      if (!text) return;
-      if (!scenario.nodes[nodeId].messages) scenario.nodes[nodeId].messages = [];
-      scenario.nodes[nodeId].messages.push({ type: 'text', text, delay: 3000 });
-      renderAll();
+    function refreshNode(id) {
+      const dfId = nodeIdMap[id];
+      if (dfId) {
+        const node = scenario.nodes[id];
+        editor.drawflow.drawflow.Home.data[dfId].html = nodeHTML(id, node);
+        editor.updateNodeDataFromId(dfId, { scenarioId: id });
+        // Re-render node content
+        const el = document.querySelector(`#node-${dfId} .drawflow_content_node`);
+        if (el) el.innerHTML = nodeHTML(id, node);
+      }
+      renderProps();
+      updateStats();
     }
 
-    function removeMsg(nodeId, idx) {
-      scenario.nodes[nodeId].messages.splice(idx, 1);
-      renderAll();
-    }
+    // ── Export ───────────────────
 
-    function addChoice(nodeId) {
-      const text = prompt('Текст выбора:');
-      if (!text) return;
-      if (!scenario.nodes[nodeId].choices) scenario.nodes[nodeId].choices = [];
-      scenario.nodes[nodeId].choices.push({ text, next: null, tag: 'new_' + Date.now(), key: true });
-      renderAll();
-    }
-
-    function removeChoice(nodeId, idx) {
-      scenario.nodes[nodeId].choices.splice(idx, 1);
-      renderAll();
-    }
-
-    // ── Export ───────────────────────
-
-    function exportJSON() {
+    function doExport() {
       const json = JSON.stringify(scenario, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'scenario.json';
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'scenario.json'; a.click();
     }
 
-    function copyJSON() {
-      const json = JSON.stringify(scenario, null, 2);
-      navigator.clipboard.writeText(json).then(() => {
-        alert('JSON скопирован в буфер обмена');
-      });
+    function doCopy() {
+      navigator.clipboard.writeText(JSON.stringify(scenario, null, 2)).then(() => alert('Скопировано!'));
     }
-
-    // ── Stats ───────────────────────
 
     function updateStats() {
       if (!scenario) return;
-      const nodes = Object.keys(scenario.nodes);
-      const choices = nodes.filter(n => scenario.nodes[n].choices).length;
-      const waits = nodes.filter(n => scenario.nodes[n].wait).length;
-      const msgs = nodes.reduce((sum, n) => sum + (scenario.nodes[n].messages || []).length, 0);
-      document.getElementById('statsInfo').textContent =
-        `${nodes.length} нод | ${msgs} сообщ. | ${choices} выборов | ${waits} пауз`;
+      const ids = Object.keys(scenario.nodes);
+      const msgs = ids.reduce((s, n) => s + (scenario.nodes[n].messages || []).length, 0);
+      const ch = ids.filter(n => scenario.nodes[n].choices).length;
+      const w = ids.filter(n => scenario.nodes[n].wait).length;
+      document.getElementById('stats').textContent = `${ids.length} нод | ${msgs} сообщ. | ${ch} выборов | ${w} пауз`;
     }
 
-    // ── Init ────────────────────────
     init();
   </script>
 </body>
