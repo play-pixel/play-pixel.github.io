@@ -4,141 +4,204 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Backrooms: Untold Stories</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
     :root {
-      --bg: #121218; --surface: #1a1a22; --bubble-npc: #22222e; --bubble-player: #1e2a45;
-      --text: #d8d8e0; --text-dim: #6e6e82; --text-muted: #454558;
-      --accent: #6ba3f7; --green: #5cd88a; --border: #2a2a36;
-      --radius: 20px; --header-bg: #16161e;
+      --bg: #f0f1f5;
+      --surface: #ffffff;
+      --bubble-npc: #ffffff;
+      --bubble-player: #3b82f6;
+      --text: #1a1a1e;
+      --text-dim: #8c8c96;
+      --text-muted: #b0b0ba;
+      --text-on-accent: #ffffff;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --border: #e4e4e8;
+      --radius: 18px;
+      --header-bg: #ffffff;
+      --input-bg: #f0f1f5;
+      --tab-bg: #ffffff;
+      --shadow: 0 -1px 0 rgba(0,0,0,.06);
+      --bubble-shadow: 0 1px 2px rgba(0,0,0,.06);
     }
-    [data-theme="light"] {
-      --bg: #eeeef3; --surface: #f8f8fb; --bubble-npc: #dddde5; --bubble-player: #d4e4f8;
-      --text: #2c2c30; --text-dim: #7a7a84; --text-muted: #a0a0ae;
-      --accent: #2a7de8; --green: #2cb85c; --border: #cdcdd6; --header-bg: #f0f0f5;
+    [data-theme="dark"] {
+      --bg: #0e0e12;
+      --surface: #1a1a22;
+      --bubble-npc: #1e1e2a;
+      --bubble-player: #2563eb;
+      --text: #e0e0e8;
+      --text-dim: #6a6a7a;
+      --text-muted: #404050;
+      --text-on-accent: #ffffff;
+      --accent: #3b82f6;
+      --green: #4ade80;
+      --border: #28283a;
+      --header-bg: #14141c;
+      --input-bg: #1a1a22;
+      --tab-bg: #14141c;
+      --shadow: 0 -1px 0 rgba(255,255,255,.04);
+      --bubble-shadow: none;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden;
-      transition: background .3s, color .3s;
+      transition: background .25s, color .25s;
     }
 
     .screen { display:none; flex-direction:column; height:100dvh; }
     .screen.active { display:flex; }
 
-    /* ── Start ──────────────────── */
-    #startScreen { align-items:center; justify-content:center; gap:20px; padding:32px; text-align:center; }
+    /* ── Start Screen ──────── */
+    #startScreen { align-items:center; justify-content:center; gap:20px; padding:32px; text-align:center; background:var(--surface); }
     .start-logo { font-size:11px; letter-spacing:6px; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
     .start-title { font-size:28px; font-weight:300; letter-spacing:2px; line-height:1.3; }
     .start-title span { display:block; font-size:14px; font-weight:400; color:var(--text-dim); letter-spacing:4px; margin-top:6px; }
     .start-sub { color:var(--text-dim); font-size:13px; line-height:1.7; max-width:280px; }
-    .start-btn { padding:14px 52px; border:1px solid var(--accent); border-radius:28px; background:none; color:var(--accent); font-size:15px; cursor:pointer; margin-top:24px; }
-    .start-btn:active { background:var(--accent); color:#fff; }
+    .start-btn { padding:14px 52px; border:none; border-radius:28px; background:var(--accent); color:#fff; font-size:15px; cursor:pointer; margin-top:24px; }
+    .start-btn:active { opacity:.85; }
     .start-reset { padding:8px 20px; border:none; background:none; color:var(--text-muted); font-size:12px; cursor:pointer; }
 
-    /* ── Contacts ───────────────── */
-    .contacts-hdr { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 12px; border-bottom:1px solid var(--border); background:var(--header-bg); }
-    .contacts-hdr-left h1 { font-size:22px; font-weight:600; }
-    .contacts-hdr-left .sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
-    .icon-btn { width:36px; height:36px; border-radius:50%; border:none; background:var(--surface); color:var(--text-dim); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .icon-btn:active { background:var(--border); }
-    .contacts-list { flex:1; overflow-y:auto; }
-    .contact-item { display:flex; align-items:center; padding:18px 20px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .1s; }
-    .contact-item:active { background:var(--surface); }
-    .contact-item.locked { opacity:.5; cursor:default; }
+    /* ── Contacts Screen ─────── */
+    .contacts-hdr { padding:12px 16px 0; background:var(--header-bg); }
+    .contacts-hdr h1 { font-size:26px; font-weight:700; padding:4px 0 10px; }
+    .contacts-search { display:flex; align-items:center; background:var(--input-bg); border-radius:12px; padding:10px 14px; margin-bottom:12px; gap:8px; }
+    .contacts-search svg { flex-shrink:0; color:var(--text-muted); }
+    .contacts-search span { color:var(--text-muted); font-size:14px; }
+
+    .contacts-list { flex:1; overflow-y:auto; background:var(--surface); }
+    .contact-item { display:flex; align-items:center; padding:12px 16px; cursor:pointer; border-bottom:1px solid var(--border); }
+    .contact-item:active { background:var(--bg); }
+    .contact-item.locked { opacity:.4; cursor:default; }
     .contact-item.locked:active { background:transparent; }
-    .ct-avatar { width:54px; height:54px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px; margin-right:16px; flex-shrink:0; font-weight:500; }
-    .ct-avatar.lika { background:linear-gradient(135deg,#2a1a4e,#1a2a4e); color:var(--accent); }
-    [data-theme="light"] .ct-avatar.lika { background:linear-gradient(135deg,#ddd0f5,#d0e0ff); }
-    .ct-avatar.lock { background:var(--surface); color:var(--text-muted); font-size:20px; }
+
+    .ct-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; margin-right:14px; flex-shrink:0; font-weight:600; color:#fff; }
+    .ct-avatar.lika { background:linear-gradient(135deg,#7c3aed,#3b82f6); }
+    .ct-avatar.lock { background:var(--input-bg); color:var(--text-muted); }
+
     .ct-info { flex:1; min-width:0; }
-    .ct-name { font-size:17px; font-weight:500; }
-    .ct-preview { font-size:14px; color:var(--text-dim); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ct-name { font-size:16px; font-weight:600; }
+    .ct-preview { font-size:13px; color:var(--text-dim); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
     .ct-meta { text-align:right; flex-shrink:0; margin-left:12px; }
     .ct-time { font-size:12px; color:var(--text-dim); }
-    .ct-badge { width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; margin-left:auto; margin-top:4px; }
+    .ct-badge { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font-size:11px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:6px; }
     .ct-lock-icon { font-size:14px; color:var(--text-muted); }
 
-    /* ── Settings ───────────────── */
+    /* Tab bar */
+    .tab-bar { display:flex; background:var(--tab-bg); border-top:1px solid var(--border); padding:6px 0 env(safe-area-inset-bottom, 2px); flex-shrink:0; }
+    .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 0; cursor:pointer; color:var(--text-muted); font-size:10px; }
+    .tab-item.active { color:var(--accent); }
+    .tab-item svg { width:24px; height:24px; }
+
+    /* ── Settings Screen ─────── */
     .settings-hdr { display:flex; align-items:center; padding:14px 16px; border-bottom:1px solid var(--border); background:var(--header-bg); gap:8px; }
     .settings-hdr h1 { font-size:18px; font-weight:600; flex:1; }
-    .settings-list { flex:1; overflow-y:auto; padding:8px 0; }
-    .settings-section { padding:24px 20px 8px; font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
-    .settings-row { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); }
+    .settings-list { flex:1; overflow-y:auto; background:var(--surface); }
+    .settings-section { padding:24px 16px 8px; font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; }
+    .settings-row { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
     .settings-row-label { font-size:15px; }
     .toggle { position:relative; width:48px; height:28px; cursor:pointer; }
     .toggle input { display:none; }
     .toggle-track { position:absolute; inset:0; border-radius:14px; background:var(--text-muted); transition:background .25s; }
     .toggle input:checked + .toggle-track { background:var(--accent); }
-    .toggle-thumb { position:absolute; top:2px; left:2px; width:24px; height:24px; border-radius:50%; background:#fff; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+    .toggle-thumb { position:absolute; top:2px; left:2px; width:24px; height:24px; border-radius:50%; background:#fff; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
     .toggle input:checked ~ .toggle-thumb { transform:translateX(20px); }
     .lang-options { display:flex; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
     .lang-opt { padding:8px 16px; font-size:13px; border:none; background:var(--surface); color:var(--text-dim); cursor:pointer; }
     .lang-opt.active { background:var(--accent); color:#fff; }
     .settings-version { text-align:center; padding:24px; font-size:12px; color:var(--text-muted); }
 
-    /* ── Chat ───────────────────── */
-    .chat-hdr { display:flex; align-items:center; padding:10px 8px; background:var(--header-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
-    .chat-back { width:36px; height:36px; border:none; background:none; color:var(--accent); font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .chat-hdr-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#2a1a4e,#1a2a4e); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--accent); margin-right:10px; flex-shrink:0; }
-    [data-theme="light"] .chat-hdr-av { background:linear-gradient(135deg,#ddd0f5,#d0e0ff); }
+    /* ── Chat Screen ─────── */
+    .chat-hdr { display:flex; align-items:center; padding:8px 8px; background:var(--header-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .chat-back { width:32px; height:40px; border:none; background:none; color:var(--accent); font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .chat-hdr-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; margin-right:10px; flex-shrink:0; font-weight:600; }
     .chat-hdr-info { flex:1; }
     .chat-hdr-name { font-size:15px; font-weight:600; }
-    .chat-hdr-status { font-size:11px; color:var(--text-dim); transition:color .3s; }
+    .chat-hdr-status { font-size:12px; color:var(--text-dim); }
     .chat-hdr-status.online { color:var(--green); }
     .chat-hdr-status.typing { color:var(--accent); }
 
-    .chat-area { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:5px; scroll-behavior:smooth; }
+    .chat-area { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:3px; scroll-behavior:smooth; background:var(--bg); }
 
-    .msg { max-width:78%; padding:10px 14px; border-radius:var(--radius); font-size:15px; line-height:1.45; word-wrap:break-word; }
-    .msg.npc { align-self:flex-start; background:var(--bubble-npc); border-bottom-left-radius:6px; }
-    .msg.player { align-self:flex-end; background:var(--bubble-player); border-bottom-right-radius:6px; color:var(--accent); position:relative; }
-    .msg.status-msg { align-self:center; background:none; color:var(--text-dim); font-size:12px; font-style:italic; padding:10px 0; max-width:100%; }
-    .msg.new-msg { animation: msgIn .25s ease; }
+    /* Date separator */
+    .date-sep { text-align:center; padding:12px 0 8px; font-size:12px; color:var(--text-dim); }
 
-    .msg.npc.img-msg { padding:4px; max-width:68%; }
-    .msg.npc.img-msg .img-ph { width:100%; aspect-ratio:4/3; border-radius:calc(var(--radius) - 2px); background:linear-gradient(145deg,#1a1a26,#20202a,#1a2028); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:12px; text-align:center; padding:20px; line-height:1.5; }
-    [data-theme="light"] .msg.npc.img-msg .img-ph { background:linear-gradient(145deg,#d8d8e0,#d0d0d8,#d5d5dd); }
+    /* Messages */
+    .msg-row { display:flex; gap:8px; align-items:flex-end; max-width:82%; }
+    .msg-row.npc { align-self:flex-start; }
+    .msg-row.player { align-self:flex-end; flex-direction:row-reverse; }
 
-    .msg.npc.voice-msg { display:flex; align-items:center; gap:10px; min-width:180px; }
-    .v-play { width:34px; height:34px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:13px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-    .v-wave { flex:1; height:22px; display:flex; align-items:center; gap:2px; }
-    .v-wave span { display:block; width:3px; border-radius:2px; background:var(--accent); opacity:.4; }
-    .v-dur { font-size:11px; color:var(--text-dim); flex-shrink:0; }
+    .msg-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; }
 
-    /* Checkmarks */
-    .checks { display:inline-flex; margin-left:6px; font-size:13px; vertical-align:middle; line-height:1; }
-    .checks.sent { color:var(--text-muted); }
-    .checks.delivered { color:var(--text-muted); }
-    .checks.read { color:var(--accent); }
+    .msg-bubble { padding:8px 12px; border-radius:var(--radius); font-size:15px; line-height:1.4; word-wrap:break-word; position:relative; box-shadow:var(--bubble-shadow); }
+    .msg-row.npc .msg-bubble { background:var(--bubble-npc); border-bottom-left-radius:4px; }
+    .msg-row.player .msg-bubble { background:var(--bubble-player); color:var(--text-on-accent); border-bottom-right-radius:4px; }
 
-    .typing-dots { align-self:flex-start; padding:12px 18px; background:var(--bubble-npc); border-radius:var(--radius); border-bottom-left-radius:6px; display:flex; gap:5px; animation:msgIn .25s ease; }
-    .typing-dots span { width:7px; height:7px; border-radius:50%; background:var(--text-dim); animation:dot 1.4s infinite; }
+    /* Message meta (time + checks) */
+    .msg-meta { display:inline-flex; align-items:center; gap:3px; float:right; margin:4px 0 -4px 10px; font-size:11px; }
+    .msg-row.npc .msg-meta { color:var(--text-muted); }
+    .msg-row.player .msg-meta { color:rgba(255,255,255,.65); }
+
+    .checks { font-size:13px; line-height:1; }
+    .checks.sent { opacity:.5; }
+    .checks.delivered { opacity:.6; }
+    .checks.read { color:#60d0ff; opacity:1; }
+    [data-theme="dark"] .checks.read { color:#60a5fa; }
+
+    /* Status messages */
+    .msg-status { text-align:center; font-size:12px; color:var(--text-dim); font-style:italic; padding:8px 0; }
+
+    /* Image */
+    .msg-row.npc .msg-bubble.img-msg { padding:3px; }
+    .img-ph { width:200px; max-width:100%; aspect-ratio:4/3; border-radius:calc(var(--radius) - 2px); background:var(--input-bg); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; text-align:center; padding:16px; line-height:1.5; }
+
+    /* Voice */
+    .msg-bubble.voice-msg { display:flex; align-items:center; gap:8px; min-width:170px; }
+    .v-play { width:32px; height:32px; border-radius:50%; background:var(--accent); border:none; color:#fff; font-size:12px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .msg-row.player .v-play { background:rgba(255,255,255,.25); }
+    .v-wave { flex:1; height:20px; display:flex; align-items:center; gap:2px; }
+    .v-wave span { display:block; width:2px; border-radius:1px; background:var(--accent); opacity:.4; }
+    .msg-row.player .v-wave span { background:rgba(255,255,255,.5); }
+    .v-dur { font-size:10px; color:var(--text-dim); flex-shrink:0; }
+    .msg-row.player .v-dur { color:rgba(255,255,255,.6); }
+
+    /* Typing */
+    .msg-row.typing { align-self:flex-start; }
+    .typing-dots { padding:12px 16px; background:var(--bubble-npc); border-radius:var(--radius); border-bottom-left-radius:4px; display:flex; gap:4px; box-shadow:var(--bubble-shadow); }
+    .typing-dots span { width:7px; height:7px; border-radius:50%; background:var(--text-muted); animation:dot 1.4s infinite; }
     .typing-dots span:nth-child(2) { animation-delay:.2s; }
     .typing-dots span:nth-child(3) { animation-delay:.4s; }
     @keyframes dot { 0%,60%,100%{opacity:.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-3px)} }
     @keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .new-msg { animation: msgIn .25s ease; }
 
-    .choices-panel { display:flex; flex-direction:column; gap:8px; padding:14px 16px; flex-shrink:0; border-top:1px solid var(--border); background:var(--bg); }
-    .choices-panel button { width:100%; padding:13px 16px; border:1px solid var(--border); border-radius:14px; background:var(--bubble-player); color:var(--text); font-size:14px; cursor:pointer; text-align:left; line-height:1.35; }
-    .choices-panel button:active { border-color:var(--accent); transform:scale(.98); }
-    .choices-countdown { text-align:center; font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+    /* Choices */
+    .choices-panel { display:flex; flex-direction:column; gap:6px; padding:10px 12px; flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); }
+    .choices-panel button { width:100%; padding:12px 14px; border:1.5px solid var(--accent); border-radius:14px; background:transparent; color:var(--accent); font-size:14px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
+    .choices-panel button:active { background:var(--accent); color:#fff; }
+    .choices-countdown { text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:2px; }
 
-    .wait-panel { display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; gap:10px; flex-shrink:0; border-top:1px solid var(--border); background:var(--bg); }
+    /* Input bar (decorative) */
+    .input-bar { display:flex; align-items:center; padding:8px 12px; gap:8px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
+    .input-field { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--input-bg); font-size:14px; color:var(--text-muted); }
+
+    /* Wait */
+    .wait-panel { display:none; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:8px; flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); }
     .wait-panel.active { display:flex; }
     .wait-lbl { color:var(--text-dim); font-size:13px; }
-    .wait-clk { color:var(--text); font-size:22px; font-weight:300; font-variant-numeric:tabular-nums; }
-    .wait-skip { margin-top:4px; padding:7px 20px; border:1px solid var(--border); border-radius:20px; background:none; color:var(--text-muted); font-size:12px; cursor:pointer; }
+    .wait-clk { color:var(--text); font-size:20px; font-weight:300; font-variant-numeric:tabular-nums; }
+    .wait-skip { padding:7px 20px; border:1px solid var(--border); border-radius:20px; background:none; color:var(--text-dim); font-size:12px; cursor:pointer; }
 
     .hidden { display:none !important; }
   </style>
 </head>
-<body data-theme="dark">
+<body data-theme="light">
 
+  <!-- Start -->
   <div class="screen active" id="startScreen">
     <div class="start-logo">backrooms</div>
     <div class="start-title">Untold Stories<span>interactive fiction</span></div>
@@ -147,13 +210,13 @@
     <button class="start-reset" id="resetBtn">Сбросить прогресс</button>
   </div>
 
+  <!-- Contacts -->
   <div class="screen" id="contactsScreen">
     <div class="contacts-hdr">
-      <div class="contacts-hdr-left"><h1>Сообщения</h1><div class="sub">Backrooms: Untold Stories</div></div>
-      <div style="display:flex;gap:6px">
-        <button class="icon-btn" id="settingsBtn" aria-label="Настройки">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
+      <h1>Чаты</h1>
+      <div class="contacts-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Поиск по чатам и людям</span>
       </div>
     </div>
     <div class="contacts-list">
@@ -162,24 +225,54 @@
         <div class="ct-info"><div class="ct-name">Неизвестный номер</div><div class="ct-preview" id="ctPreview">привет?</div></div>
         <div class="ct-meta"><div class="ct-time" id="ctTime">23:08</div><div class="ct-badge" id="ctBadge">1</div></div>
       </div>
-      <div class="contact-item locked"><div class="ct-avatar lock">?</div><div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div><div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div></div>
-      <div class="contact-item locked"><div class="ct-avatar lock">?</div><div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div><div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div></div>
+      <div class="contact-item locked">
+        <div class="ct-avatar lock">?</div>
+        <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
+        <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>
+      </div>
+      <div class="contact-item locked">
+        <div class="ct-avatar lock">?</div>
+        <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
+        <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Чаты
+      </div>
+      <div class="tab-item" id="tabSettings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Настройки
+      </div>
     </div>
   </div>
 
+  <!-- Settings -->
   <div class="screen" id="settingsScreen">
     <div class="settings-hdr"><button class="chat-back" id="settingsBack">&#8249;</button><h1>Настройки</h1></div>
     <div class="settings-list">
       <div class="settings-section">Оформление</div>
-      <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Язык / Language</div>
       <div class="settings-row"><div class="settings-row-label">Язык интерфейса</div><div class="lang-options"><button class="lang-opt active" id="langRu">RU</button><button class="lang-opt" id="langEn">EN</button></div></div>
       <div class="settings-section">Прогресс</div>
-      <div class="settings-row"><div class="settings-row-label">Сбросить прогресс</div><button class="icon-btn" id="settingsReset" style="background:none;color:var(--text-dim);font-size:14px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button></div>
-      <div class="settings-version">Backrooms: Untold Stories v0.3.0</div>
+      <div class="settings-row"><div class="settings-row-label">Сбросить прогресс</div><button style="padding:8px 16px;border:1px solid var(--border);border-radius:10px;background:none;color:#e74c3c;font-size:13px;cursor:pointer;" id="settingsReset">Сбросить</button></div>
+      <div class="settings-version">Backrooms: Untold Stories v0.4.0</div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab-item" id="tabChatsFromSettings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Чаты
+      </div>
+      <div class="tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Настройки
+      </div>
     </div>
   </div>
 
+  <!-- Chat -->
   <div class="screen" id="chatScreen">
     <div class="chat-hdr">
       <button class="chat-back" id="chatBack">&#8249;</button>
@@ -193,44 +286,31 @@
       <div class="wait-clk" id="waitClk">0:00</div>
       <button class="wait-skip" id="waitSkip">пропустить ожидание</button>
     </div>
+    <div class="input-bar" id="inputBar">
+      <div class="input-field">Введите сообщение...</div>
+    </div>
   </div>
 
   <script>
     // ══════════════════════════════════════════════════
     //  BACKROOMS: UNTOLD STORIES — Timeline Engine v0.4
-    //  All events are timestamp-based. Game progresses
-    //  whether app is open, minimized, or closed.
     // ══════════════════════════════════════════════════
 
     const SAVE = 'backrooms_us_save';
     const PREFS = 'backrooms_us_prefs';
-    const CHOICE_TIMEOUT = 60; // seconds
+    const CHOICE_TIMEOUT = 60;
 
     let scenario = null;
-    let prefs = { theme: 'dark', lang: 'ru' };
+    let prefs = { theme: 'light', lang: 'ru' };
     let currentScreen = 'startScreen';
-    let lastRenderedCount = 0; // how many history items are in DOM
+    let lastRenderedCount = 0;
 
-    // ── Persisted state ─────────────
     let state = {
-      started: false,
-      opened: false,
-      // Timeline: scheduled events with absolute timestamps
-      // [{ts, type:'msg'|'typing_start'|'typing_end'|'status_change', data:{...}}]
-      timeline: [],
-      timelineIdx: 0,      // next event to process
-      history: [],          // delivered messages [{type, text, checks?, ...}]
-      choices: [],          // tags of player choices
-      // Current phase
-      phase: 'idle',        // idle | playing | choice | wait | done
-      // Choice state
-      choiceNode: null,     // node id with current choice
-      choiceDeadline: null, // timestamp
-      // Wait state
-      waitUntil: null,
-      waitNextNode: null,
-      // Pending: next node to schedule after current finishes
-      pendingNode: null
+      started:false, opened:false,
+      timeline:[], timelineIdx:0,
+      history:[], choices:[],
+      phase:'idle', choiceNode:null, choiceDeadline:null,
+      waitUntil:null, waitNextNode:null, pendingNode:null
     };
 
     const $ = id => document.getElementById(id);
@@ -238,9 +318,12 @@
     const choicesPanel = $('choicesPanel');
 
     // ── Prefs ───────────────────────
-    function loadPrefs() { try { const p = JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); }
+    function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); }
     function savePrefs() { localStorage.setItem(PREFS, JSON.stringify(prefs)); }
-    function applyTheme() { document.body.setAttribute('data-theme', prefs.theme); $('themeToggle').checked = prefs.theme==='dark'; }
+    function applyTheme() {
+      document.body.setAttribute('data-theme', prefs.theme);
+      $('themeToggle').checked = prefs.theme === 'dark';
+    }
 
     // ── Save / Load ─────────────────
     function save() { localStorage.setItem(SAVE, JSON.stringify(state)); }
@@ -248,16 +331,12 @@
       try {
         const s = JSON.parse(localStorage.getItem(SAVE));
         if (s) {
-          // Migrate old save formats — ensure all fields exist
           state = {
-            started: false, opened: false,
-            timeline: [], timelineIdx: 0,
-            history: [], choices: [],
-            phase: 'idle', choiceNode: null, choiceDeadline: null,
-            waitUntil: null, waitNextNode: null, pendingNode: null,
+            started:false, opened:false, timeline:[], timelineIdx:0,
+            history:[], choices:[], phase:'idle', choiceNode:null,
+            choiceDeadline:null, waitUntil:null, waitNextNode:null, pendingNode:null,
             ...s
           };
-          // Ensure arrays are arrays
           if (!Array.isArray(state.timeline)) state.timeline = [];
           if (!Array.isArray(state.history)) state.history = [];
           if (!Array.isArray(state.choices)) state.choices = [];
@@ -281,122 +360,94 @@
     }
     function isChatVisible() { return currentScreen === 'chatScreen'; }
 
+    // ── Time formatting ─────────────
+    function fmtTime(ts) {
+      const d = new Date(ts);
+      return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    }
+    function fmtDateSep(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const diff = (today - msgDay) / 86400000;
+      if (diff === 0) return 'Сегодня';
+      if (diff === 1) return 'Вчера';
+      return d.toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
+    }
+
     // ── Timeline Scheduling ─────────
-    // Convert a scenario node's messages into timestamped events
     function scheduleNode(nodeId, startTime) {
       const node = scenario.nodes[nodeId];
       if (!node) { state.phase = 'done'; save(); return; }
 
       let t = startTime;
-
       for (const msg of node.messages) {
         if (msg.type === 'typing') {
-          state.timeline.push({ ts: t, type: 'typing_start' });
+          state.timeline.push({ ts:t, type:'typing_start' });
           t += (msg.duration || 3000);
-          state.timeline.push({ ts: t, type: 'typing_end' });
+          state.timeline.push({ ts:t, type:'typing_end' });
           continue;
         }
-
         const text = msg.text || msg.alt || '';
         const len = text.length;
-
         if (msg.type === 'status') {
-          state.timeline.push({ ts: t, type: 'msg', data: { ...msg } });
-          t += 500;
-          continue;
+          state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+          t += 500; continue;
         }
-
-        // Think pause
-        const thinkTime = msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
-        t += thinkTime;
-
-        // Typing indicator
+        t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
         const typeTime = Math.max(1500, Math.min(len * 45, 4000));
-        state.timeline.push({ ts: t, type: 'typing_start' });
+        state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
-        state.timeline.push({ ts: t, type: 'typing_end' });
-
-        // Message appears
-        state.timeline.push({ ts: t, type: 'msg', data: { ...msg } });
-
-        // Reading pause
-        const readTime = Math.max(1500, Math.min(len * 70, 6000));
-        t += readTime;
+        state.timeline.push({ ts:t, type:'typing_end' });
+        state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+        t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
-      // After messages: determine next step
       if (node.choices) {
         state.choiceNode = nodeId;
         state.choiceDeadline = t + CHOICE_TIMEOUT * 1000;
         state.phase = 'choice';
-        state.pendingNode = null;
       } else if (node.wait) {
         state.waitUntil = t + node.wait * 1000;
         state.waitNextNode = node.next;
         state.phase = 'wait';
-        state.pendingNode = null;
-        // Schedule a status message at start of wait
-        const statusMsg = node.messages.find(m => m.type === 'status');
-        if (!statusMsg) {
-          state.timeline.push({ ts: t, type: 'msg', data: { type: 'status', text: 'Лика ушла исследовать...' } });
-        }
       } else if (node.next) {
-        // Chain: schedule next node starting at time t
-        state.pendingNode = null;
-        scheduleNode(node.next, t);
-        return; // don't save twice
+        scheduleNode(node.next, t); return;
       } else {
         state.phase = 'done';
-        state.pendingNode = null;
       }
-
       save();
     }
 
-    // ── Tick: process due events ────
+    // ── Tick ────────────────────────
     function tick() {
       if (!scenario || !state.timeline) return;
       const now = Date.now();
       let changed = false;
 
-      // 1. Deliver timeline events
       while (state.timelineIdx < state.timeline.length) {
         const evt = state.timeline[state.timelineIdx];
-        if (evt.ts > now) break; // not yet
-
+        if (evt.ts > now) break;
         state.timelineIdx++;
         changed = true;
-
         if (evt.type === 'msg') {
           state.history.push({ ...evt.data, _ts: evt.ts });
-          // Update checks on previous player message to "read"
           updateChecksToRead();
         }
-        // typing_start / typing_end handled in UI render
       }
 
-      // 2. Check choice timeout
       if (state.phase === 'choice' && state.choiceDeadline && now >= state.choiceDeadline) {
-        autoChoose(now);
-        changed = true;
+        autoChoose(now); changed = true;
       }
-
-      // 3. Check wait end
       if (state.phase === 'wait' && state.waitUntil && now >= state.waitUntil) {
         const next = state.waitNextNode;
-        state.waitUntil = null;
-        state.waitNextNode = null;
-        state.phase = 'playing';
+        state.waitUntil = null; state.waitNextNode = null; state.phase = 'playing';
         if (next) scheduleNode(next, now);
         changed = true;
       }
 
-      if (changed) {
-        save();
-        renderUI();
-      }
-
-      // Always update countdown displays
+      if (changed) { save(); renderUI(); }
       updateCountdowns(now);
     }
 
@@ -405,13 +456,9 @@
       if (!node || !node.choices) return;
       const defIdx = node.choices.findIndex(c => c.default);
       const ch = node.choices[defIdx >= 0 ? defIdx : 0];
-
-      state.history.push({ type: 'auto', text: 'Лика не дождалась ответа и решила сама', _ts: now });
+      state.history.push({ type:'auto', text:'Лика не дождалась ответа и решила сама', _ts:now });
       state.choices.push(ch.tag + '_auto');
-      state.choiceNode = null;
-      state.choiceDeadline = null;
-      state.phase = 'playing';
-
+      state.choiceNode = null; state.choiceDeadline = null; state.phase = 'playing';
       scheduleNode(ch.next, now + 1000);
     }
 
@@ -420,27 +467,18 @@
       if (!node || !node.choices || state.phase !== 'choice') return;
       const ch = node.choices[choiceIdx];
       const now = Date.now();
-
-      // Add player message with checks
-      state.history.push({ type: 'player', text: ch.text, checks: 1, _ts: now });
+      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
       state.choices.push(ch.tag);
-      state.choiceNode = null;
-      state.choiceDeadline = null;
-      state.phase = 'playing';
-
-      // Schedule "delivered" check update after 1s
+      state.choiceNode = null; state.choiceDeadline = null; state.phase = 'playing';
       setTimeout(() => {
         const pm = [...state.history].reverse().find(m => m.type === 'player');
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
-
       scheduleNode(ch.next, now + 1500);
-      save();
-      renderUI();
+      save(); renderUI();
     }
 
     function updateChecksToRead() {
-      // When NPC sends a message, mark the last player message as "read"
       for (let i = state.history.length - 1; i >= 0; i--) {
         if (state.history[i].type === 'player') {
           if (state.history[i].checks < 3) state.history[i].checks = 3;
@@ -452,31 +490,17 @@
     // ── UI Rendering ────────────────
 
     function renderUI() {
-      if (!isChatVisible()) {
-        updateContactList();
-        return;
-      }
-
+      if (!isChatVisible()) { updateContactList(); return; }
       const newCount = state.history.length;
-
-      // Append only new messages
       for (let i = lastRenderedCount; i < newCount; i++) {
-        addMsgDOM(state.history[i], i >= lastRenderedCount && lastRenderedCount > 0);
+        maybeAddDateSep(i);
+        addMsgDOM(state.history[i], i, lastRenderedCount > 0);
       }
       lastRenderedCount = newCount;
-
-      // Update all checkmarks
       updateAllChecks();
-
-      // Update typing indicator
       updateTypingUI();
-
-      // Show/hide choices
       updateChoiceUI();
-
-      // Show/hide wait
       updateWaitUI();
-
       scroll();
     }
 
@@ -484,40 +508,86 @@
       chatArea.innerHTML = '';
       lastRenderedCount = 0;
       for (let i = 0; i < state.history.length; i++) {
-        addMsgDOM(state.history[i], false);
+        maybeAddDateSep(i);
+        addMsgDOM(state.history[i], i, false);
       }
       lastRenderedCount = state.history.length;
-      updateAllChecks();
-      updateTypingUI();
-      updateChoiceUI();
-      updateWaitUI();
-      scroll();
+      updateAllChecks(); updateTypingUI(); updateChoiceUI(); updateWaitUI(); scroll();
     }
 
-    function addMsgDOM(msg, animate) {
-      const el = document.createElement('div');
+    function maybeAddDateSep(idx) {
+      const msg = state.history[idx];
+      if (!msg._ts) return;
+      if (idx === 0) {
+        const sep = document.createElement('div');
+        sep.className = 'date-sep';
+        sep.textContent = fmtDateSep(msg._ts);
+        chatArea.appendChild(sep);
+        return;
+      }
+      const prev = state.history[idx - 1];
+      if (prev._ts) {
+        const d1 = new Date(prev._ts).toDateString();
+        const d2 = new Date(msg._ts).toDateString();
+        if (d1 !== d2) {
+          const sep = document.createElement('div');
+          sep.className = 'date-sep';
+          sep.textContent = fmtDateSep(msg._ts);
+          chatArea.appendChild(sep);
+        }
+      }
+    }
+
+    function addMsgDOM(msg, histIdx, animate) {
       const cls = animate ? ' new-msg' : '';
 
-      if (msg.type === 'text') {
-        el.className = 'msg npc' + cls;
+      if (msg.type === 'status' || msg.type === 'auto') {
+        const el = document.createElement('div');
+        el.className = 'msg-status' + cls;
         el.textContent = msg.text;
-      } else if (msg.type === 'player') {
-        el.className = 'msg player' + cls;
-        el.dataset.playerIdx = state.history.indexOf(msg);
-        const textSpan = document.createElement('span');
-        textSpan.textContent = msg.text;
-        el.appendChild(textSpan);
-        const checksSpan = document.createElement('span');
-        checksSpan.className = 'checks';
-        el.appendChild(checksSpan);
+        chatArea.appendChild(el);
+        return;
+      }
+
+      const row = document.createElement('div');
+      const isPlayer = msg.type === 'player';
+      row.className = 'msg-row ' + (isPlayer ? 'player' : 'npc') + cls;
+
+      // Avatar for NPC
+      if (!isPlayer) {
+        const av = document.createElement('div');
+        av.className = 'msg-avatar';
+        av.textContent = 'Л';
+        row.appendChild(av);
+      }
+
+      const bubble = document.createElement('div');
+
+      if (msg.type === 'text' || msg.type === 'player') {
+        bubble.className = 'msg-bubble';
+        const meta = document.createElement('span');
+        meta.className = 'msg-meta';
+        if (msg._ts) {
+          const time = document.createElement('span');
+          time.textContent = fmtTime(msg._ts);
+          meta.appendChild(time);
+        }
+        if (isPlayer) {
+          const ck = document.createElement('span');
+          ck.className = 'checks';
+          ck.dataset.histIdx = histIdx;
+          meta.appendChild(ck);
+        }
+        bubble.textContent = msg.text;
+        bubble.appendChild(meta);
       } else if (msg.type === 'image') {
-        el.className = 'msg npc img-msg' + cls;
+        bubble.className = 'msg-bubble img-msg';
         const ph = document.createElement('div');
         ph.className = 'img-ph';
         ph.textContent = msg.alt || 'photo';
-        el.appendChild(ph);
+        bubble.appendChild(ph);
       } else if (msg.type === 'voice') {
-        el.className = 'msg npc voice-msg' + cls;
+        bubble.className = 'msg-bubble voice-msg';
         const btn = document.createElement('button');
         btn.className = 'v-play'; btn.innerHTML = '&#9654;';
         const wave = document.createElement('div');
@@ -528,63 +598,51 @@
         const dur = document.createElement('span');
         dur.className = 'v-dur';
         dur.textContent = '0:'+String(msg.duration||4).padStart(2,'0');
-        el.appendChild(btn); el.appendChild(wave); el.appendChild(dur);
+        bubble.appendChild(btn); bubble.appendChild(wave); bubble.appendChild(dur);
         if (msg.transcript) {
           btn.onclick = () => {
-            let t = el.querySelector('.vt');
+            let t = bubble.querySelector('.vt');
             if (t) { t.remove(); return; }
             t = document.createElement('div');
             t.className = 'vt';
             t.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
             t.textContent = '\u201c'+msg.transcript+'\u201d';
-            el.style.flexWrap = 'wrap';
-            el.appendChild(t);
+            bubble.style.flexWrap = 'wrap';
+            bubble.appendChild(t);
           };
         }
-      } else if (msg.type === 'status' || msg.type === 'auto') {
-        el.className = 'msg status-msg' + cls;
-        el.textContent = msg.text;
       }
 
-      chatArea.appendChild(el);
+      row.appendChild(bubble);
+      chatArea.appendChild(row);
     }
 
     function updateAllChecks() {
-      document.querySelectorAll('.msg.player').forEach(el => {
-        const idx = parseInt(el.dataset.playerIdx);
+      document.querySelectorAll('.checks[data-hist-idx]').forEach(el => {
+        const idx = parseInt(el.dataset.histIdx);
         const msg = state.history[idx];
         if (!msg) return;
-        const checksEl = el.querySelector('.checks');
-        if (!checksEl) return;
         const c = msg.checks || 0;
-        if (c === 1) { checksEl.textContent = '\u2713'; checksEl.className = 'checks sent'; }
-        else if (c === 2) { checksEl.textContent = '\u2713\u2713'; checksEl.className = 'checks delivered'; }
-        else if (c >= 3) { checksEl.textContent = '\u2713\u2713'; checksEl.className = 'checks read'; }
+        if (c === 1) { el.textContent = '\u2713'; el.className = 'checks sent'; }
+        else if (c === 2) { el.textContent = '\u2713\u2713'; el.className = 'checks delivered'; }
+        else if (c >= 3) { el.textContent = '\u2713\u2713'; el.className = 'checks read'; }
       });
     }
 
     function updateTypingUI() {
       const existing = $('td');
       const now = Date.now();
+      if (!state.timeline || state.timeline.length === 0) { if(existing) existing.remove(); return; }
 
-      if (!state.timeline || state.timeline.length === 0) {
-        if (existing) existing.remove();
-        return;
-      }
-
-      // Check if there's an active typing event
       let isTyping = false;
       for (let i = state.timelineIdx - 1; i >= 0; i--) {
-        const evt = state.timeline[i];
-        if (evt.ts > now) continue;
-        if (evt.type === 'typing_end') break;
-        if (evt.type === 'typing_start') { isTyping = true; break; }
+        const e = state.timeline[i]; if(e.ts > now) continue;
+        if (e.type === 'typing_end') break;
+        if (e.type === 'typing_start') { isTyping = true; break; }
       }
-      // Also check if next unprocessed event is typing_end (meaning we're in typing)
       if (!isTyping && state.timelineIdx < state.timeline.length) {
-        const next = state.timeline[state.timelineIdx];
-        if (next.type === 'typing_end' && next.ts > now) {
-          // Check if there was a typing_start before
+        const nx = state.timeline[state.timelineIdx];
+        if (nx.type === 'typing_end' && nx.ts > now) {
           for (let i = state.timelineIdx - 1; i >= 0; i--) {
             if (state.timeline[i].type === 'typing_start' && state.timeline[i].ts <= now) { isTyping = true; break; }
             if (state.timeline[i].type === 'typing_end') break;
@@ -593,10 +651,15 @@
       }
 
       if (isTyping && !existing) {
-        const el = document.createElement('div');
-        el.className = 'typing-dots'; el.id = 'td';
-        el.innerHTML = '<span></span><span></span><span></span>';
-        chatArea.appendChild(el);
+        const row = document.createElement('div');
+        row.className = 'msg-row npc typing'; row.id = 'td';
+        const av = document.createElement('div');
+        av.className = 'msg-avatar'; av.textContent = 'Л';
+        const dots = document.createElement('div');
+        dots.className = 'typing-dots';
+        dots.innerHTML = '<span></span><span></span><span></span>';
+        row.appendChild(av); row.appendChild(dots);
+        chatArea.appendChild(row);
         setStatus('печатает...', 'typing');
         scroll();
       } else if (!isTyping && existing) {
@@ -606,24 +669,15 @@
     }
 
     function updateChoiceUI() {
+      const inputBar = $('inputBar');
       if (state.phase !== 'choice' || !state.choiceNode) {
         choicesPanel.classList.add('hidden');
+        if (inputBar) inputBar.classList.remove('hidden');
         return;
       }
-
       const now = Date.now();
-      // Check all timeline events for this choice are delivered
-      const allDelivered = state.timelineIdx >= state.timeline.length ||
-        state.timeline[state.timelineIdx].ts > now;
-
-      // Only show choices after all preceding messages are delivered
-      // and we're past the last timeline event timestamp
-      if (!allDelivered) {
-        choicesPanel.classList.add('hidden');
-        return;
-      }
-
-      // Don't re-render if already showing
+      const allDone = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > now;
+      if (!allDone) { choicesPanel.classList.add('hidden'); return; }
       if (!choicesPanel.classList.contains('hidden') && choicesPanel.children.length > 1) return;
 
       const node = scenario.nodes[state.choiceNode];
@@ -631,10 +685,10 @@
 
       choicesPanel.innerHTML = '';
       choicesPanel.classList.remove('hidden');
+      if (inputBar) inputBar.classList.add('hidden');
 
       const cd = document.createElement('div');
-      cd.className = 'choices-countdown';
-      cd.id = 'choiceCountdown';
+      cd.className = 'choices-countdown'; cd.id = 'choiceCountdown';
       choicesPanel.appendChild(cd);
 
       node.choices.forEach((ch, idx) => {
@@ -646,91 +700,69 @@
     }
 
     function updateWaitUI() {
-      if (state.phase !== 'wait' || !state.waitUntil) {
-        $('waitPanel').classList.remove('active');
-        return;
-      }
+      if (state.phase !== 'wait' || !state.waitUntil) { $('waitPanel').classList.remove('active'); return; }
       $('waitPanel').classList.add('active');
       choicesPanel.classList.add('hidden');
+      $('inputBar').classList.add('hidden');
       setStatus('ушла', '');
     }
 
     function updateCountdowns(now) {
-      // Choice countdown
       if (state.phase === 'choice' && state.choiceDeadline) {
         const el = $('choiceCountdown');
-        if (el) {
-          const sec = Math.max(0, Math.ceil((state.choiceDeadline - now) / 1000));
-          el.textContent = `Лика ждёт ответ... ${sec}с`;
-        }
+        if (el) { const s = Math.max(0, Math.ceil((state.choiceDeadline - now)/1000)); el.textContent = `Лика ждёт ответ... ${s}с`; }
       }
-      // Wait countdown
       if (state.phase === 'wait' && state.waitUntil) {
         const rem = Math.max(0, state.waitUntil - now);
-        const sec = Math.ceil(rem / 1000);
-        $('waitClk').textContent = Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+        const s = Math.ceil(rem/1000);
+        $('waitClk').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
       }
     }
 
     function updateContactList() {
       const lt = [...state.history].reverse().find(m => m.type === 'text' || m.type === 'player');
       if (lt) $('ctPreview').textContent = lt.text;
-      // Count unread (messages since last time chat was opened)
-      // For now just show/hide badge
     }
 
-    function setStatus(txt, cls) {
-      $('hdrStatus').textContent = txt;
-      $('hdrStatus').className = 'chat-hdr-status' + (cls ? ' '+cls : '');
+    function setStatus(t, c) {
+      $('hdrStatus').textContent = t;
+      $('hdrStatus').className = 'chat-hdr-status' + (c ? ' '+c : '');
     }
 
     function scroll() { requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; }); }
 
     // ── Events ──────────────────────
-
-    $('startBtn').onclick = () => { state.started = true; save(); go('contactsScreen'); };
+    $('startBtn').onclick = () => { state.started=true; save(); go('contactsScreen'); };
     $('resetBtn').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
 
     $('contactLika').onclick = () => {
       if (!state.started) return;
       $('ctBadge').classList.add('hidden');
       go('chatScreen');
-
       if (!state.opened) {
-        state.opened = true;
-        state.phase = 'playing';
-        scheduleNode('start', Date.now());
-        save();
+        state.opened = true; state.phase = 'playing';
+        scheduleNode('start', Date.now()); save();
       }
-
       renderFullHistory();
     };
 
-    $('chatBack').onclick = () => {
-      go('contactsScreen');
-      updateContactList();
-    };
+    $('chatBack').onclick = () => { go('contactsScreen'); updateContactList(); };
 
     $('waitSkip').onclick = () => {
-      if (state.phase === 'wait' && state.waitUntil) {
-        state.waitUntil = Date.now();
-        save();
-        tick();
-      }
+      if (state.phase === 'wait' && state.waitUntil) { state.waitUntil = Date.now(); save(); tick(); }
     };
 
-    // Settings
-    $('settingsBtn').onclick = () => go('settingsScreen');
+    $('tabSettings').onclick = () => go('settingsScreen');
+    $('tabChatsFromSettings').onclick = () => go('contactsScreen');
     $('settingsBack').onclick = () => go('contactsScreen');
     $('themeToggle').onchange = (e) => { prefs.theme = e.target.checked ? 'dark' : 'light'; applyTheme(); savePrefs(); };
     $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); $('langRu').classList.add('active'); $('langEn').classList.remove('active'); };
     $('langEn').onclick = () => alert('English language coming soon!');
     $('settingsReset').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
 
-    // ── Visibility change ───────────
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && state.started && state.opened) {
-        tick(); // catch up on return
+        tick();
         if (isChatVisible()) renderFullHistory();
       }
     });
@@ -740,20 +772,10 @@
       loadPrefs();
       const resp = await fetch('./data/scenario.json');
       scenario = await resp.json();
-
       if (load() && state.started) {
         go('contactsScreen');
-        if (state.opened) {
-          updateContactList();
-          $('ctBadge').classList.add('hidden');
-          // Catch up on any missed events
-          tick();
-        }
-      } else {
-        go('startScreen');
-      }
-
-      // Main game loop — runs every 500ms
+        if (state.opened) { updateContactList(); $('ctBadge').classList.add('hidden'); tick(); }
+      } else { go('startScreen'); }
       setInterval(tick, 500);
     })();
   </script>
