@@ -305,12 +305,13 @@
       const pos = scenePositions[sceneId];
       const sx = e.clientX, sy = e.clientY;
       const ox = pos.x, oy = pos.y;
+      let rafId = 0;
       function onMove(ev) {
         pos.x = ox + (ev.clientX - sx);
         pos.y = oy + (ev.clientY - sy);
         card.style.left = pos.x + 'px';
         card.style.top = pos.y + 'px';
-        renderSceneMapConnections();
+        if (!rafId) rafId = requestAnimationFrame(() => { updateConnectionPaths(); rafId = 0; });
       }
       function onUp() {
         document.removeEventListener('mousemove', onMove);
@@ -318,6 +319,31 @@
       }
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
+    }
+
+    // Fast path update — reuses existing SVG elements
+    function updateConnectionPaths() {
+      const svg = document.getElementById('sceneMapSvg');
+      const paths = svg.querySelectorAll('[data-conn]');
+      paths.forEach(el => {
+        const [from, to] = el.dataset.conn.split('->');
+        const a = getCardRect(from), b = getCardRect(to);
+        if (!a || !b) return;
+        const x1 = a.x + a.w/2, y1 = a.y + a.h;
+        const x2 = b.x + b.w/2, y2 = b.y;
+        const curve = Math.max(Math.abs(y2-y1)*0.4, 30);
+        if (el.tagName === 'path') {
+          el.setAttribute('d', `M${x1},${y1} C${x1},${y1+curve} ${x2},${y2-curve} ${x2},${y2}`);
+        } else if (el.tagName === 'polygon') {
+          el.setAttribute('points', `${x2},${y2} ${x2-6},${y2-10} ${x2+6},${y2-10}`);
+        }
+      });
+    }
+
+    function getCardRect(sceneId) {
+      const card = document.querySelector(`.scene-card[data-scene-id="${sceneId}"]`);
+      if (!card) return null;
+      return { x: parseInt(card.style.left), y: parseInt(card.style.top), w: card.offsetWidth, h: card.offsetHeight };
     }
 
     function renderSceneMapConnections() {
@@ -361,27 +387,23 @@
         const a = cardRects[from], b = cardRects[to];
         if (!a || !b) return;
 
-        const x1 = a.x + a.w / 2;
-        const y1 = a.y + a.h;
-        const x2 = b.x + b.w / 2;
-        const y2 = b.y;
-
-        const dy = Math.abs(y2 - y1);
-        const curve = Math.max(dy * 0.4, 30);
+        const x1 = a.x + a.w / 2, y1 = a.y + a.h;
+        const x2 = b.x + b.w / 2, y2 = b.y;
+        const curve = Math.max(Math.abs(y2 - y1) * 0.4, 30);
+        const connId = `${from}->${to}`;
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + curve} ${x2},${y2 - curve} ${x2},${y2}`);
+        path.dataset.conn = connId;
+        path.setAttribute('d', `M${x1},${y1} C${x1},${y1+curve} ${x2},${y2-curve} ${x2},${y2}`);
         path.setAttribute('stroke', '#5b9cf5');
         path.setAttribute('stroke-width', '2.5');
         path.setAttribute('fill', 'none');
         path.setAttribute('opacity', '0.6');
         svg.appendChild(path);
 
-        // Arrowhead triangle
-        const angle = Math.atan2(y2 - (y2 - curve), x2 - x2);
-        const ax = x2, ay = y2;
         const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        arrow.setAttribute('points', `${ax},${ay} ${ax - 6},${ay - 10} ${ax + 6},${ay - 10}`);
+        arrow.dataset.conn = connId;
+        arrow.setAttribute('points', `${x2},${y2} ${x2-6},${y2-10} ${x2+6},${y2-10}`);
         arrow.setAttribute('fill', '#5b9cf5');
         arrow.setAttribute('opacity', '0.6');
         svg.appendChild(arrow);
