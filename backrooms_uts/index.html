@@ -623,7 +623,10 @@
       const newMsgs = newCount - prevCount;
       if (newMsgs > 0 && userScrolledUp) {
         unreadWhileScrolled += newMsgs;
-        $('scrollFabBadge').textContent = unreadWhileScrolled;
+      }
+      // Show FAB if scrolled up and there's something to see (new msgs or pending choice)
+      if (userScrolledUp && (unreadWhileScrolled > 0 || state.phase === 'choice')) {
+        $('scrollFabBadge').textContent = unreadWhileScrolled > 0 ? unreadWhileScrolled : '▼';
         $('scrollFab').classList.remove('hidden');
       } else if (!userScrolledUp) {
         scroll();
@@ -820,8 +823,18 @@
           bottomChoices.innerHTML = '';
           return;
         }
-        bottomStatus.textContent = ''; // Clear any previous status
+        // Don't show choices if user scrolled up (hasn't read messages)
+        if (userScrolledUp) {
+          bottomStatus.textContent = '';
+          bottomChoices.innerHTML = '';
+          $('scrollFabBadge').textContent = '▼';
+          $('scrollFab').classList.remove('hidden');
+          return;
+        }
+        bottomStatus.textContent = '';
         renderChoiceButtons();
+        // Auto-scroll so last message is visible above buttons
+        scroll();
       } else if (state.phase === 'wait' && state.waitUntil) {
         renderWaitPanel(now);
       } else if (state.phase === 'done') {
@@ -966,22 +979,34 @@
       userScrolledUp = false;
       unreadWhileScrolled = 0;
       $('scrollFab').classList.add('hidden');
-      requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+      requestAnimationFrame(() => {
+        chatArea.scrollTop = chatArea.scrollHeight;
+      });
+    }
+
+    // When scrolling to bottom, also trigger choice display if pending
+    function scrollAndShowChoices() {
+      scroll();
+      // Re-run bottom panel now that user is at bottom
+      requestAnimationFrame(() => updateBottomPanel());
     }
 
     // Scroll detection
     chatArea.addEventListener('scroll', () => {
       const atBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 60;
       if (atBottom) {
+        const wasScrolledUp = userScrolledUp;
         userScrolledUp = false;
         unreadWhileScrolled = 0;
         $('scrollFab').classList.add('hidden');
+        // If user just scrolled down to bottom, show pending choices
+        if (wasScrolledUp) updateBottomPanel();
       } else {
         userScrolledUp = true;
       }
     });
 
-    $('scrollFab').onclick = () => scroll();
+    $('scrollFab').onclick = () => scrollAndShowChoices();
 
     // ── Admin panel ─────────────────
 
