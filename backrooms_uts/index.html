@@ -469,6 +469,18 @@
       }
 
       if (changed) { save(); renderUI(); }
+
+      // Always try to show choice/wait UI even when no new events
+      // (choices appear after all timeline events are delivered)
+      if (isChatVisible() && !changed) {
+        if (state.phase === 'choice' && choicesPanel.classList.contains('hidden')) {
+          updateChoiceUI();
+        }
+        if (state.phase === 'wait') {
+          updateWaitUI();
+        }
+      }
+
       updateCountdowns(now);
     }
 
