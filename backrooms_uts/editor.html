@@ -243,7 +243,9 @@
       // Messages
       h += `<div class="ps"><label>Сообщения (${(node.messages||[]).length})</label>`;
       (node.messages||[]).forEach((m, i) => {
-        h += `<div class="mi"><span class="t">${m.type}</span><span class="v">${esc(m.text||m.alt||m.transcript||'—')}</span><span class="d" data-action="delMsg" data-idx="${i}">×</span></div>`;
+        const typeLabel = m.type === 'typing' ? '⏳' : m.type === 'image' ? '🖼' : m.type === 'voice' ? '🎤' : m.type === 'status' ? '📌' : 'text';
+        const valLabel = m.type === 'typing' ? `пауза ${(m.duration||3000)/1000}с` : (m.text||m.alt||m.transcript||'—');
+        h += `<div class="mi"><span class="t">${typeLabel}</span><span class="v">${esc(valLabel)}</span><span class="d" data-action="delMsg" data-idx="${i}">×</span></div>`;
       });
       h += `<button class="btn-s" data-action="addMsg">+ Сообщение</button></div>`;
 
