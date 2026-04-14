@@ -568,6 +568,34 @@
 
       h += `<div class="ps"><label>Next →</label><input value="${esc(node.next||'')}" id="pNext"></div>`;
 
+      // Scene end / next scene
+      h += `<div class="ps">`;
+      h += `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="pSceneEnd" ${node.sceneEnd?'checked':''} style="width:auto;"> Конец сцены (sceneEnd)</label>`;
+      if (node.sceneEnd) {
+        // nextScene editor
+        const ns = node.nextScene;
+        let nextSceneOpts = '<option value="">— нет (конец истории) —</option>';
+        if (scenario.scenes) scenario.scenes.forEach(s => {
+          const sel = (typeof ns === 'string' && ns === s.id) ? ' selected' : '';
+          nextSceneOpts += `<option value="${s.id}"${sel}>${s.order}. ${s.name}</option>`;
+        });
+        h += `<label style="margin-top:6px;">Следующая сцена</label>`;
+        h += `<select id="pNextScene">${nextSceneOpts}</select>`;
+
+        // Conditional transitions
+        if (Array.isArray(ns)) {
+          h += `<div style="margin-top:6px;font-size:11px;color:var(--dim);">Условные переходы:</div>`;
+          ns.forEach((rule, ri) => {
+            const condStr = rule.if ? JSON.stringify(rule.if) : 'default';
+            const sceneName = scenario.scenes?.find(s => s.id === rule.scene)?.name || rule.scene;
+            h += `<div class="mi"><span class="t" style="color:var(--orange);width:auto;">${esc(condStr)}</span><span class="v">→ ${esc(sceneName)}</span><span class="d" data-action="delSceneRule" data-idx="${ri}">×</span></div>`;
+          });
+          h += `<button class="btn-s" data-action="addSceneRule">+ Условие</button>`;
+        }
+        h += `<div style="margin-top:4px;"><button class="btn-s" data-action="toggleCondMode">${Array.isArray(ns) ? 'Простой режим' : 'Условные переходы'}</button></div>`;
+      }
+      h += `</div>`;
+
       // Messages
       h += `<div class="ps"><label>Сообщения (${(node.messages||[]).length})</label>`;
       (node.messages||[]).forEach((m, i) => {
@@ -625,6 +653,29 @@
           if (a === 'delChoice') { node.choices.splice(idx, 1); refreshNode(id); }
           if (a === 'addChoice') { const t = prompt('Текст выбора:'); if(t) { (node.choices=node.choices||[]).push({text:t,next:null,tag:'c_'+Date.now(),key:true}); refreshNode(id); } }
           if (a === 'delNode') { if(confirm('Удалить '+id+'?')) { delete scenario.nodes[id]; buildGraph(); } }
+          if (a === 'delSceneRule') { if(Array.isArray(node.nextScene)) { node.nextScene.splice(idx, 1); if(node.nextScene.length===0) node.nextScene=null; renderProps(); } }
+          if (a === 'addSceneRule') {
+            const sceneId = prompt('ID сцены:');
+            const flagStr = prompt('Условие (флаг, или пусто для default):');
+            if (sceneId) {
+              if (!Array.isArray(node.nextScene)) node.nextScene = [];
+              const rule = { scene: sceneId };
+              if (flagStr) rule.if = { flags: [flagStr] };
+              node.nextScene.push(rule);
+              renderProps();
+            }
+          }
+          if (a === 'toggleCondMode') {
+            if (Array.isArray(node.nextScene)) {
+              // Switch to simple — take first scene
+              node.nextScene = node.nextScene[0]?.scene || null;
+            } else {
+              // Switch to conditional
+              const current = node.nextScene;
+              node.nextScene = current ? [{ scene: current }] : [];
+            }
+            renderProps();
+          }
         });
       });
 
@@ -633,6 +684,20 @@
 
       const pScene = document.getElementById('pScene');
       if (pScene) pScene.onchange = () => { node.scene = pScene.value || null; refreshNode(id); };
+
+      const pSceneEnd = document.getElementById('pSceneEnd');
+      if (pSceneEnd) pSceneEnd.onchange = () => {
+        node.sceneEnd = pSceneEnd.checked || undefined;
+        if (!node.sceneEnd) { delete node.sceneEnd; delete node.nextScene; }
+        renderProps(); refreshNode(id);
+      };
+
+      const pNextScene = document.getElementById('pNextScene');
+      if (pNextScene) pNextScene.onchange = () => {
+        if (Array.isArray(node.nextScene)) return; // managed by conditional UI
+        node.nextScene = pNextScene.value || null;
+        refreshNode(id);
+      };
 
       const pWait = document.getElementById('pWait');
       if (pWait) pWait.onchange = () => { node.wait = parseInt(pWait.value); refreshNode(id); };
