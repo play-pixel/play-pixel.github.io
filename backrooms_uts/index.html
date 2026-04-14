@@ -179,26 +179,27 @@
     @keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
     .new-msg { animation: msgIn .25s ease; }
 
-    /* Choices */
-    .choices-panel { display:flex; flex-direction:column; gap:6px; padding:10px 12px; flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); }
-    .choices-panel button { width:100%; padding:12px 14px; border:1.5px solid var(--accent); border-radius:14px; background:transparent; color:var(--accent); font-size:14px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
-    .choices-panel button:active { background:var(--accent); color:#fff; }
-    .choices-panel button.choice-key { border-color:var(--accent); font-weight:600; }
+    /* Bottom panel — always visible */
+    .bottom-panel { flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
+    .bottom-status { font-size:12px; color:var(--text-dim); text-align:center; min-height:16px; }
+    .bottom-choices { display:flex; flex-direction:column; gap:6px; }
+    .bottom-choices:empty { display:none; }
+
+    .bottom-choices button { width:100%; padding:12px 14px; border:1.5px solid var(--accent); border-radius:14px; background:transparent; color:var(--accent); font-size:14px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
+    .bottom-choices button:active { background:var(--accent); color:#fff; }
+    .bottom-choices button.choice-key { border-color:var(--accent); font-weight:600; }
     .choice-arrow { font-size:10px; opacity:.6; }
-    .choices-panel button.choice-optional { border-color:var(--border); color:var(--text-dim); font-size:13px; border-style:dashed; }
-    .choices-panel button.choice-optional:active { background:var(--border); color:var(--text); border-style:solid; }
-    .choices-countdown { text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:2px; }
+    .bottom-choices button.choice-optional { border-color:var(--border); color:var(--text-dim); font-size:13px; border-style:dashed; }
+    .bottom-choices button.choice-optional:active { background:var(--border); color:var(--text); border-style:solid; }
+    .bottom-choices .opt-label { font-size:11px; color:var(--text-dim); text-align:center; margin:2px 0; }
 
-    /* Input bar (decorative) */
-    .input-bar { display:flex; align-items:center; padding:8px 12px; gap:8px; background:var(--surface); border-top:1px solid var(--border); flex-shrink:0; }
-    .input-field { flex:1; padding:10px 14px; border-radius:20px; border:1px solid var(--border); background:var(--input-bg); font-size:14px; color:var(--text-muted); }
+    .wait-skip { padding:6px 18px; border:1px solid var(--border); border-radius:16px; background:none; color:var(--text-muted); font-size:11px; cursor:pointer; display:inline-block; margin-top:2px; }
 
-    /* Wait */
-    .wait-panel { display:none; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:8px; flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); }
-    .wait-panel.active { display:flex; }
-    .wait-lbl { color:var(--text-dim); font-size:13px; }
-    .wait-clk { color:var(--text); font-size:20px; font-weight:300; font-variant-numeric:tabular-nums; }
-    .wait-skip { padding:7px 20px; border:1px solid var(--border); border-radius:20px; background:none; color:var(--text-dim); font-size:12px; cursor:pointer; }
+    /* Scroll-to-bottom FAB */
+    .scroll-fab { position:absolute; bottom:70px; right:16px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
+    .scroll-fab svg { width:36px; height:36px; padding:8px; background:var(--surface); border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,.15); color:var(--text-dim); }
+    .scroll-fab-badge { min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--accent); color:#fff; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; }
+    .scroll-fab-badge:empty { display:none; }
 
     .hidden { display:none !important; }
   </style>
@@ -279,21 +280,22 @@
   </div>
 
   <!-- Chat -->
-  <div class="screen" id="chatScreen">
+  <div class="screen" id="chatScreen" style="position:relative;">
     <div class="chat-hdr">
       <button class="chat-back" id="chatBack">&#8249;</button>
       <div class="chat-hdr-av">Л</div>
       <div class="chat-hdr-info"><div class="chat-hdr-name">Неизвестный номер</div><div class="chat-hdr-status" id="hdrStatus">в сети</div></div>
     </div>
     <div class="chat-area" id="chatArea"></div>
-    <div class="choices-panel hidden" id="choicesPanel"></div>
-    <div class="wait-panel" id="waitPanel">
-      <div class="wait-lbl" id="waitLbl">Лика ушла исследовать...</div>
-      <div class="wait-clk" id="waitClk">0:00</div>
-      <button class="wait-skip" id="waitSkip">пропустить ожидание</button>
+    <!-- Scroll-to-bottom button -->
+    <div class="scroll-fab hidden" id="scrollFab">
+      <span class="scroll-fab-badge" id="scrollFabBadge">0</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-    <div class="input-bar" id="inputBar">
-      <div class="input-field">Введите сообщение...</div>
+    <!-- Bottom panel — always visible -->
+    <div class="bottom-panel" id="bottomPanel">
+      <div class="bottom-status" id="bottomStatus"></div>
+      <div class="bottom-choices" id="bottomChoices"></div>
     </div>
   </div>
 
@@ -324,7 +326,10 @@
 
     const $ = id => document.getElementById(id);
     const chatArea = $('chatArea');
-    const choicesPanel = $('choicesPanel');
+    const bottomStatus = $('bottomStatus');
+    const bottomChoices = $('bottomChoices');
+    let userScrolledUp = false;
+    let unreadWhileScrolled = 0;
 
     // ── Prefs ───────────────────────
     function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); }
@@ -470,15 +475,9 @@
 
       if (changed) { save(); renderUI(); }
 
-      // Always try to show choice/wait UI even when no new events
-      // (choices appear after all timeline events are delivered)
-      if (isChatVisible() && !changed) {
-        if (state.phase === 'choice' && choicesPanel.classList.contains('hidden')) {
-          updateChoiceUI();
-        }
-        if (state.phase === 'wait') {
-          updateWaitUI();
-        }
+      // Always update bottom panel UI
+      if (isChatVisible()) {
+        updateBottomPanel();
       }
 
       updateCountdowns(now);
@@ -565,6 +564,7 @@
 
     function renderUI() {
       if (!isChatVisible()) { updateContactList(); return; }
+      const prevCount = lastRenderedCount;
       const newCount = state.history.length;
       for (let i = lastRenderedCount; i < newCount; i++) {
         maybeAddDateSep(i);
@@ -573,9 +573,16 @@
       lastRenderedCount = newCount;
       updateAllChecks();
       updateTypingUI();
-      updateChoiceUI();
-      updateWaitUI();
-      scroll();
+      updateBottomPanel();
+
+      const newMsgs = newCount - prevCount;
+      if (newMsgs > 0 && userScrolledUp) {
+        unreadWhileScrolled += newMsgs;
+        $('scrollFabBadge').textContent = unreadWhileScrolled;
+        $('scrollFab').classList.remove('hidden');
+      } else if (!userScrolledUp) {
+        scroll();
+      }
     }
 
     function renderFullHistory() {
@@ -586,7 +593,7 @@
         addMsgDOM(state.history[i], i, false);
       }
       lastRenderedCount = state.history.length;
-      updateAllChecks(); updateTypingUI(); updateChoiceUI(); updateWaitUI(); scroll();
+      updateAllChecks(); updateTypingUI(); updateBottomPanel(); scroll();
     }
 
     function maybeAddDateSep(idx) {
@@ -756,99 +763,98 @@
       }
     }
 
-    function updateChoiceUI() {
-      const inputBar = $('inputBar');
-      if (state.phase !== 'choice' || !state.choiceNode) {
-        choicesPanel.classList.add('hidden');
-        if (inputBar) inputBar.classList.remove('hidden');
-        return;
-      }
+    // ── Unified bottom panel ────────
+    function updateBottomPanel() {
       const now = Date.now();
-      if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
-        choicesPanel.classList.add('hidden');
-        return;
-      }
 
+      if (state.phase === 'choice' && state.choiceNode) {
+        if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
+          // Messages still delivering
+          bottomStatus.textContent = '';
+          bottomChoices.innerHTML = '';
+          return;
+        }
+        renderChoiceButtons();
+      } else if (state.phase === 'wait' && state.waitUntil) {
+        renderWaitPanel(now);
+      } else if (state.phase === 'done') {
+        bottomStatus.textContent = 'Конец истории';
+        bottomChoices.innerHTML = '';
+      } else {
+        // Playing or idle
+        bottomStatus.textContent = '';
+        bottomChoices.innerHTML = '';
+      }
+    }
+
+    function renderChoiceButtons() {
       const node = scenario.nodes[state.choiceNode];
       if (!node || !node.choices) return;
 
-      // Always re-render to reflect used optionals
-      choicesPanel.innerHTML = '';
-      choicesPanel.classList.remove('hidden');
-      if (inputBar) inputBar.classList.add('hidden');
+      bottomChoices.innerHTML = '';
 
-      const cd = document.createElement('div');
-      cd.className = 'choices-countdown'; cd.id = 'choiceCountdown';
-      choicesPanel.appendChild(cd);
-
-      // Key choices first (marked with arrow)
-      node.choices.filter(ch => ch.key).forEach((ch, _i, arr) => {
+      // Key choices
+      node.choices.filter(ch => ch.key).forEach(ch => {
         const idx = node.choices.indexOf(ch);
         const btn = document.createElement('button');
         btn.className = 'choice-key';
         btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + ch.text;
         btn.onclick = () => playerChoose(idx);
-        choicesPanel.appendChild(btn);
+        bottomChoices.appendChild(btn);
       });
 
-      // Optional choices (not yet used)
+      // Optional choices
       const optionals = node.choices.filter(ch => ch.optional && !state.usedOptionals.includes(ch.tag));
       if (optionals.length > 0) {
         const sep = document.createElement('div');
-        sep.style.cssText = 'font-size:11px;color:var(--text-dim);text-align:center;margin:4px 0 2px;';
+        sep.className = 'opt-label';
         sep.textContent = 'Узнать больше:';
-        choicesPanel.appendChild(sep);
-
+        bottomChoices.appendChild(sep);
         optionals.forEach(ch => {
           const idx = node.choices.indexOf(ch);
           const btn = document.createElement('button');
           btn.className = 'choice-optional';
           btn.textContent = ch.text;
           btn.onclick = () => playerChooseOptional(idx);
-          choicesPanel.appendChild(btn);
+          bottomChoices.appendChild(btn);
         });
       }
     }
 
-    function updateWaitUI() {
-      if (state.phase !== 'wait' || !state.waitUntil) {
-        $('waitPanel').classList.remove('active');
-        return;
-      }
+    function renderWaitPanel(now) {
+      const rem = Math.max(0, state.waitUntil - now);
+      const s = Math.ceil(rem / 1000);
+      const timeStr = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
 
-      // Check if wait-chat questions are available
+      // Check wait-chat availability
       const node = state.waitChatNode ? scenario.nodes[state.waitChatNode] : null;
-      const waitChats = node && node.waitChat ? node.waitChat.filter(wc =>
+      const allDelivered = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > now;
+      const waitChats = (node && node.waitChat && allDelivered) ? node.waitChat.filter(wc =>
         !state.usedOptionals.includes(wc.tag) &&
         (!wc.requires || state.knowledgeFlags.includes(wc.requires))
       ) : [];
 
-      // If there are wait-chat questions AND all timeline events delivered, show them
-      const allDelivered = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > Date.now();
+      bottomStatus.innerHTML = 'Лика вернётся через ' + timeStr +
+        ' <button class="wait-skip" id="waitSkipBtn">пропустить</button>';
 
-      if (waitChats.length > 0 && allDelivered) {
-        // Show wait-chat in choices panel instead of wait panel
-        $('waitPanel').classList.add('active');
-        $('inputBar').classList.add('hidden');
-        choicesPanel.innerHTML = '';
-        choicesPanel.classList.remove('hidden');
+      const skipBtn = $('waitSkipBtn');
+      if (skipBtn) skipBtn.onclick = () => {
+        state.waitUntil = Date.now(); save(); tick();
+      };
 
-        const timer = document.createElement('div');
-        timer.className = 'choices-countdown';
-        timer.id = 'waitChatTimer';
-        choicesPanel.appendChild(timer);
-
+      bottomChoices.innerHTML = '';
+      if (waitChats.length > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'opt-label';
+        sep.textContent = 'Пока можно спросить:';
+        bottomChoices.appendChild(sep);
         waitChats.forEach(wc => {
           const btn = document.createElement('button');
           btn.className = 'choice-optional';
           btn.textContent = wc.text;
           btn.onclick = () => playerWaitChat(wc);
-          choicesPanel.appendChild(btn);
+          bottomChoices.appendChild(btn);
         });
-      } else {
-        choicesPanel.classList.add('hidden');
-        $('waitPanel').classList.add('active');
-        $('inputBar').classList.add('hidden');
       }
 
       setStatus('ушла', '');
@@ -864,7 +870,6 @@
         state.knowledgeFlags.push(wc.flag);
       }
 
-      // Schedule response
       let t = now + 1500;
       for (const msg of wc.response) {
         const text = msg.text || '';
@@ -888,25 +893,14 @@
 
     function updateCountdowns(now) {
       if (state.phase === 'choice' && state.choiceDeadline && state.choiceAvailableAt && now >= state.choiceAvailableAt) {
-        const el = $('choiceCountdown');
-        if (el) {
-          const s = Math.max(0, Math.ceil((state.choiceDeadline - now)/1000));
-          const m = Math.floor(s / 60);
-          const sec = s % 60;
-          el.textContent = m > 0
-            ? `Лика ждёт ответ... ${m}м ${sec.toString().padStart(2,'0')}с`
-            : `Лика ждёт ответ... ${s}с`;
-        }
+        const s = Math.max(0, Math.ceil((state.choiceDeadline - now) / 1000));
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        bottomStatus.textContent = m > 0
+          ? `Лика ждёт ответ... ${m}м ${sec.toString().padStart(2,'0')}с`
+          : `Лика ждёт ответ... ${s}с`;
       }
-      if (state.phase === 'wait' && state.waitUntil) {
-        const rem = Math.max(0, state.waitUntil - now);
-        const s = Math.ceil(rem/1000);
-        const timeStr = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
-        $('waitClk').textContent = timeStr;
-        // Also update wait-chat timer if visible
-        const wcTimer = $('waitChatTimer');
-        if (wcTimer) wcTimer.textContent = 'Лика вернётся через ' + timeStr;
-      }
+      // Wait countdown handled in renderWaitPanel
     }
 
     function updateContactList() {
@@ -919,7 +913,26 @@
       $('hdrStatus').className = 'chat-hdr-status' + (c ? ' '+c : '');
     }
 
-    function scroll() { requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; }); }
+    function scroll() {
+      userScrolledUp = false;
+      unreadWhileScrolled = 0;
+      $('scrollFab').classList.add('hidden');
+      requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+    }
+
+    // Scroll detection
+    chatArea.addEventListener('scroll', () => {
+      const atBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 60;
+      if (atBottom) {
+        userScrolledUp = false;
+        unreadWhileScrolled = 0;
+        $('scrollFab').classList.add('hidden');
+      } else {
+        userScrolledUp = true;
+      }
+    });
+
+    $('scrollFab').onclick = () => scroll();
 
     // ── Events ──────────────────────
     $('startBtn').onclick = () => { state.started=true; save(); go('contactsScreen'); };
@@ -938,9 +951,7 @@
 
     $('chatBack').onclick = () => { go('contactsScreen'); updateContactList(); };
 
-    $('waitSkip').onclick = () => {
-      if (state.phase === 'wait' && state.waitUntil) { state.waitUntil = Date.now(); save(); tick(); }
-    };
+    // waitSkip is now dynamically created in renderWaitPanel
 
     $('tabSettings').onclick = () => go('settingsScreen');
     $('tabChatsFromSettings').onclick = () => go('contactsScreen');
