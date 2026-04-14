@@ -1002,9 +1002,14 @@
     function adminJumpToNode(nodeId) {
       if (!scenario || !scenario.nodes[nodeId]) return;
       const node = scenario.nodes[nodeId];
+      const now = Date.now();
 
-      // Clear future timeline
-      state.timeline = state.timeline.slice(0, state.timelineIdx);
+      console.log('ADMIN JUMP TO:', nodeId, node);
+
+      // Полный сброс движка
+      state.timeline = [];
+      state.timelineIdx = 0;
+      state.node = nodeId;
       state.choiceNode = null;
       state.choiceAvailableAt = null;
       state.choiceDeadline = null;
@@ -1012,15 +1017,13 @@
       state.waitNextNode = null;
       state.waitChatNode = null;
 
-      // Instantly deliver all messages of this node
-      const now = Date.now();
-      state.node = nodeId;
+      // Мгновенно добавить сообщения ноды в историю
       for (const msg of node.messages) {
-        if (msg.type === 'typing' || msg.type === 'status') continue;
+        if (msg.type === 'typing') continue;
         state.history.push({ ...msg, _ts: now });
       }
 
-      // Set phase based on node type
+      // Определить фазу
       if (node.choices) {
         state.choiceNode = nodeId;
         state.choiceAvailableAt = now;
@@ -1031,11 +1034,8 @@
         state.waitNextNode = node.next;
         state.waitChatNode = node.waitChat ? nodeId : null;
         state.phase = 'wait';
-      } else if (node.next) {
-        state.phase = 'playing';
-        // Don't auto-chain — stop here for admin inspection
-        state.node = nodeId;
       } else {
+        // Останавливаем на этой ноде, не продолжаем автоматически
         state.phase = 'done';
       }
 
@@ -1053,13 +1053,24 @@
     $('adminPrev').onclick = () => {
       const ids = getAllNodeIds();
       const idx = getCurrentNodeIdx();
-      if (idx > 0) adminJumpToNode(ids[idx - 1]);
+      console.log('ADMIN PREV:', idx, 'node:', state.node, 'ids:', ids.length);
+      if (idx > 0) {
+        adminJumpToNode(ids[idx - 1]);
+      } else if (idx === -1 && ids.length > 0) {
+        // node not found in list — jump to first
+        adminJumpToNode(ids[0]);
+      }
     };
 
     $('adminNext').onclick = () => {
       const ids = getAllNodeIds();
       const idx = getCurrentNodeIdx();
-      if (idx < ids.length - 1) adminJumpToNode(ids[idx + 1]);
+      console.log('ADMIN NEXT:', idx, 'node:', state.node, 'ids:', ids.length);
+      if (idx < ids.length - 1) {
+        adminJumpToNode(ids[idx + 1]);
+      } else if (idx === -1 && ids.length > 0) {
+        adminJumpToNode(ids[0]);
+      }
     };
 
     $('adminJumpNode').onclick = () => {
