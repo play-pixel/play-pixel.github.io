@@ -999,17 +999,36 @@
       $('adminHistory').textContent = state.history.length + ' msgs';
     }
 
-    function adminJumpToNode(nodeId) {
-      if (!scenario || !scenario.nodes[nodeId]) return;
-      const node = scenario.nodes[nodeId];
+    // Собрать линейную цепочку нод от start до конца (следуя next + default choices)
+    function buildNodeChain() {
+      const chain = [];
+      const visited = new Set();
+      let id = 'start';
+      while (id && scenario.nodes[id] && !visited.has(id)) {
+        visited.add(id);
+        chain.push(id);
+        const node = scenario.nodes[id];
+        if (node.choices) {
+          // Следуем по default choice
+          const def = node.choices.find(c => c.default) || node.choices.find(c => c.key) || node.choices[0];
+          id = def ? def.next : null;
+        } else {
+          id = node.next || null;
+        }
+      }
+      return chain;
+    }
+
+    function adminJumpToNode(targetId) {
+      if (!scenario || !scenario.nodes[targetId]) return;
       const now = Date.now();
+      const chain = buildNodeChain();
+      const targetIdx = chain.indexOf(targetId);
 
-      console.log('ADMIN JUMP TO:', nodeId, node);
-
-      // Полный сброс движка
+      // Полный сброс
       state.timeline = [];
       state.timelineIdx = 0;
-      state.node = nodeId;
+      state.history = [];
       state.choiceNode = null;
       state.choiceAvailableAt = null;
       state.choiceDeadline = null;
@@ -1017,26 +1036,45 @@
       state.waitNextNode = null;
       state.waitChatNode = null;
 
-      // Мгновенно добавить сообщения ноды в историю
-      for (const msg of node.messages) {
-        if (msg.type === 'typing') continue;
-        state.history.push({ ...msg, _ts: now });
+      // Мгновенно проиграть все ноды от начала до целевой
+      const nodesToPlay = targetIdx >= 0 ? chain.slice(0, targetIdx + 1) : [targetId];
+
+      for (const nid of nodesToPlay) {
+        const node = scenario.nodes[nid];
+        if (!node) continue;
+        state.node = nid;
+
+        for (const msg of node.messages) {
+          if (msg.type === 'typing') continue;
+          state.history.push({ ...msg, _ts: now });
+        }
+
+        // Если это choice-нода и не последняя — авто-выбор default
+        if (node.choices && nid !== targetId) {
+          const def = node.choices.find(c => c.default) || node.choices.find(c => c.key) || node.choices[0];
+          if (def) {
+            state.history.push({ type: 'player', text: def.text, checks: 3, _ts: now });
+            state.choices.push(def.tag);
+          }
+        }
       }
 
-      // Определить фазу
-      if (node.choices) {
-        state.choiceNode = nodeId;
+      // Установить фазу по последней ноде
+      const lastNode = scenario.nodes[targetId];
+      if (lastNode.choices) {
+        state.choiceNode = targetId;
         state.choiceAvailableAt = now;
         state.choiceDeadline = now + getChoiceTimeout();
         state.phase = 'choice';
-      } else if (node.wait) {
-        state.waitUntil = now + scaleWait(node.wait);
-        state.waitNextNode = node.next;
-        state.waitChatNode = node.waitChat ? nodeId : null;
+      } else if (lastNode.wait) {
+        state.waitUntil = now + scaleWait(lastNode.wait);
+        state.waitNextNode = lastNode.next;
+        state.waitChatNode = lastNode.waitChat ? targetId : null;
         state.phase = 'wait';
-      } else {
-        // Останавливаем на этой ноде, не продолжаем автоматически
+      } else if (!lastNode.next) {
         state.phase = 'done';
+      } else {
+        state.phase = 'done'; // Stop here for inspection
       }
 
       save();
@@ -1051,26 +1089,17 @@
     };
 
     $('adminPrev').onclick = () => {
-      const ids = getAllNodeIds();
-      const idx = getCurrentNodeIdx();
-      console.log('ADMIN PREV:', idx, 'node:', state.node, 'ids:', ids.length);
-      if (idx > 0) {
-        adminJumpToNode(ids[idx - 1]);
-      } else if (idx === -1 && ids.length > 0) {
-        // node not found in list — jump to first
-        adminJumpToNode(ids[0]);
-      }
+      const chain = buildNodeChain();
+      const idx = chain.indexOf(state.node);
+      if (idx > 0) adminJumpToNode(chain[idx - 1]);
+      else if (idx === -1) adminJumpToNode(chain[0]);
     };
 
     $('adminNext').onclick = () => {
-      const ids = getAllNodeIds();
-      const idx = getCurrentNodeIdx();
-      console.log('ADMIN NEXT:', idx, 'node:', state.node, 'ids:', ids.length);
-      if (idx < ids.length - 1) {
-        adminJumpToNode(ids[idx + 1]);
-      } else if (idx === -1 && ids.length > 0) {
-        adminJumpToNode(ids[0]);
-      }
+      const chain = buildNodeChain();
+      const idx = chain.indexOf(state.node);
+      if (idx < chain.length - 1) adminJumpToNode(chain[idx + 1]);
+      else if (idx === -1) adminJumpToNode(chain[0]);
     };
 
     $('adminJumpNode').onclick = () => {
@@ -1079,7 +1108,7 @@
       if (!jumpDiv.classList.contains('hidden')) {
         const sel = $('adminNodeSelect');
         sel.innerHTML = '';
-        getAllNodeIds().forEach(id => {
+        getAllNodeIds().forEach((id, i) => {
           const opt = document.createElement('option');
           opt.value = id;
           opt.textContent = id;
