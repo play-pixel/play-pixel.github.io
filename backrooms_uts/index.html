@@ -824,7 +824,7 @@
       } else if (state.phase === 'wait' && state.waitUntil) {
         renderWaitPanel(now);
       } else if (state.phase === 'done') {
-        bottomStatus.textContent = 'Конец истории';
+        bottomStatus.textContent = 'Новых сообщений нет';
         bottomChoices.innerHTML = '';
       } else {
         // Playing or idle
