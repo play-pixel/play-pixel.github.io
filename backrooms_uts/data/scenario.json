@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Backrooms: Untold Stories",
-    "version": "0.3.0",
+    "version": "0.5.0",
     "act": 1
   },
   "nodes": {
@@ -16,8 +16,8 @@
     "first_contact_1": {
       "messages": [],
       "choices": [
-        { "text": "Привет. Ты мне написала, я не знаю тебя", "next": "fc2_honest", "tag": "honest", "default": true },
-        { "text": "Это ты кто? У меня незнакомый номер высветился", "next": "fc2_confused", "tag": "confused" }
+        { "text": "Привет. Ты мне написала, я не знаю тебя", "next": "fc2_honest", "tag": "honest", "key": true, "default": true },
+        { "text": "Это ты кто? У меня незнакомый номер высветился", "next": "fc2_confused", "tag": "confused", "key": true }
       ]
     },
     "fc2_honest": {
@@ -54,8 +54,15 @@
     "fc3_name": {
       "messages": [],
       "choices": [
-        { "text": "Не важно как меня зовут. Что случилось?", "next": "fc4_noname", "tag": "noname", "default": true },
-        { "text": "Давай без имён. Расскажи что происходит", "next": "fc4_noname", "tag": "anon" }
+        { "text": "Не важно как меня зовут. Что случилось?", "next": "fc4_noname", "tag": "noname", "key": true, "default": true },
+        { "text": "Давай без имён. Расскажи что происходит", "next": "fc4_noname", "tag": "anon", "key": true },
+        { "text": "Лика — это полное имя?", "tag": "ask_name", "optional": true,
+          "response": [
+            { "type": "text", "text": "Ангелика", "delay": 2000 },
+            { "type": "text", "text": "только так меня никто не зовёт", "delay": 3000 },
+            { "type": "text", "text": "даже мама", "delay": 2500 }
+          ]
+        }
       ]
     },
     "fc4_noname": {
@@ -74,8 +81,22 @@
     "fc5": {
       "messages": [],
       "choices": [
-        { "text": "Провалилась? Как в яму?", "next": "fc5_what", "tag": "hole", "default": true },
-        { "text": "Ты упала? Тебе нужна скорая?", "next": "fc5_help", "tag": "help" }
+        { "text": "Провалилась? Как в яму?", "next": "fc5_what", "tag": "hole", "key": true, "default": true },
+        { "text": "Ты упала? Тебе нужна скорая?", "next": "fc5_help", "tag": "help", "key": true },
+        { "text": "После какой смены? Ты где работаешь?", "tag": "ask_job", "optional": true,
+          "response": [
+            { "type": "text", "text": "курьер", "delay": 2000 },
+            { "type": "text", "text": "на велике. доставка еды", "delay": 3000 },
+            { "type": "text", "text": "это не важно сейчас", "delay": 2500 }
+          ]
+        },
+        { "text": "Подземный переход — где конкретно?", "tag": "ask_location", "optional": true,
+          "response": [
+            { "type": "text", "text": "у метро Академическая", "delay": 2500 },
+            { "type": "text", "text": "переход к торговому центру", "delay": 3000 },
+            { "type": "text", "text": "я там каждый день хожу. тысячу раз проходила", "delay": 4000 }
+          ]
+        }
       ]
     },
     "fc5_what": {
@@ -100,7 +121,7 @@
     "first_photo": {
       "messages": [
         { "type": "typing", "duration": 4000 },
-        { "type": "image", "src": "corridor_01.jpg", "alt": "бесконечный коридор, флуоресцентные лампы, жёлтые стены, мокрый ковролин", "delay": 0 }
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/f/fb/BackroomsRender2.png", "alt": "бесконечный коридор, флуоресцентные лампы, жёлтые стены, мокрый ковролин", "delay": 0 }
       ],
       "next": "after_photo"
     },
@@ -117,8 +138,26 @@
     "reaction_choice": {
       "messages": [],
       "choices": [
-        { "text": "Это выглядит как... бэкрумс?", "next": "react_backrooms", "tag": "knows", "default": true },
-        { "text": "Где это? Ты в каком городе вообще?", "next": "react_where", "tag": "where" }
+        { "text": "Это выглядит как... бэкрумс?", "next": "react_backrooms", "tag": "knows", "key": true, "default": true },
+        { "text": "Где это? Ты в каком городе вообще?", "next": "react_where", "tag": "where", "key": true },
+        { "text": "Тебе страшно?", "tag": "ask_fear", "optional": true,
+          "response": [
+            { "type": "text", "text": "мне жутко", "delay": 2500 },
+            { "type": "text", "text": "тут тихо. слишком тихо", "delay": 3500 },
+            { "type": "text", "text": "только лампы гудят. и этот запах", "delay": 4000 },
+            { "type": "text", "text": "пахнет как в старом офисе который закрыли лет десять назад", "delay": 5000 }
+          ]
+        },
+        { "text": "У тебя есть кто-то близкий? Кто будет искать?", "tag": "ask_family", "optional": true,
+          "response": [
+            { "type": "text", "text": "мама", "delay": 2000 },
+            { "type": "text", "text": "но она в Калуге", "delay": 3000 },
+            { "type": "text", "text": "подруга Наташа. она наверное уже заметила что я не отвечаю", "delay": 5000 },
+            { "type": "text", "text": "парня нет если что", "delay": 3000 },
+            { "type": "text", "text": "кот есть. Шуруп", "delay": 2500 },
+            { "type": "text", "text": "боже, кто его покормит", "delay": 3000 }
+          ]
+        }
       ]
     },
     "react_backrooms": {
@@ -139,8 +178,16 @@
     "react_explain": {
       "messages": [],
       "choices": [
-        { "text": "Попробуй найти выход. Иди вдоль стены", "next": "start_explore", "tag": "practical", "default": true },
-        { "text": "Не паникуй. Давай разберёмся. Что у тебя с собой?", "next": "inventory_check", "tag": "calm" }
+        { "text": "Попробуй найти выход. Иди вдоль стены", "next": "start_explore", "tag": "practical", "key": true, "default": true },
+        { "text": "Не паникуй. Давай разберёмся. Что у тебя с собой?", "next": "inventory_check", "tag": "calm", "key": true },
+        { "text": "А ты вообще спортивная? Выносливая?", "tag": "ask_fitness", "optional": true,
+          "response": [
+            { "type": "text", "text": "я курьер на велике", "delay": 2500 },
+            { "type": "text", "text": "весь день кручу педали по Москве", "delay": 3500 },
+            { "type": "text", "text": "ноги стальные. руки тоже ничего", "delay": 3000 },
+            { "type": "text", "text": "но тут не велик нужен а чудо какое-нибудь", "delay": 4000 }
+          ]
+        }
       ]
     },
     "inventory_check": {
@@ -189,8 +236,8 @@
     },
     "corridor_choice": {
       "messages": [
-        { "type": "image", "src": "corridor_light.jpg", "alt": "светлый широкий коридор, лампы работают", "delay": 0 },
-        { "type": "image", "src": "corridor_dark.jpg", "alt": "тёмный узкий коридор, на стене что-то нацарапано", "delay": 2000 },
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg/600px-Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg", "alt": "светлый широкий коридор, лампы работают", "delay": 0 },
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/The_Corridor.jpg/600px-The_Corridor.jpg", "alt": "тёмный узкий коридор", "delay": 2000 },
         { "type": "text", "text": "два варианта", "delay": 3000 },
         { "type": "text", "text": "один светлый и широкий, другой тёмный и узкий", "delay": 4500 },
         { "type": "text", "text": "в тёмном что-то нацарапано на стене, не могу разобрать отсюда", "delay": 5000 },
@@ -201,8 +248,24 @@
     "choice_corridor": {
       "messages": [],
       "choices": [
-        { "text": "Иди на свет, там безопаснее", "next": "path_light", "tag": "light", "default": true },
-        { "text": "Подожди. Посмотри что написано на стене", "next": "path_dark", "tag": "dark" }
+        { "text": "Иди на свет, там безопаснее", "next": "path_light", "tag": "light", "key": true, "default": true },
+        { "text": "Подожди. Посмотри что написано на стене", "next": "path_dark", "tag": "dark", "key": true },
+        { "text": "Как ты себя чувствуешь? Не ранена?", "tag": "ask_health", "optional": true,
+          "response": [
+            { "type": "text", "text": "физически норм", "delay": 2000 },
+            { "type": "text", "text": "коленка немного ноет, ударилась когда падала", "delay": 4000 },
+            { "type": "text", "text": "и пить хочется", "delay": 2500 },
+            { "type": "text", "text": "но воду экономлю", "delay": 2500 }
+          ]
+        },
+        { "text": "Ты раньше слышала про такие места?", "tag": "ask_heard", "optional": true,
+          "response": [
+            { "type": "text", "text": "нет", "delay": 2000 },
+            { "type": "text", "text": "я вообще не из этих. не крипипаста, не хоррор", "delay": 4000 },
+            { "type": "text", "text": "я сериалы смотрю. нормальные. про людей", "delay": 4000 },
+            { "type": "text", "text": "а сейчас я внутри одного видимо", "delay": 3500 }
+          ]
+        }
       ]
     },
     "path_light": {
@@ -247,7 +310,7 @@
     },
     "wall_photo": {
       "messages": [
-        { "type": "image", "src": "wall_where_door.jpg", "alt": "сплошная стена на месте бывшего прохода", "delay": 3000 },
+        { "type": "image", "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Inevitable_end_of_corridor_%282098072225%29.jpg/600px-Inevitable_end_of_corridor_%282098072225%29.jpg", "alt": "сплошная стена на месте бывшего прохода", "delay": 3000 },
         { "type": "text", "text": "я не сошла с ума", "delay": 4000 },
         { "type": "text", "text": "тут был проход. Я ПОМНЮ", "delay": 4000 }
       ],
@@ -266,8 +329,8 @@
     "final_choice": {
       "messages": [],
       "choices": [
-        { "text": "Беги. Прямо сейчас.", "next": "act1_end_run", "tag": "run", "default": true },
-        { "text": "Не двигайся. Выключи фонарик. Замри.", "next": "act1_end_hide", "tag": "hide" }
+        { "text": "Беги. Прямо сейчас.", "next": "act1_end_run", "tag": "run", "key": true, "default": true },
+        { "text": "Не двигайся. Выключи фонарик. Замри.", "next": "act1_end_hide", "tag": "hide", "key": true }
       ]
     },
     "act1_end_run": {

@@ -183,6 +183,10 @@
     .choices-panel { display:flex; flex-direction:column; gap:6px; padding:10px 12px; flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); }
     .choices-panel button { width:100%; padding:12px 14px; border:1.5px solid var(--accent); border-radius:14px; background:transparent; color:var(--accent); font-size:14px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
     .choices-panel button:active { background:var(--accent); color:#fff; }
+    .choices-panel button.choice-key { border-color:var(--accent); font-weight:600; }
+    .choice-arrow { font-size:10px; opacity:.6; }
+    .choices-panel button.choice-optional { border-color:var(--border); color:var(--text-dim); font-size:13px; border-style:dashed; }
+    .choices-panel button.choice-optional:active { background:var(--border); color:var(--text); border-style:solid; }
     .choices-countdown { text-align:center; font-size:11px; color:var(--text-dim); margin-bottom:2px; }
 
     /* Input bar (decorative) */
@@ -314,7 +318,7 @@
       timeline:[], timelineIdx:0,
       history:[], choices:[],
       phase:'idle', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
-      waitUntil:null, waitNextNode:null, pendingNode:null
+      waitUntil:null, waitNextNode:null, pendingNode:null, usedOptionals:[]
     };
 
     const $ = id => document.getElementById(id);
@@ -493,6 +497,44 @@
       save(); renderUI();
     }
 
+    function playerChooseOptional(choiceIdx) {
+      const node = scenario.nodes[state.choiceNode];
+      if (!node || !node.choices || state.phase !== 'choice') return;
+      const ch = node.choices[choiceIdx];
+      if (!ch.optional || !ch.response) return;
+      const now = Date.now();
+
+      // Add player message
+      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+      state.usedOptionals.push(ch.tag);
+
+      // Schedule response messages, then return to choice
+      let t = now + 1500;
+      for (const msg of ch.response) {
+        const text = msg.text || '';
+        const len = text.length;
+        t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
+        const typeTime = Math.max(1500, Math.min(len * 45, 4000));
+        state.timeline.push({ ts:t, type:'typing_start' });
+        t += typeTime;
+        state.timeline.push({ ts:t, type:'typing_end' });
+        state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+        t += Math.max(1500, Math.min(len * 70, 6000));
+      }
+
+      // Reset deadline from end of optional response
+      state.choiceAvailableAt = t;
+      state.choiceDeadline = t + getChoiceTimeout();
+
+      // Mark player message as delivered
+      setTimeout(() => {
+        const pm = [...state.history].reverse().find(m => m.type === 'player');
+        if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
+      }, 1000);
+
+      save(); renderUI();
+    }
+
     function updateChecksToRead() {
       for (let i = state.history.length - 1; i >= 0; i--) {
         if (state.history[i].type === 'player') {
@@ -597,10 +639,24 @@
         bubble.appendChild(meta);
       } else if (msg.type === 'image') {
         bubble.className = 'msg-bubble img-msg';
-        const ph = document.createElement('div');
-        ph.className = 'img-ph';
-        ph.textContent = msg.alt || 'photo';
-        bubble.appendChild(ph);
+        if (msg.src && msg.src.startsWith('http')) {
+          const img = document.createElement('img');
+          img.src = msg.src;
+          img.alt = msg.alt || '';
+          img.style.cssText = 'width:100%;max-width:240px;border-radius:calc(var(--radius) - 2px);display:block;';
+          img.loading = 'lazy';
+          img.onerror = () => {
+            img.replaceWith(Object.assign(document.createElement('div'), {
+              className: 'img-ph', textContent: msg.alt || 'photo'
+            }));
+          };
+          bubble.appendChild(img);
+        } else {
+          const ph = document.createElement('div');
+          ph.className = 'img-ph';
+          ph.textContent = msg.alt || 'photo';
+          bubble.appendChild(ph);
+        }
       } else if (msg.type === 'voice') {
         bubble.className = 'msg-bubble voice-msg';
         const btn = document.createElement('button');
@@ -691,16 +747,15 @@
         return;
       }
       const now = Date.now();
-      // Don't show until all preceding messages are delivered
       if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
         choicesPanel.classList.add('hidden');
         return;
       }
-      if (!choicesPanel.classList.contains('hidden') && choicesPanel.children.length > 1) return;
 
       const node = scenario.nodes[state.choiceNode];
       if (!node || !node.choices) return;
 
+      // Always re-render to reflect used optionals
       choicesPanel.innerHTML = '';
       choicesPanel.classList.remove('hidden');
       if (inputBar) inputBar.classList.add('hidden');
@@ -709,12 +764,33 @@
       cd.className = 'choices-countdown'; cd.id = 'choiceCountdown';
       choicesPanel.appendChild(cd);
 
-      node.choices.forEach((ch, idx) => {
+      // Key choices first (marked with arrow)
+      node.choices.filter(ch => ch.key).forEach((ch, _i, arr) => {
+        const idx = node.choices.indexOf(ch);
         const btn = document.createElement('button');
-        btn.textContent = ch.text;
+        btn.className = 'choice-key';
+        btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + ch.text;
         btn.onclick = () => playerChoose(idx);
         choicesPanel.appendChild(btn);
       });
+
+      // Optional choices (not yet used)
+      const optionals = node.choices.filter(ch => ch.optional && !state.usedOptionals.includes(ch.tag));
+      if (optionals.length > 0) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'font-size:11px;color:var(--text-dim);text-align:center;margin:4px 0 2px;';
+        sep.textContent = 'Узнать больше:';
+        choicesPanel.appendChild(sep);
+
+        optionals.forEach(ch => {
+          const idx = node.choices.indexOf(ch);
+          const btn = document.createElement('button');
+          btn.className = 'choice-optional';
+          btn.textContent = ch.text;
+          btn.onclick = () => playerChooseOptional(idx);
+          choicesPanel.appendChild(btn);
+        });
+      }
     }
 
     function updateWaitUI() {
