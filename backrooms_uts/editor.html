@@ -19,6 +19,24 @@
 
     .main { display:flex; flex:1; overflow:hidden; }
 
+    /* View tabs */
+    .view-tabs { display:flex; gap:2px; background:var(--surface); border-radius:6px; padding:2px; }
+    .vt { padding:4px 12px; border:none; border-radius:4px; background:transparent; color:var(--dim); font-size:11px; cursor:pointer; font-weight:500; }
+    .vt.active { background:var(--accent); color:#fff; }
+
+    /* Scene map */
+    .scene-card { position:absolute; width:220px; background:var(--surface); border:2px solid var(--border); border-radius:10px; cursor:move; user-select:none; transition:border-color .15s; }
+    .scene-card:hover { border-color:var(--accent); }
+    .scene-card.selected { border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,156,245,.2); }
+    .scene-card-hdr { padding:10px 14px; font-size:14px; font-weight:700; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+    .scene-card-hdr .order { width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .scene-card-body { padding:8px 14px; font-size:12px; color:var(--dim); line-height:1.5; }
+    .scene-card-body .stat { color:var(--text); font-weight:500; }
+    .scene-card-footer { padding:6px 14px 10px; font-size:11px; border-top:1px solid var(--border); }
+    .scene-card-footer .next-tag { display:inline-block; padding:2px 8px; border-radius:4px; background:rgba(91,156,245,.15); color:var(--accent); font-size:10px; margin:2px 2px 0 0; }
+    .scene-card-footer .cond-tag { background:rgba(245,158,11,.15); color:var(--orange); }
+    .scene-card-footer .end-tag { background:rgba(239,68,68,.15); color:var(--red); }
+
     /* Sidebar */
     .sidebar { width:200px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
     .sb-hdr { padding:10px 12px; font-size:11px; font-weight:600; color:var(--dim); letter-spacing:1px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
@@ -79,7 +97,11 @@
     <select id="storySelect"></select>
     <button onclick="doLoad()">Загрузить</button>
     <span style="color:var(--border);margin:0 4px;">|</span>
-    <span style="font-size:11px;color:var(--dim);">Сцена:</span>
+    <div class="view-tabs">
+      <button class="vt active" id="vtNodes" onclick="switchView('nodes')">Ноды</button>
+      <button class="vt" id="vtMap" onclick="switchView('map')">Карта сцен</button>
+    </div>
+    <span style="font-size:11px;color:var(--dim);margin-left:8px;" id="sceneLabel">Сцена:</span>
     <select id="sceneSelect" onchange="onSceneChange()"><option value="">Все</option></select>
     <div class="spacer"></div>
     <div class="info" id="stats">—</div>
@@ -92,6 +114,10 @@
       <div class="sb-list" id="nodeList"></div>
     </div>
     <div id="drawflow"></div>
+    <div id="sceneMap" style="display:none;flex:1;position:relative;overflow:hidden;background:var(--bg);">
+      <svg id="sceneMapSvg" style="position:absolute;inset:0;width:100%;height:100%;"></svg>
+      <div id="sceneMapCards" style="position:absolute;inset:0;"></div>
+    </div>
     <div class="props" id="props">
       <div class="props-header">Свойства</div>
       <div class="props-empty" id="propsEmpty">Выбери ноду</div>
@@ -161,6 +187,221 @@
     function onSceneChange() {
       selectedScene = document.getElementById('sceneSelect').value;
       buildGraph();
+    }
+
+    let currentView = 'nodes';
+
+    function switchView(view) {
+      currentView = view;
+      document.getElementById('vtNodes').classList.toggle('active', view === 'nodes');
+      document.getElementById('vtMap').classList.toggle('active', view === 'map');
+      document.getElementById('drawflow').style.display = view === 'nodes' ? '' : 'none';
+      document.getElementById('sidebar').style.display = view === 'nodes' ? '' : 'none';
+      document.getElementById('sceneMap').style.display = view === 'map' ? 'flex' : 'none';
+      document.getElementById('sceneLabel').style.display = view === 'nodes' ? '' : 'none';
+      document.getElementById('sceneSelect').style.display = view === 'nodes' ? '' : 'none';
+      if (view === 'map') renderSceneMap();
+    }
+
+    let scenePositions = {};
+    let selectedSceneId = null;
+
+    function renderSceneMap() {
+      if (!scenario || !scenario.scenes) return;
+      const cards = document.getElementById('sceneMapCards');
+      const svg = document.getElementById('sceneMapSvg');
+      cards.innerHTML = '';
+      svg.innerHTML = '';
+
+      const scenes = [...scenario.scenes].sort((a,b) => (a.order||0) - (b.order||0));
+      const nodesByScene = {};
+      for (const [id, node] of Object.entries(scenario.nodes)) {
+        const s = node.scene || '_none';
+        if (!nodesByScene[s]) nodesByScene[s] = [];
+        nodesByScene[s].push({ id, node });
+      }
+
+      // Position scenes in a grid
+      const cols = Math.ceil(Math.sqrt(scenes.length));
+      const gapX = 280, gapY = 220, startX = 40, startY = 40;
+
+      scenes.forEach((scene, idx) => {
+        if (!scenePositions[scene.id]) {
+          scenePositions[scene.id] = {
+            x: startX + (idx % cols) * gapX,
+            y: startY + Math.floor(idx / cols) * gapY
+          };
+        }
+        const pos = scenePositions[scene.id];
+        const nodes = nodesByScene[scene.id] || [];
+        const choiceNodes = nodes.filter(n => n.node.choices);
+        const endNodes = nodes.filter(n => n.node.sceneEnd);
+
+        // Collect next scenes
+        const nextScenes = new Set();
+        endNodes.forEach(n => {
+          const ns = n.node.nextScene;
+          if (typeof ns === 'string') nextScenes.add(ns);
+          else if (Array.isArray(ns)) ns.forEach(r => nextScenes.add(r.scene));
+        });
+        // Also check nodes that link to nodes in other scenes
+        nodes.forEach(n => {
+          if (n.node.next && scenario.nodes[n.node.next] && scenario.nodes[n.node.next].scene !== scene.id) {
+            nextScenes.add(scenario.nodes[n.node.next].scene);
+          }
+        });
+
+        const card = document.createElement('div');
+        card.className = 'scene-card' + (scene.id === selectedSceneId ? ' selected' : '');
+        card.style.left = pos.x + 'px';
+        card.style.top = pos.y + 'px';
+
+        let footerHTML = '';
+        if (nextScenes.size > 0) {
+          nextScenes.forEach(ns => {
+            const meta = scenario.scenes.find(s => s.id === ns);
+            const label = meta ? `→ ${meta.order}. ${meta.name}` : `→ ${ns}`;
+            // Check if conditional
+            const isCond = endNodes.some(n => Array.isArray(n.node.nextScene));
+            footerHTML += `<span class="next-tag${isCond ? ' cond-tag' : ''}">${label}</span>`;
+          });
+        } else if (endNodes.length > 0) {
+          footerHTML = '<span class="next-tag end-tag">КОНЕЦ</span>';
+        }
+
+        card.innerHTML = `
+          <div class="scene-card-hdr"><span class="order">${scene.order||'?'}</span>${esc(scene.name)}</div>
+          <div class="scene-card-body">
+            ${scene.description ? `<div style="margin-bottom:4px;">${esc(scene.description)}</div>` : ''}
+            <div><span class="stat">${nodes.length}</span> нод, <span class="stat">${choiceNodes.length}</span> выборов</div>
+            <div>entry: <span class="stat">${scene.entry || '—'}</span></div>
+          </div>
+          ${footerHTML ? `<div class="scene-card-footer">${footerHTML}</div>` : ''}
+        `;
+
+        // Drag
+        card.addEventListener('mousedown', (e) => {
+          selectedSceneId = scene.id;
+          renderSceneMap();
+          startSceneDrag(e, card, scene.id);
+        });
+
+        // Double click to open scene in nodes view
+        card.addEventListener('dblclick', () => {
+          document.getElementById('sceneSelect').value = scene.id;
+          onSceneChange();
+          switchView('nodes');
+        });
+
+        cards.appendChild(card);
+      });
+
+      // Draw connections
+      scenes.forEach(scene => {
+        const fromPos = scenePositions[scene.id];
+        if (!fromPos) return;
+        const nodes = nodesByScene[scene.id] || [];
+
+        const targets = new Set();
+        nodes.forEach(n => {
+          if (n.node.sceneEnd && n.node.nextScene) {
+            if (typeof n.node.nextScene === 'string') targets.add(n.node.nextScene);
+            else if (Array.isArray(n.node.nextScene)) n.node.nextScene.forEach(r => targets.add(r.scene));
+          }
+          if (n.node.next && scenario.nodes[n.node.next] && scenario.nodes[n.node.next].scene !== scene.id) {
+            targets.add(scenario.nodes[n.node.next].scene);
+          }
+        });
+
+        targets.forEach(targetId => {
+          const toPos = scenePositions[targetId];
+          if (!toPos) return;
+          const x1 = fromPos.x + 110, y1 = fromPos.y + 160;
+          const x2 = toPos.x + 110, y2 = toPos.y;
+          const cy1 = y1 + 50, cy2 = y2 - 50;
+
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', `M${x1},${y1} C${x1},${cy1} ${x2},${cy2} ${x2},${y2}`);
+          path.setAttribute('stroke', 'var(--accent)');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('opacity', '0.5');
+          path.setAttribute('marker-end', 'url(#arrowhead)');
+          svg.appendChild(path);
+        });
+      });
+
+      // Arrow marker
+      if (!svg.querySelector('defs')) {
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" opacity="0.6"/></marker>`;
+        svg.prepend(defs);
+      }
+    }
+
+    function startSceneDrag(e, card, sceneId) {
+      e.preventDefault();
+      const pos = scenePositions[sceneId];
+      const sx = e.clientX, sy = e.clientY;
+      const ox = pos.x, oy = pos.y;
+      function onMove(ev) {
+        pos.x = ox + (ev.clientX - sx);
+        pos.y = oy + (ev.clientY - sy);
+        card.style.left = pos.x + 'px';
+        card.style.top = pos.y + 'px';
+        renderSceneMapConnections();
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    }
+
+    function renderSceneMapConnections() {
+      // Re-render only SVG connections
+      const svg = document.getElementById('sceneMapSvg');
+      svg.querySelectorAll('path').forEach(p => p.remove());
+      if (!scenario || !scenario.scenes) return;
+
+      const nodesByScene = {};
+      for (const [id, node] of Object.entries(scenario.nodes)) {
+        const s = node.scene || '_none';
+        if (!nodesByScene[s]) nodesByScene[s] = [];
+        nodesByScene[s].push({ id, node });
+      }
+
+      scenario.scenes.forEach(scene => {
+        const fromPos = scenePositions[scene.id];
+        if (!fromPos) return;
+        const nodes = nodesByScene[scene.id] || [];
+        const targets = new Set();
+        nodes.forEach(n => {
+          if (n.node.sceneEnd && n.node.nextScene) {
+            if (typeof n.node.nextScene === 'string') targets.add(n.node.nextScene);
+            else if (Array.isArray(n.node.nextScene)) n.node.nextScene.forEach(r => targets.add(r.scene));
+          }
+          if (n.node.next && scenario.nodes[n.node.next] && scenario.nodes[n.node.next].scene !== scene.id) {
+            targets.add(scenario.nodes[n.node.next].scene);
+          }
+        });
+        targets.forEach(targetId => {
+          const toPos = scenePositions[targetId];
+          if (!toPos) return;
+          const x1 = fromPos.x + 110, y1 = fromPos.y + 160;
+          const x2 = toPos.x + 110, y2 = toPos.y;
+          const cy1 = y1 + 50, cy2 = y2 - 50;
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', `M${x1},${y1} C${x1},${cy1} ${x2},${cy2} ${x2},${y2}`);
+          path.setAttribute('stroke', 'var(--accent)');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('opacity', '0.5');
+          path.setAttribute('marker-end', 'url(#arrowhead)');
+          svg.appendChild(path);
+        });
+      });
     }
 
     function getFilteredNodeIds() {
