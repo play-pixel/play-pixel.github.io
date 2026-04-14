@@ -815,11 +815,11 @@
 
       if (state.phase === 'choice' && state.choiceNode) {
         if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
-          // Messages still delivering
           bottomStatus.textContent = '';
           bottomChoices.innerHTML = '';
           return;
         }
+        bottomStatus.textContent = ''; // Clear any previous status
         renderChoiceButtons();
       } else if (state.phase === 'wait' && state.waitUntil) {
         renderWaitPanel(now);
@@ -1029,6 +1029,9 @@
       state.timeline = [];
       state.timelineIdx = 0;
       state.history = [];
+      state.choices = [];
+      state.usedOptionals = [];
+      state.knowledgeFlags = [];
       state.choiceNode = null;
       state.choiceAvailableAt = null;
       state.choiceDeadline = null;
