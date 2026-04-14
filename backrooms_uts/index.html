@@ -313,7 +313,7 @@
       started:false, opened:false,
       timeline:[], timelineIdx:0,
       history:[], choices:[],
-      phase:'idle', choiceNode:null, choiceDeadline:null,
+      phase:'idle', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
       waitUntil:null, waitNextNode:null, pendingNode:null
     };
 
@@ -419,6 +419,8 @@
 
       if (node.choices) {
         state.choiceNode = nodeId;
+        // Deadline starts AFTER all messages are delivered (t = time of last msg)
+        state.choiceAvailableAt = t;
         state.choiceDeadline = t + getChoiceTimeout();
         state.phase = 'choice';
       } else if (node.wait) {
@@ -471,7 +473,7 @@
       const ch = node.choices[defIdx >= 0 ? defIdx : 0];
       state.history.push({ type:'auto', text:'Лика не дождалась ответа и решила сама', _ts:now });
       state.choices.push(ch.tag + '_auto');
-      state.choiceNode = null; state.choiceDeadline = null; state.phase = 'playing';
+      state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
       scheduleNode(ch.next, now + 1000);
     }
 
@@ -482,7 +484,7 @@
       const now = Date.now();
       state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
       state.choices.push(ch.tag);
-      state.choiceNode = null; state.choiceDeadline = null; state.phase = 'playing';
+      state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
       setTimeout(() => {
         const pm = [...state.history].reverse().find(m => m.type === 'player');
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
@@ -689,8 +691,11 @@
         return;
       }
       const now = Date.now();
-      const allDone = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > now;
-      if (!allDone) { choicesPanel.classList.add('hidden'); return; }
+      // Don't show until all preceding messages are delivered
+      if (state.choiceAvailableAt && now < state.choiceAvailableAt) {
+        choicesPanel.classList.add('hidden');
+        return;
+      }
       if (!choicesPanel.classList.contains('hidden') && choicesPanel.children.length > 1) return;
 
       const node = scenario.nodes[state.choiceNode];
@@ -721,7 +726,7 @@
     }
 
     function updateCountdowns(now) {
-      if (state.phase === 'choice' && state.choiceDeadline) {
+      if (state.phase === 'choice' && state.choiceDeadline && state.choiceAvailableAt && now >= state.choiceAvailableAt) {
         const el = $('choiceCountdown');
         if (el) {
           const s = Math.max(0, Math.ceil((state.choiceDeadline - now)/1000));
