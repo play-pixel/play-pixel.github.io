@@ -281,6 +281,18 @@
         node.choices.forEach((c, i) => {
           const tags = []; if(c.key) tags.push('KEY'); if(c.optional) tags.push('OPT'); if(c.default) tags.push('DEF');
           h += `<div class="mi"><span class="t" style="color:${c.optional?'var(--dim)':'var(--orange)'}">${tags.join(' ')||'—'}</span><span class="v">${esc(c.text)}</span><span class="d" data-action="delChoice" data-idx="${i}">×</span></div>`;
+          if (c.flag || c.requires) {
+            h += `<div style="margin:0 0 2px 42px;font-size:10px;">`;
+            if (c.flag) h += `<span style="color:var(--green);">flag: ${c.flag}</span> `;
+            if (c.requires) h += `<span style="color:var(--orange);">requires: ${c.requires}</span>`;
+            h += `</div>`;
+          }
+          if (c.optional && c.response && c.response.length > 0) {
+            h += `<div style="margin:0 0 6px 42px;padding:4px 8px;background:var(--bg);border-radius:4px;border-left:2px solid var(--purple);font-size:10px;color:var(--dim);">`;
+            h += `<div style="color:var(--purple);margin-bottom:2px;">Ответ (${c.response.length}):</div>`;
+            c.response.forEach(r => { h += `<div style="color:var(--text);opacity:.7;">${esc(r.text||'—')}</div>`; });
+            h += `</div>`;
+          }
         });
         h += `<button class="btn-s" data-action="addChoice">+ Выбор</button></div>`;
       }
