@@ -836,6 +836,8 @@
     function renderChoiceButtons() {
       const node = scenario.nodes[state.choiceNode];
       if (!node || !node.choices) return;
+      if (!state.usedOptionals) state.usedOptionals = [];
+      if (!state.knowledgeFlags) state.knowledgeFlags = [];
 
       bottomChoices.innerHTML = '';
 
@@ -868,6 +870,8 @@
     }
 
     function renderWaitPanel(now) {
+      if (!state.usedOptionals) state.usedOptionals = [];
+      if (!state.knowledgeFlags) state.knowledgeFlags = [];
       const rem = Math.max(0, state.waitUntil - now);
       const s = Math.ceil(rem / 1000);
       const timeStr = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
