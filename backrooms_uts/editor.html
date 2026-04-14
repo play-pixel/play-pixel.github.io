@@ -19,6 +19,20 @@
 
     .main { display:flex; flex:1; overflow:hidden; }
 
+    /* Sidebar */
+    .sidebar { width:200px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+    .sb-hdr { padding:10px 12px; font-size:11px; font-weight:600; color:var(--dim); letter-spacing:1px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    .sb-list { flex:1; overflow-y:auto; }
+    .sb-item { padding:7px 12px; font-size:12px; cursor:pointer; border-left:3px solid transparent; display:flex; align-items:center; gap:6px; }
+    .sb-item:hover { background:var(--surface); }
+    .sb-item.active { background:var(--surface); border-left-color:var(--accent); }
+    .sb-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .sb-dot.msg { background:var(--accent); }
+    .sb-dot.choice { background:var(--orange); }
+    .sb-dot.wait { background:var(--purple); }
+    .sb-dot.end { background:var(--red); }
+    .sb-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+
     /* Drawflow overrides */
     #drawflow { flex:1; background:var(--bg); }
     .drawflow .connection .main-path { stroke:var(--accent); stroke-width:2; }
@@ -70,6 +84,10 @@
     <button onclick="doCopy()" class="primary">Копировать</button>
   </div>
   <div class="main">
+    <div class="sidebar" id="sidebar">
+      <div class="sb-hdr">НОДЫ <button class="btn-s" onclick="addNewNode()">+</button></div>
+      <div class="sb-list" id="nodeList"></div>
+    </div>
     <div id="drawflow"></div>
     <div class="props" id="props">
       <div class="props-header">Свойства</div>
@@ -203,6 +221,7 @@
       });
 
       updateStats();
+      renderNodeList();
     }
 
     function countOutputs(node) {
@@ -217,11 +236,13 @@
     editor.on('nodeSelected', (dfId) => {
       selectedScenarioNode = dfIdMap[dfId] || null;
       renderProps();
+      renderNodeList();
     });
 
     editor.on('nodeUnselected', () => {
       selectedScenarioNode = null;
       renderProps();
+      renderNodeList();
     });
 
     // ── Properties panel ────────
@@ -319,6 +340,48 @@
 
     function doCopy() {
       navigator.clipboard.writeText(JSON.stringify(scenario, null, 2)).then(() => alert('Скопировано!'));
+    }
+
+    function renderNodeList() {
+      const list = document.getElementById('nodeList');
+      list.innerHTML = '';
+      if (!scenario) return;
+      Object.keys(scenario.nodes).forEach(id => {
+        const node = scenario.nodes[id];
+        const type = getType(node);
+        const item = document.createElement('div');
+        item.className = 'sb-item' + (id === selectedScenarioNode ? ' active' : '');
+        item.innerHTML = `<span class="sb-dot ${type}"></span><span class="sb-name">${id}</span>`;
+        item.onclick = () => {
+          selectedScenarioNode = id;
+          renderProps();
+          renderNodeList();
+          // Focus node in drawflow
+          const dfId = nodeIdMap[id];
+          if (dfId) {
+            const el = document.querySelector(`#node-${dfId}`);
+            if (el) {
+              editor.dispatch('nodeSelected', dfId);
+              el.classList.add('selected');
+              // Pan to node
+              const x = editor.drawflow.drawflow.Home.data[dfId].pos_x;
+              const y = editor.drawflow.drawflow.Home.data[dfId].pos_y;
+              editor.canvas_x = -(x - 400);
+              editor.canvas_y = -(y - 200);
+              editor.precanvas.style.transform = `translate(${editor.canvas_x}px, ${editor.canvas_y}px) scale(${editor.zoom})`;
+            }
+          }
+        };
+        list.appendChild(item);
+      });
+    }
+
+    function addNewNode() {
+      if (!scenario) return;
+      const id = prompt('ID новой ноды:');
+      if (!id || scenario.nodes[id]) return;
+      scenario.nodes[id] = { messages: [], next: null };
+      buildGraph();
     }
 
     function updateStats() {
