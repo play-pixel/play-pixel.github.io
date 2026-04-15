@@ -621,6 +621,40 @@
       renderNodeList();
     });
 
+    // Walk up the node chain to find which choice led to this node
+    function findChoiceTagForNode(nodeId, outputClass) {
+      const node = scenario.nodes[nodeId];
+      if (!node) return '';
+
+      // Direct: source is a choice node
+      if (node.choices) {
+        const outputIdx = parseInt((outputClass || '').replace('output_', '')) - 1;
+        let outCount = node.next ? 1 : 0;
+        if (outputIdx >= outCount && node.choices[outputIdx - outCount]) {
+          return node.choices[outputIdx - outCount].tag || '';
+        }
+      }
+
+      // Indirect: walk backwards — find who points to this node via choice
+      for (const [id, n] of Object.entries(scenario.nodes)) {
+        if (n.choices) {
+          for (const c of n.choices) {
+            if (c.next === nodeId && c.tag) return c.tag;
+          }
+        }
+      }
+
+      // Walk further: check who has `next` pointing here, then check their parent
+      for (const [id, n] of Object.entries(scenario.nodes)) {
+        if (n.next === nodeId) {
+          const tag = findChoiceTagForNode(id, '');
+          if (tag) return tag;
+        }
+      }
+
+      return '';
+    }
+
     // When a connection is created to an END node, auto-detect source
     editor.on('connectionCreated', (conn) => {
       const targetDfId = conn.input_id;
@@ -638,18 +672,9 @@
 
       const transitionIdx = inputIdx - 1; // transitions[0] = input_2, etc.
 
-      // Try to find choice tag from source node
-      const sourceNode = scenario.nodes[sourceNodeId];
+      // Try to find choice tag — check source node, or walk up the chain
       let autoTag = '';
-      if (sourceNode?.choices) {
-        // Find which output port was used
-        const outputIdx = parseInt(conn.output_class.replace('output_', '')) - 1;
-        // Map output to choice
-        let outCount = sourceNode.next ? 1 : 0;
-        if (outputIdx >= outCount && sourceNode.choices[outputIdx - outCount]) {
-          autoTag = sourceNode.choices[outputIdx - outCount].tag || '';
-        }
-      }
+      autoTag = findChoiceTagForNode(sourceNodeId, conn.output_class);
 
       // Update transition
       if (!targetNode.transitions) targetNode.transitions = [];
