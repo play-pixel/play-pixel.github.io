@@ -118,7 +118,8 @@
     <select id="sceneSelect" onchange="onSceneChange()"><option value="">Все</option></select>
     <div class="spacer"></div>
     <div class="info" id="stats">—</div>
-    <button onclick="doExport()">Экспорт JSON</button>
+    <button onclick="doLoad(true)" title="Загрузить с сервера (сбросить локальные изменения)">Сброс</button>
+    <button onclick="doExport()">Скачать</button>
     <button onclick="doCopy()" class="primary">Копировать</button>
   </div>
   <div class="main">
@@ -172,8 +173,23 @@
       if (data.stories[0]?.scenario) { sel.value = data.stories[0].scenario; await doLoad(); }
     }
 
-    async function doLoad() {
+    async function doLoad(forceServer) {
       const path = document.getElementById('storySelect').value;
+
+      // Try localStorage first
+      if (!forceServer) {
+        const saved = autoLoad();
+        if (saved) {
+          scenario = saved;
+          migrateToScenes(scenario);
+          selectedScene = '';
+          populateSceneSelect();
+          buildGraph();
+          document.getElementById('stats').textContent += ' (localStorage)';
+          return;
+        }
+      }
+
       const resp = await fetch('./' + path);
       scenario = await resp.json();
       migrateToScenes(scenario);
@@ -570,6 +586,7 @@
 
       updateStats();
       renderNodeList();
+      autoSave();
     }
 
     function countOutputs(node) {
@@ -831,6 +848,7 @@
       }
       renderProps();
       updateStats();
+      autoSave();
     }
 
     // ── Export ───────────────────
@@ -838,11 +856,34 @@
     function doExport() {
       const json = JSON.stringify(scenario, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'scenario.json'; a.click();
+      const sel = document.getElementById('storySelect');
+      const filename = sel.value.split('/').pop() || 'scenario.json';
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
     }
 
     function doCopy() {
       navigator.clipboard.writeText(JSON.stringify(scenario, null, 2)).then(() => alert('Скопировано!'));
+    }
+
+    // Auto-save to localStorage on every change
+    function autoSave() {
+      if (!scenario) return;
+      const key = 'editor_' + (document.getElementById('storySelect').value || 'default');
+      localStorage.setItem(key, JSON.stringify(scenario));
+      localStorage.setItem('editor_lastStory', document.getElementById('storySelect').value);
+    }
+
+    function autoLoad() {
+      const path = document.getElementById('storySelect').value;
+      const key = 'editor_' + path;
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.nodes && Object.keys(data.nodes).length > 0) return data;
+        } catch(e) {}
+      }
+      return null;
     }
 
     function renderNodeList() {
