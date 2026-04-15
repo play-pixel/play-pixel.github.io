@@ -933,8 +933,8 @@
 
     function addStartNode() {
       if (!scenario) return;
-      const scene = selectedScene || prompt('ID сцены:');
-      if (!scene) return;
+      if (!selectedScene) { alert('Сначала выбери сцену в dropdown'); return; }
+      const scene = selectedScene;
       const id = scene + '_start';
       if (scenario.nodes[id]) { alert('START уже есть в этой сцене'); return; }
       scenario.nodes[id] = { type: 'scene_start', next: null, scene: scene };
@@ -945,8 +945,8 @@
 
     function addEndNode() {
       if (!scenario) return;
-      const scene = selectedScene || prompt('ID сцены:');
-      if (!scene) return;
+      if (!selectedScene) { alert('Сначала выбери сцену в dropdown'); return; }
+      const scene = selectedScene;
       const id = scene + '_end';
       if (scenario.nodes[id]) { alert('END уже есть в этой сцене'); return; }
       scenario.nodes[id] = {
