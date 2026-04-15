@@ -621,6 +621,50 @@
       renderNodeList();
     });
 
+    // When a connection is created to an END node, auto-detect source
+    editor.on('connectionCreated', (conn) => {
+      const targetDfId = conn.input_id;
+      const sourceDfId = conn.output_id;
+      const targetNodeId = dfIdMap[targetDfId];
+      const sourceNodeId = dfIdMap[sourceDfId];
+      if (!targetNodeId || !sourceNodeId || !scenario) return;
+
+      const targetNode = scenario.nodes[targetNodeId];
+      if (targetNode?.type !== 'scene_end') return;
+
+      // Figure out which input port was connected
+      const inputIdx = parseInt(conn.input_class.replace('input_', '')) - 1; // 0-based
+      if (inputIdx === 0) return; // input_1 = default flow, no transition needed
+
+      const transitionIdx = inputIdx - 1; // transitions[0] = input_2, etc.
+
+      // Try to find choice tag from source node
+      const sourceNode = scenario.nodes[sourceNodeId];
+      let autoTag = '';
+      if (sourceNode?.choices) {
+        // Find which output port was used
+        const outputIdx = parseInt(conn.output_class.replace('output_', '')) - 1;
+        // Map output to choice
+        let outCount = sourceNode.next ? 1 : 0;
+        if (outputIdx >= outCount && sourceNode.choices[outputIdx - outCount]) {
+          autoTag = sourceNode.choices[outputIdx - outCount].tag || '';
+        }
+      }
+
+      // Update transition
+      if (!targetNode.transitions) targetNode.transitions = [];
+      while (targetNode.transitions.length <= transitionIdx) {
+        targetNode.transitions.push({ choiceTag: '', nextScene: null });
+      }
+      if (autoTag && !targetNode.transitions[transitionIdx].choiceTag) {
+        targetNode.transitions[transitionIdx].choiceTag = autoTag;
+      }
+      targetNode.transitions[transitionIdx].fromNode = sourceNodeId;
+
+      refreshNode(targetNodeId);
+      if (selectedScenarioNode === targetNodeId) renderProps();
+    });
+
     // ── Properties panel ────────
 
     function renderProps() {
