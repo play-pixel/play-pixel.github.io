@@ -476,19 +476,16 @@
       // Special END node
       if (type === 'scene_end') {
         let body = '';
+        // Default
+        const defScene = node.defaultNextScene ? (scenario.scenes?.find(s => s.id === node.defaultNextScene)?.name || node.defaultNextScene) : 'конец';
+        body += `<div class="end-transition"><span style="color:var(--dim)">●</span> default → <span class="target">${esc(defScene)}</span></div>`;
+        // Transitions
         const tr = node.transitions || [];
-        if (tr.length > 0) {
-          tr.forEach(t => {
-            const sceneName = scenario.scenes?.find(s => s.id === t.nextScene)?.name || t.nextScene;
-            body += `<div class="end-transition"><span class="cond">${esc(t.choiceTag||'default')}</span> → <span class="target">${esc(sceneName||'?')}</span></div>`;
-          });
-        }
-        if (node.defaultNextScene) {
-          const dn = scenario.scenes?.find(s => s.id === node.defaultNextScene)?.name || node.defaultNextScene;
-          body += `<div class="end-transition"><span class="cond">default</span> → <span class="target">${esc(dn)}</span></div>`;
-        }
-        if (!body) body = '<div style="color:var(--dim)">конец истории</div>';
-        return `<div class="df-node-header type-scene_end">■ END SCENE</div><div class="df-node-body">${body}</div>`;
+        tr.forEach((t, i) => {
+          const sceneName = t.nextScene ? (scenario.scenes?.find(s => s.id === t.nextScene)?.name || t.nextScene) : '?';
+          body += `<div class="end-transition"><span style="color:var(--orange)">●</span> ${esc(t.choiceTag||'?')} → <span class="target">${esc(sceneName)}</span></div>`;
+        });
+        return `<div class="df-node-header type-scene_end">■ END SCENE (${1 + tr.length} входов)</div><div class="df-node-body">${body}</div>`;
       }
 
       // Regular nodes
@@ -641,55 +638,63 @@
 
       // Special END node panel
       if (node.type === 'scene_end') {
+        if (!node.transitions) node.transitions = [];
+        const tr = node.transitions;
+
         h += `<div class="ps" style="background:rgba(91,156,245,.05);"><label style="color:var(--accent);font-weight:600;">■ END SCENE</label>`;
 
-        // Default next scene
+        // Input 1: main flow → default scene
         let defOpts = '<option value="">— конец истории —</option>';
         if (scenario.scenes) scenario.scenes.forEach(s => {
           defOpts += `<option value="${s.id}"${node.defaultNextScene===s.id?' selected':''}>${s.order}. ${s.name}</option>`;
         });
-        h += `<label style="margin-top:6px;">Default (если нет условий)</label>`;
-        h += `<select id="pEndDefault">${defOpts}</select>`;
-
-        // Transitions
-        h += `<label style="margin-top:10px;">Условные переходы (${(node.transitions||[]).length})</label>`;
-        (node.transitions||[]).forEach((tr, i) => {
-          const sceneName = scenario.scenes?.find(s => s.id === tr.nextScene)?.name || tr.nextScene || '?';
-          h += `<div class="mi">
-            <span class="t" style="color:var(--orange);width:auto;">${esc(tr.choiceTag||'?')}</span>
-            <span class="v">→ ${esc(sceneName)}</span>
-            <span class="d" data-action="delTransition" data-idx="${i}">×</span>
-          </div>`;
-        });
-        h += `<button class="btn-s" data-action="addTransition">+ Добавить переход</button>`;
+        h += `<div style="margin:8px 0;padding:8px;background:var(--bg);border-radius:6px;border-left:3px solid var(--dim);">`;
+        h += `<div style="font-size:11px;color:var(--dim);margin-bottom:4px;">● Вход — основной flow</div>`;
+        h += `<label>Default → сцена:</label><select id="pEndDefault">${defOpts}</select>`;
         h += `</div>`;
 
-        // Delete
+        // Conditional inputs
+        h += `<label style="margin-top:8px;">Развилки (${tr.length})</label>`;
+        tr.forEach((t, i) => {
+          let scOpts = '<option value="">— выбрать сцену —</option>';
+          if (scenario.scenes) scenario.scenes.forEach(s => {
+            scOpts += `<option value="${s.id}"${t.nextScene===s.id?' selected':''}>${s.order}. ${s.name}</option>`;
+          });
+          h += `<div style="margin:6px 0;padding:8px;background:var(--bg);border-radius:6px;border-left:3px solid var(--orange);">`;
+          h += `<div style="font-size:11px;color:var(--orange);margin-bottom:4px;display:flex;justify-content:space-between;">● Вход ${i+2} — условие <span class="d" data-action="delTransition" data-idx="${i}" style="cursor:pointer;color:var(--red);">×</span></div>`;
+          h += `<label>Choice tag:</label><input value="${esc(t.choiceTag||'')}" data-tr-tag="${i}" style="margin-bottom:4px;">`;
+          h += `<label>→ Сцена:</label><select data-tr-scene="${i}">${scOpts}</select>`;
+          h += `</div>`;
+        });
+
+        h += `<button class="btn-s" data-action="addTransition" style="margin-top:6px;">+ Добавить развилку</button>`;
+        h += `</div>`;
+
         h += `<div class="ps"><button class="btn-s red" data-action="delNode">Удалить ноду</button></div>`;
         pc.innerHTML = h;
 
-        // Bind END events
+        // Bind events
         pc.querySelectorAll('[data-action]').forEach(el => {
           el.addEventListener('click', () => {
             const a = el.dataset.action, idx = parseInt(el.dataset.idx);
-            if (a === 'delTransition') { node.transitions.splice(idx, 1); refreshNode(id); renderProps(); }
-            if (a === 'addTransition') {
-              const tag = prompt('Choice tag (флаг/тег выбора):');
-              if (!tag) return;
-              let scOpts = scenario.scenes?.map(s => `${s.id} (${s.name})`).join(', ') || '';
-              const scId = prompt('ID следующей сцены:\n' + scOpts);
-              if (!scId) return;
-              if (!node.transitions) node.transitions = [];
-              node.transitions.push({ choiceTag: tag, nextScene: scId });
-              refreshNode(id); renderProps();
-            }
-            if (a === 'delNode') { if(confirm('Удалить '+id+'?')) { delete scenario.nodes[id]; buildGraph(); } }
+            if (a === 'delTransition') { tr.splice(idx, 1); buildGraph(); renderProps(); }
+            if (a === 'addTransition') { tr.push({ choiceTag: '', nextScene: null }); buildGraph(); renderProps(); }
+            if (a === 'delNode') { if(confirm('Удалить?')) { delete scenario.nodes[id]; buildGraph(); } }
           });
         });
 
         const pEndDefault = document.getElementById('pEndDefault');
         if (pEndDefault) pEndDefault.onchange = () => { node.defaultNextScene = pEndDefault.value || null; refreshNode(id); };
-        return; // Don't render regular node props
+
+        // Bind transition inputs
+        pc.querySelectorAll('[data-tr-tag]').forEach(el => {
+          el.onchange = () => { tr[parseInt(el.dataset.trTag)].choiceTag = el.value; refreshNode(id); };
+        });
+        pc.querySelectorAll('[data-tr-scene]').forEach(el => {
+          el.onchange = () => { tr[parseInt(el.dataset.trScene)].nextScene = el.value || null; refreshNode(id); };
+        });
+
+        return;
       }
 
       // Scene selector
