@@ -640,9 +640,22 @@
         state.phase = 'wait';
       } else if (node.next) {
         scheduleNode(node.next, t); return;
-      } else if (node.sceneEnd && node.nextScene) {
-        // Scene transition
-        const nextSceneId = resolveSceneTransition(node);
+      } else if (node.type === 'scene_end' || (node.sceneEnd && node.nextScene)) {
+        // Scene transition — new style (type: scene_end) or old style (sceneEnd + nextScene)
+        let nextSceneId = null;
+        if (node.type === 'scene_end') {
+          // Check transitions — match choice tags against state.choices
+          const transitions = node.transitions || [];
+          for (const tr of transitions) {
+            if (tr.choiceTag && (state.choices || []).includes(tr.choiceTag)) {
+              nextSceneId = tr.nextScene;
+              break;
+            }
+          }
+          if (!nextSceneId) nextSceneId = node.defaultNextScene || null;
+        } else {
+          nextSceneId = resolveSceneTransition(node);
+        }
         if (nextSceneId && scenario.scenes) {
           const sceneMeta = scenario.scenes.find(s => s.id === nextSceneId);
           if (sceneMeta && sceneMeta.entry) {

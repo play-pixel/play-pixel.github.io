@@ -89,6 +89,19 @@
     .btn-s { padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface); color:var(--dim); font-size:11px; cursor:pointer; margin-top:4px; }
     .btn-s:hover { border-color:var(--accent); color:var(--text); }
     .btn-s.red { color:var(--red); } .btn-s.red:hover { border-color:var(--red); }
+    .btn-s.green { color:var(--green); } .btn-s.green:hover { border-color:var(--green); }
+    .btn-s.blue { color:var(--accent); } .btn-s.blue:hover { border-color:var(--accent); }
+
+    /* Special node styles */
+    .drawflow .drawflow-node.scene_start .drawflow_content_node { border:2px solid var(--green); border-radius:8px; }
+    .drawflow .drawflow-node.scene_start .df-node-header { background:rgba(74,222,128,.15); color:var(--green); }
+    .drawflow .drawflow-node.scene_end .drawflow_content_node { border:2px solid var(--accent); border-radius:8px; }
+    .drawflow .drawflow-node.scene_end .df-node-header { background:rgba(91,156,245,.15); color:var(--accent); }
+
+    /* Transition tag in END node */
+    .end-transition { padding:3px 6px; margin:2px 0; background:var(--bg); border-radius:3px; font-size:10px; display:flex; align-items:center; gap:4px; }
+    .end-transition .cond { color:var(--orange); }
+    .end-transition .target { color:var(--accent); }
   </style>
 </head>
 <body>
@@ -110,7 +123,13 @@
   </div>
   <div class="main">
     <div class="sidebar" id="sidebar">
-      <div class="sb-hdr">НОДЫ <button class="btn-s" onclick="addNewNode()">+</button></div>
+      <div class="sb-hdr">НОДЫ
+        <span style="display:flex;gap:3px;">
+          <button class="btn-s" onclick="addNewNode()" title="Обычная нода">+</button>
+          <button class="btn-s green" onclick="addStartNode()" title="START нода">▶</button>
+          <button class="btn-s blue" onclick="addEndNode()" title="END нода">■</button>
+        </span>
+      </div>
       <div class="sb-list" id="nodeList"></div>
     </div>
     <div id="drawflow"></div>
@@ -422,6 +441,8 @@
     // ── Build Drawflow graph ────
 
     function getType(node) {
+      if (node.type === 'scene_start') return 'scene_start';
+      if (node.type === 'scene_end') return 'scene_end';
       if (node.choices) return 'choice';
       if (node.wait) return 'wait';
       if (!node.next) return 'end';
@@ -430,6 +451,31 @@
 
     function nodeHTML(id, node) {
       const type = getType(node);
+
+      // Special START node
+      if (type === 'scene_start') {
+        return `<div class="df-node-header type-scene_start">▶ START</div><div class="df-node-body">${esc(id)}</div>`;
+      }
+
+      // Special END node
+      if (type === 'scene_end') {
+        let body = '';
+        const tr = node.transitions || [];
+        if (tr.length > 0) {
+          tr.forEach(t => {
+            const sceneName = scenario.scenes?.find(s => s.id === t.nextScene)?.name || t.nextScene;
+            body += `<div class="end-transition"><span class="cond">${esc(t.choiceTag||'default')}</span> → <span class="target">${esc(sceneName||'?')}</span></div>`;
+          });
+        }
+        if (node.defaultNextScene) {
+          const dn = scenario.scenes?.find(s => s.id === node.defaultNextScene)?.name || node.defaultNextScene;
+          body += `<div class="end-transition"><span class="cond">default</span> → <span class="target">${esc(dn)}</span></div>`;
+        }
+        if (!body) body = '<div style="color:var(--dim)">конец истории</div>';
+        return `<div class="df-node-header type-scene_end">■ END SCENE</div><div class="df-node-body">${body}</div>`;
+      }
+
+      // Regular nodes
       const msgs = (node.messages || []).filter(m => m.type === 'text');
       let body = '';
       msgs.slice(0, 3).forEach(m => { body += `<div class="msg-line">${esc(m.text)}</div>`; });
@@ -495,7 +541,10 @@
           const html = nodeHTML(id, node);
           const x = startX + li * gapX;
           const y = startY + ni * gapY;
-          const dfId = editor.addNode(id, 1, outputs, x, y, id, { scenarioId: id }, html);
+          const inputs = countInputs(node);
+          const type = getType(node);
+          const cssClass = (type === 'scene_start' || type === 'scene_end') ? type : id;
+          const dfId = editor.addNode(id, inputs, outputs, x, y, cssClass, { scenarioId: id }, html);
           nodeIdMap[id] = dfId;
           dfIdMap[dfId] = id;
         });
@@ -524,10 +573,24 @@
     }
 
     function countOutputs(node) {
+      if (node.type === 'scene_end') {
+        // END node: outputs = number of transitions (each goes to a different scene)
+        const tr = node.transitions || [];
+        return Math.max(tr.length + (node.defaultNextScene ? 1 : 0), 1);
+      }
       let n = 0;
       if (node.next) n++;
       if (node.choices) n += node.choices.filter(c => c.next).length;
       return Math.max(n, 1);
+    }
+
+    function countInputs(node) {
+      if (node.type === 'scene_end') {
+        // END node: 1 regular input + extra inputs for conditional transitions
+        const tr = node.transitions || [];
+        return Math.max(1 + tr.length, 1);
+      }
+      return 1;
     }
 
     // ── Selection ───────────────
@@ -558,6 +621,59 @@
 
       let h = '';
       h += `<div class="ps"><label>ID</label><input value="${esc(id)}" id="pId"></div>`;
+
+      // Special END node panel
+      if (node.type === 'scene_end') {
+        h += `<div class="ps" style="background:rgba(91,156,245,.05);"><label style="color:var(--accent);font-weight:600;">■ END SCENE</label>`;
+
+        // Default next scene
+        let defOpts = '<option value="">— конец истории —</option>';
+        if (scenario.scenes) scenario.scenes.forEach(s => {
+          defOpts += `<option value="${s.id}"${node.defaultNextScene===s.id?' selected':''}>${s.order}. ${s.name}</option>`;
+        });
+        h += `<label style="margin-top:6px;">Default (если нет условий)</label>`;
+        h += `<select id="pEndDefault">${defOpts}</select>`;
+
+        // Transitions
+        h += `<label style="margin-top:10px;">Условные переходы (${(node.transitions||[]).length})</label>`;
+        (node.transitions||[]).forEach((tr, i) => {
+          const sceneName = scenario.scenes?.find(s => s.id === tr.nextScene)?.name || tr.nextScene || '?';
+          h += `<div class="mi">
+            <span class="t" style="color:var(--orange);width:auto;">${esc(tr.choiceTag||'?')}</span>
+            <span class="v">→ ${esc(sceneName)}</span>
+            <span class="d" data-action="delTransition" data-idx="${i}">×</span>
+          </div>`;
+        });
+        h += `<button class="btn-s" data-action="addTransition">+ Добавить переход</button>`;
+        h += `</div>`;
+
+        // Delete
+        h += `<div class="ps"><button class="btn-s red" data-action="delNode">Удалить ноду</button></div>`;
+        pc.innerHTML = h;
+
+        // Bind END events
+        pc.querySelectorAll('[data-action]').forEach(el => {
+          el.addEventListener('click', () => {
+            const a = el.dataset.action, idx = parseInt(el.dataset.idx);
+            if (a === 'delTransition') { node.transitions.splice(idx, 1); refreshNode(id); renderProps(); }
+            if (a === 'addTransition') {
+              const tag = prompt('Choice tag (флаг/тег выбора):');
+              if (!tag) return;
+              let scOpts = scenario.scenes?.map(s => `${s.id} (${s.name})`).join(', ') || '';
+              const scId = prompt('ID следующей сцены:\n' + scOpts);
+              if (!scId) return;
+              if (!node.transitions) node.transitions = [];
+              node.transitions.push({ choiceTag: tag, nextScene: scId });
+              refreshNode(id); renderProps();
+            }
+            if (a === 'delNode') { if(confirm('Удалить '+id+'?')) { delete scenario.nodes[id]; buildGraph(); } }
+          });
+        });
+
+        const pEndDefault = document.getElementById('pEndDefault');
+        if (pEndDefault) pEndDefault.onchange = () => { node.defaultNextScene = pEndDefault.value || null; refreshNode(id); };
+        return; // Don't render regular node props
+      }
 
       // Scene selector
       let sceneOpts = '<option value="">— нет —</option>';
@@ -738,7 +854,9 @@
         const type = getType(node);
         const item = document.createElement('div');
         item.className = 'sb-item' + (id === selectedScenarioNode ? ' active' : '');
-        item.innerHTML = `<span class="sb-dot ${type}"></span><span class="sb-name">${id}</span>`;
+        const icon = type === 'scene_start' ? '▶' : type === 'scene_end' ? '■' : '●';
+        const dotClass = type === 'scene_start' ? 'color:var(--green)' : type === 'scene_end' ? 'color:var(--accent)' : '';
+        item.innerHTML = `<span style="font-size:10px;flex-shrink:0;${dotClass}">${icon}</span><span class="sb-name">${id}</span>`;
         item.onclick = () => {
           selectedScenarioNode = id;
           // Deselect all nodes first
@@ -768,7 +886,35 @@
       if (!scenario) return;
       const id = prompt('ID новой ноды:');
       if (!id || scenario.nodes[id]) return;
-      scenario.nodes[id] = { messages: [], next: null };
+      scenario.nodes[id] = { messages: [], next: null, scene: selectedScene || undefined };
+      buildGraph();
+    }
+
+    function addStartNode() {
+      if (!scenario) return;
+      const scene = selectedScene || prompt('ID сцены:');
+      if (!scene) return;
+      const id = scene + '_start';
+      if (scenario.nodes[id]) { alert('START нода уже существует: ' + id); return; }
+      scenario.nodes[id] = { type: 'scene_start', next: null, scene: scene };
+      // Update scene entry
+      const sceneMeta = scenario.scenes?.find(s => s.id === scene);
+      if (sceneMeta) sceneMeta.entry = id;
+      buildGraph();
+    }
+
+    function addEndNode() {
+      if (!scenario) return;
+      const scene = selectedScene || prompt('ID сцены:');
+      if (!scene) return;
+      const id = scene + '_end';
+      if (scenario.nodes[id]) { alert('END нода уже существует: ' + id); return; }
+      scenario.nodes[id] = {
+        type: 'scene_end',
+        scene: scene,
+        transitions: [],
+        defaultNextScene: null
+      };
       buildGraph();
     }
 
