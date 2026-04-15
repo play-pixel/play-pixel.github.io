@@ -895,9 +895,8 @@
       const scene = selectedScene || prompt('ID сцены:');
       if (!scene) return;
       const id = scene + '_start';
-      if (scenario.nodes[id]) { alert('START нода уже существует: ' + id); return; }
+      if (scenario.nodes[id]) { alert('START уже есть в этой сцене'); return; }
       scenario.nodes[id] = { type: 'scene_start', next: null, scene: scene };
-      // Update scene entry
       const sceneMeta = scenario.scenes?.find(s => s.id === scene);
       if (sceneMeta) sceneMeta.entry = id;
       buildGraph();
@@ -908,7 +907,7 @@
       const scene = selectedScene || prompt('ID сцены:');
       if (!scene) return;
       const id = scene + '_end';
-      if (scenario.nodes[id]) { alert('END нода уже существует: ' + id); return; }
+      if (scenario.nodes[id]) { alert('END уже есть в этой сцене'); return; }
       scenario.nodes[id] = {
         type: 'scene_end',
         scene: scene,
