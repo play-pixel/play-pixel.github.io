@@ -1114,7 +1114,7 @@
       if (msg.type === 'status' || msg.type === 'auto') {
         const el = document.createElement('div');
         el.className = 'msg-status' + cls;
-        el.textContent = msg.text;
+        el.textContent = L(msg.text);
         chatArea.appendChild(el);
         return;
       }
@@ -1209,7 +1209,7 @@
             t = document.createElement('div');
             t.className = 'vt';
             t.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
-            t.textContent = '\u201c'+msg.transcript+'\u201d';
+            t.textContent = '\u201c'+L(msg.transcript)+'\u201d';
             bubble.style.flexWrap = 'wrap';
             bubble.appendChild(t);
           };
@@ -1437,7 +1437,7 @@
       if (state.waitChatBusyUntil && Date.now() < state.waitChatBusyUntil) return;
       const now = Date.now();
 
-      state.history.push({ type:'player', text:wc.text, checks:1, _ts:now });
+      state.history.push({ type:'player', text:L(wc.text), checks:1, _ts:now });
       vibrate(30);
       state.usedOptionals.push(wc.tag);
       if (wc.flag && !state.knowledgeFlags.includes(wc.flag)) {
@@ -1446,7 +1446,7 @@
 
       let t = now + 1500;
       for (const msg of wc.response) {
-        const text = msg.text || '';
+        const text = L(msg.text) || '';
         const len = text.length;
         t += 800;
         const typeTime = Math.max(1500, Math.min(len * 45, 4000));
