@@ -831,7 +831,7 @@
       if (!node || !node.choices || state.phase !== 'choice') return;
       const ch = node.choices[choiceIdx];
       const now = Date.now();
-      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+      state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
       state.choices.push(ch.tag);
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
       setTimeout(() => {
@@ -850,7 +850,7 @@
       const now = Date.now();
 
       // Add player message + knowledge flag
-      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+      state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
       state.usedOptionals.push(ch.tag);
       if (ch.flag && !state.knowledgeFlags.includes(ch.flag)) {
         state.knowledgeFlags.push(ch.flag);
@@ -859,7 +859,7 @@
       // Schedule response messages, then return to choice
       let t = now + 1500;
       for (const msg of ch.response) {
-        const text = msg.text || '';
+        const text = L(msg.text) || '';
         const len = text.length;
         t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
         const typeTime = Math.max(1500, Math.min(len * 45, 4000));
@@ -1093,7 +1093,8 @@
         const row = document.createElement('div');
         row.className = 'msg-row npc typing'; row.id = 'td';
         const av = document.createElement('div');
-        av.className = 'msg-avatar'; av.textContent = 'Л';
+        const stMeta2 = storiesMeta.find(s => s.id === state.activeStory);
+        av.className = 'msg-avatar'; av.textContent = stMeta2 ? stMeta2.avatar : 'Z';
         const dots = document.createElement('div');
         dots.className = 'typing-dots';
         dots.innerHTML = '<span></span><span></span><span></span>';
@@ -1601,14 +1602,16 @@
       // Touch pinch + drag
       lb.addEventListener('touchstart', e => {
         if (e.touches.length === 2) {
+          e.preventDefault();
           initialDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
           initialScale = scale;
         } else if (e.touches.length === 1 && scale > 1) {
+          e.preventDefault();
           dragging = true;
           startX = e.touches[0].clientX; startY = e.touches[0].clientY;
           startPx = px; startPy = py;
         }
-      }, { passive: true });
+      }, { passive: false });
       lb.addEventListener('touchmove', e => {
         if (e.touches.length === 2) {
           e.preventDefault();
