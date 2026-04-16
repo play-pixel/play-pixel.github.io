@@ -302,6 +302,7 @@
       <div class="settings-section">Оформление</div>
       <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-row"><div class="settings-row-label" id="settingsVibLabel">Вибрация</div><label class="toggle"><input type="checkbox" id="vibToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="settings-row"><div class="settings-row-label" id="settingsNotifLabel">Уведомления</div><label class="toggle"><input type="checkbox" id="notifToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Язык / Language</div>
       <div class="settings-row"><div class="settings-row-label">Язык интерфейса</div><div class="lang-options"><button class="lang-opt active" id="langRu">RU</button><button class="lang-opt" id="langEn">EN</button></div></div>
       <div class="settings-section">Разработка</div>
@@ -390,6 +391,7 @@
       appearance:       { en:'Appearance', ru:'Оформление' },
       dark_theme:       { en:'Dark theme', ru:'Тёмная тема' },
       vibration:        { en:'Vibration', ru:'Вибрация' },
+      notifications:    { en:'Notifications', ru:'Уведомления' },
       lang_section:     { en:'Language', ru:'Язык / Language' },
       lang_label:       { en:'Interface language', ru:'Язык интерфейса' },
       dev_section:      { en:'Development', ru:'Разработка' },
@@ -433,8 +435,29 @@
     }
 
     let scenario = null; // alias for activeScenario, set on story activation
-    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true };
+    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true, notifications: true };
     function vibrate(ms) { if (prefs.vibration && navigator.vibrate) navigator.vibrate(ms); }
+
+    // Notifications
+    let notifPermission = Notification ? Notification.permission : 'denied';
+    function requestNotifPermission() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(p => { notifPermission = p; });
+      }
+    }
+    function notifyMsg(text, tag) {
+      if (!prefs.notifications || !document.hidden) return;
+      if (notifPermission !== 'granted') return;
+      const meta = storiesMeta.find(s => s.id === state.activeStory);
+      const name = meta ? L(meta.name) : 'Backrooms';
+      const opts = { body: text, tag: 'br-msg-' + (tag || ''), icon: 'media/icon-192.png', silent: true, renotify: true };
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'notify', title: name, opts });
+      } else {
+        try { new Notification(name, opts); } catch(e) {}
+      }
+    }
     let currentScreen = 'startScreen';
     let lastRenderedCount = 0;
 
@@ -516,6 +539,7 @@
       document.body.setAttribute('data-theme', prefs.theme);
       $('themeToggle').checked = prefs.theme === 'dark';
       $('vibToggle').checked = prefs.vibration !== false;
+      $('notifToggle').checked = prefs.notifications !== false;
       $('testToggle').checked = prefs.testMode || false;
     }
 
@@ -548,6 +572,7 @@
       if (labels[0]) labels[0].textContent = t('your_name');
       if (labels[1]) labels[1].textContent = t('dark_theme');
       $('settingsVibLabel').textContent = t('vibration');
+      $('settingsNotifLabel').textContent = t('notifications');
       if (labels[2]) labels[2].textContent = t('lang_label');
       if (labels[3]) { labels[3].innerHTML = t('test_mode') + '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + t('test_mode_hint') + '</div>'; }
       if (labels[4]) labels[4].textContent = t('reset_progress');
@@ -854,7 +879,10 @@
         changed = true;
         if (evt.type === 'msg') {
           state.history.push({ ...evt.data, _ts: evt.ts });
-          if (evt.data.type !== 'status') vibrate(15);
+          if (evt.data.type !== 'status') {
+            vibrate(15);
+            if (evt.data.type === 'text' && evt.data.text) notifyMsg(L(evt.data.text), state.timelineIdx);
+          }
           updateChecksToRead();
         } else if (evt.type === 'update_profile') {
           const meta = storiesMeta.find(s => s.id === state.activeStory);
@@ -1660,6 +1688,7 @@
 
     // ── Events ──────────────────────
     $('startBtn').onclick = async () => {
+      requestNotifPermission();
       state.started = true;
       // Activate first unlocked story
       const first = storiesMeta.find(s => s.unlocked);
@@ -1693,6 +1722,11 @@
     $('settingsBack').onclick = () => go('contactsScreen');
     $('themeToggle').onchange = (e) => { prefs.theme = e.target.checked ? 'dark' : 'light'; applyTheme(); savePrefs(); };
     $('vibToggle').onchange = (e) => { prefs.vibration = e.target.checked; savePrefs(); };
+    $('notifToggle').onchange = (e) => {
+      prefs.notifications = e.target.checked;
+      if (e.target.checked) requestNotifPermission();
+      savePrefs();
+    };
     $('testToggle').onchange = (e) => { prefs.testMode = e.target.checked; savePrefs(); };
     $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); applyLang(); };
     $('langEn').onclick = () => { prefs.lang='en'; savePrefs(); applyLang(); };
@@ -1704,6 +1738,10 @@
       if (!document.hidden && state.started && state.opened) {
         tick();
         if (isChatVisible()) renderFullHistory();
+        // Clear notifications when app is focused
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(reg => reg.getNotifications().then(ns => ns.forEach(n => n.close())));
+        }
       }
     });
 

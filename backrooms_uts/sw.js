@@ -55,3 +55,23 @@ self.addEventListener('activate', (e) => {
 
 // On install — take over immediately
 self.addEventListener('install', () => self.skipWaiting());
+
+// Notifications from main thread
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'notify') {
+    self.registration.showNotification(e.data.title, e.data.opts);
+  }
+});
+
+// Click notification — focus or open app
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes('/backrooms') && 'focus' in c) return c.focus();
+      }
+      return clients.openWindow('./');
+    })
+  );
+});
