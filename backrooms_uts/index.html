@@ -406,7 +406,8 @@
       unknown_number:   { en:'Unknown number', ru:'Неизвестный номер' },
       online:           { en:'online', ru:'в сети' },
       typing:           { en:'typing...', ru:'печатает...' },
-      away:             { en:'away', ru:'ушла' },
+      recently:         { en:'last seen recently', ru:'был(а) недавно' },
+      offline:          { en:'offline', ru:'не в сети' },
       no_new_messages:  { en:'No new messages', ru:'Новых сообщений нет' },
       auto_choice:      { en:'She didn\'t wait for your answer and decided herself', ru:'Она не дождалась ответа и решила сама' },
       waiting_answer:   { en:'Waiting for your answer...', ru:'Ждёт ответа...' },
@@ -742,6 +743,10 @@
         save();
       }
 
+      // Init lastNpcMsgAt from last NPC message in history
+      const lastNpc = [...state.history].reverse().find(m => m.type === 'text' && m._ts);
+      lastNpcMsgAt = lastNpc ? lastNpc._ts : 0;
+
       go('chatScreen');
       renderFullHistory();
     }
@@ -880,6 +885,7 @@
         if (evt.type === 'msg') {
           state.history.push({ ...evt.data, _ts: evt.ts });
           if (evt.data.type !== 'status') {
+            lastNpcMsgAt = Date.now();
             vibrate(15);
             if (evt.data.type === 'text' && evt.data.text) notifyMsg(L(evt.data.text), state.timelineIdx);
           }
@@ -906,9 +912,10 @@
 
       if (changed) { save(); renderUI(); }
 
-      // Always update bottom panel UI
+      // Always update bottom panel UI and auto-status
       if (isChatVisible()) {
         updateBottomPanel();
+        updateAutoStatus();
       }
 
       updateCountdowns(now);
@@ -1246,6 +1253,9 @@
         }
       }
 
+      isNpcTyping = isTyping;
+      if (isTyping) lastNpcMsgAt = Date.now();
+
       if (isTyping && !existing) {
         const row = document.createElement('div');
         row.className = 'msg-row npc typing'; row.id = 'td';
@@ -1262,11 +1272,9 @@
         dots.innerHTML = '<span></span><span></span><span></span>';
         row.appendChild(av); row.appendChild(dots);
         chatArea.appendChild(row);
-        setStatus(t('typing'), 'typing');
         scroll();
       } else if (!isTyping && existing) {
         existing.remove();
-        setStatus(t('online'), 'online');
       }
     }
 
@@ -1421,7 +1429,7 @@
         });
       }
 
-      setStatus(t('away'), '');
+      // Status is now auto-managed by updateAutoStatus()
     }
 
     function playerWaitChat(wc) {
@@ -1480,9 +1488,28 @@
       renderContactList();
     }
 
-    function setStatus(t, c) {
-      $('hdrStatus').textContent = t;
-      $('hdrStatus').className = 'chat-hdr-status' + (c ? ' '+c : '');
+    let lastNpcMsgAt = 0;   // timestamp of last NPC message/typing
+    let isNpcTyping = false; // true while typing indicator is shown
+
+    function setStatus(text, cls) {
+      $('hdrStatus').textContent = text;
+      $('hdrStatus').className = 'chat-hdr-status' + (cls ? ' '+cls : '');
+    }
+
+    function updateAutoStatus() {
+      if (isNpcTyping) {
+        setStatus(t('typing'), 'typing');
+        return;
+      }
+      const now = Date.now();
+      const elapsed = now - lastNpcMsgAt;
+      if (lastNpcMsgAt && elapsed < 30000) {
+        setStatus(t('online'), 'online');
+      } else if (lastNpcMsgAt && elapsed < 3600000) {
+        setStatus(t('recently'), '');
+      } else {
+        setStatus(t('offline'), '');
+      }
     }
 
     function scroll() {
