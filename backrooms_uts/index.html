@@ -703,6 +703,7 @@
     function scheduleNode(nodeId, startTime) {
       const node = scenario.nodes[nodeId];
       if (!node) { state.phase = 'done'; save(); return; }
+      console.log('[schedule]', nodeId, 'at +' + ((startTime - Date.now())/1000).toFixed(1) + 's', 'msgs:', node.messages?.length);
 
       let t = startTime;
       for (const msg of node.messages) {
