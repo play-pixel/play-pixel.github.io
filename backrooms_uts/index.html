@@ -427,15 +427,9 @@
     function t(key) { return (STRINGS[key] && STRINGS[key][prefs.lang]) || (STRINGS[key] && STRINGS[key].en) || key; }
 
     // Resolve localized text from scenario (string or {en,ru} object)
-    // Localize all string fields in a message object (deep)
-    function localizeMsg(msg) {
-      const out = {...msg};
-      if (out.text) out.text = L(out.text);
-      if (out.alt) out.alt = L(out.alt);
-      if (out.transcript) out.transcript = L(out.transcript);
-      if (out.name) out.name = L(out.name);
-      return out;
-    }
+    // Keep raw bilingual message data in state so language switches re-translate
+    // already-delivered messages at render time.
+    function localizeMsg(msg) { return {...msg}; }
 
     function L(val) {
       if (!val) return '';
@@ -958,7 +952,7 @@
       const now = Date.now();
       if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
       const ch = node.choices[choiceIdx];
-      state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
+      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
       vibrate(30);
       state.choices.push(ch.tag);
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
@@ -980,7 +974,7 @@
       if (!ch.optional || !ch.response) return;
 
       // Add player message + knowledge flag
-      state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
+      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
       vibrate(30);
       state.usedOptionals.push(ch.tag);
       if (ch.flag && !state.knowledgeFlags.includes(ch.flag)) {
@@ -1456,7 +1450,7 @@
       if (state.waitChatBusyUntil && Date.now() < state.waitChatBusyUntil) return;
       const now = Date.now();
 
-      state.history.push({ type:'player', text:L(wc.text), checks:1, _ts:now });
+      state.history.push({ type:'player', text:wc.text, checks:1, _ts:now });
       vibrate(30);
       state.usedOptionals.push(wc.tag);
       if (wc.flag && !state.knowledgeFlags.includes(wc.flag)) {
