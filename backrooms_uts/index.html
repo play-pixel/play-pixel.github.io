@@ -425,6 +425,16 @@
     function t(key) { return (STRINGS[key] && STRINGS[key][prefs.lang]) || (STRINGS[key] && STRINGS[key].en) || key; }
 
     // Resolve localized text from scenario (string or {en,ru} object)
+    // Localize all string fields in a message object (deep)
+    function localizeMsg(msg) {
+      const out = {...msg};
+      if (out.text) out.text = L(out.text);
+      if (out.alt) out.alt = L(out.alt);
+      if (out.transcript) out.transcript = L(out.transcript);
+      if (out.name) out.name = L(out.name);
+      return out;
+    }
+
     function L(val) {
       if (!val) return '';
       let text = typeof val === 'string' ? val : (val[prefs.lang] || val.en || val.ru || '');
@@ -798,18 +808,18 @@
           continue;
         }
         if (msg.type === 'status') {
-          state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+          state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
           t += 500; continue;
         }
         if (msg.type === 'image') {
           t += msg.delay > 0 ? msg.delay : 1500;
-          state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+          state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
           t += 2000; // pause after image
           continue;
         }
         if (msg.type === 'update_profile') {
           t += msg.delay > 0 ? msg.delay : 0;
-          state.timeline.push({ ts:t, type:'update_profile', data:{...msg} });
+          state.timeline.push({ ts:t, type:'update_profile', data:localizeMsg(msg) });
           continue;
         }
         const text = L(msg.text) || '';
@@ -819,7 +829,7 @@
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
-        state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+        state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
         t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
@@ -978,7 +988,7 @@
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
-        state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+        state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
         t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
@@ -1453,7 +1463,7 @@
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
-        state.timeline.push({ ts:t, type:'msg', data:{...msg, type:'text'} });
+        state.timeline.push({ ts:t, type:'msg', data:localizeMsg({...msg, type:'text'}) });
         t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
