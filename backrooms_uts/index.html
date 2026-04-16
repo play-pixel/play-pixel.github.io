@@ -1389,9 +1389,9 @@
       const s = Math.ceil(rem / 1000);
       const timeStr = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
 
-      // Check wait-chat availability
+      // Check wait-chat availability — only show after ALL scheduled messages are delivered
       const node = state.waitChatNode ? scenario.nodes[state.waitChatNode] : null;
-      const allDelivered = state.timelineIdx >= state.timeline.length || state.timeline[state.timelineIdx].ts > now;
+      const allDelivered = state.timelineIdx >= state.timeline.length;
       const waitChats = (node && node.waitChat && allDelivered) ? node.waitChat.filter(wc =>
         !state.usedOptionals.includes(wc.tag) &&
         (!wc.requires || state.knowledgeFlags.includes(wc.requires))
