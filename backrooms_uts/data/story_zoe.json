@@ -182,11 +182,52 @@
           "type": "text",
           "text": { "en": "my name's Zoe", "ru": "меня зовут Зои" },
           "delay": 3500
+        }
+      ],
+      "next": "fc3_selfie",
+      "scene": "intro"
+    },
+    "fc3_selfie": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "here, so you know who you're talking to", "ru": "вот, чтоб ты знал с кем разговариваешь" },
+          "delay": 3000
+        },
+        {
+          "type": "image",
+          "src": "media/zoe_selfie_01.jpg",
+          "alt": { "en": "Zoe's selfie", "ru": "сэлфи Зои" },
+          "delay": 2000
+        },
+        {
+          "type": "text",
+          "text": { "en": "hold on, let me set up my profile real quick", "ru": "подожди, настрою профиль" },
+          "delay": 5000
+        },
+        {
+          "type": "typing",
+          "duration": 8000
+        },
+        {
+          "type": "update_profile",
+          "name": { "en": "Zoe", "ru": "Зои" },
+          "avatarImg": "media/zoe_selfie_01.jpg",
+          "delay": 0
+        },
+        {
+          "type": "status",
+          "text": { "en": "Contact updated profile photo", "ru": "Контакт обновил фото профиля" }
+        },
+        {
+          "type": "text",
+          "text": { "en": "done 😌", "ru": "готово 😌" },
+          "delay": 3000
         },
         {
           "type": "text",
           "text": { "en": "what's yours?", "ru": "а тебя?" },
-          "delay": 2500
+          "delay": 3000
         }
       ],
       "next": "fc3_name",
@@ -467,6 +508,7 @@
         {
           "type": "image",
           "src": "media/act1_room_01.jpg",
+          "video": "media/act1_room_01_v.mp4",
           "alt": { "en": "endless room, fluorescent lights, yellow walls, carpet", "ru": "бесконечная комната, флуоресцентные лампы, жёлтые стены, ковролин" },
           "delay": 0
         }
@@ -939,6 +981,7 @@
         {
           "type": "image",
           "src": "media/act1_backpack_09.jpg",
+          "video": "media/act1_backpack_09_v.mp4",
           "alt": { "en": "dark narrow corridor, something in the distance", "ru": "тёмный узкий коридор, что-то вдалеке" },
           "delay": 2000
         },

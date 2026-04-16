@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>Backrooms: Untold Stories</title>
+  <title>Backrooms: Chat</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
@@ -58,11 +58,11 @@
     /* ── Start Screen ──────── */
     #startScreen { align-items:center; justify-content:center; gap:0; padding:32px; text-align:center; background:#0a0a0f; color:#e0e0e8; overflow:hidden; position:relative; }
     #startScreen::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 80%, rgba(59,130,246,.08) 0%, transparent 60%); pointer-events:none; }
-    .start-logo { font-size:10px; letter-spacing:8px; text-transform:uppercase; color:#4a4a5a; margin-bottom:12px; }
-    .start-title { font-size:32px; font-weight:200; letter-spacing:3px; line-height:1.2; color:#fff; }
-    .start-title span { display:block; font-size:13px; font-weight:400; color:#555568; letter-spacing:5px; margin-top:8px; }
+    .start-logo { font-size:11px; letter-spacing:10px; text-transform:uppercase; color:#555568; margin-bottom:6px; }
+    .start-title { font-size:38px; font-weight:300; letter-spacing:2px; line-height:1.2; color:#fff; }
+    .start-title span { display:block; font-size:11px; font-weight:400; color:#3a3a4a; letter-spacing:4px; margin-top:10px; text-transform:uppercase; }
     .start-divider { width:40px; height:1px; background:linear-gradient(90deg,transparent,#333,transparent); margin:28px auto; }
-    .start-sub { color:#6a6a7a; font-size:13px; line-height:1.8; max-width:260px; }
+    .start-sub { color:#6a6a7a; font-size:13px; line-height:2; max-width:280px; font-family:'Courier New', monospace; letter-spacing:.5px; }
     .start-btn { padding:15px 56px; border:none; border-radius:28px; background:linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; font-size:15px; font-weight:500; cursor:pointer; margin-top:32px; box-shadow:0 4px 20px rgba(59,130,246,.3); letter-spacing:.5px; }
     .start-btn:active { opacity:.85; transform:scale(.98); }
     .start-version { position:absolute; bottom:16px; font-size:10px; color:#2a2a36; letter-spacing:2px; }
@@ -120,14 +120,15 @@
     /* ── Chat Screen ─────── */
     .chat-hdr { display:flex; align-items:center; padding:8px 8px; background:var(--header-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
     .chat-back { width:32px; height:40px; border:none; background:none; color:var(--accent); font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .chat-hdr-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; margin-right:10px; flex-shrink:0; font-weight:600; }
+    .chat-hdr-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; margin-right:10px; flex-shrink:0; font-weight:600; overflow:hidden; }
     .chat-hdr-info { flex:1; }
     .chat-hdr-name { font-size:15px; font-weight:600; }
     .chat-hdr-status { font-size:12px; color:var(--text-dim); }
     .chat-hdr-status.online { color:var(--green); }
     .chat-hdr-status.typing { color:var(--accent); }
 
-    .chat-area { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:3px; scroll-behavior:smooth; background:var(--bg); }
+    .chat-area { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:3px; scroll-behavior:smooth; background:var(--bg); background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%23f0f1f5ff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%23e0e0e0ff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
+    [data-theme="dark"] .chat-area { background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%230e0e12ff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%231a1a22ff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
 
     /* Date separator */
     .date-sep { text-align:center; padding:12px 0 8px; font-size:12px; color:var(--text-dim); }
@@ -137,7 +138,7 @@
     .msg-row.npc { align-self:flex-start; }
     .msg-row.player { align-self:flex-end; flex-direction:row-reverse; }
 
-    .msg-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; }
+    .msg-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; overflow:hidden; }
 
     .msg-bubble { padding:8px 12px; border-radius:var(--radius); font-size:15px; line-height:1.4; word-wrap:break-word; position:relative; box-shadow:var(--bubble-shadow); }
     .msg-row.npc .msg-bubble { background:var(--bubble-npc); border-bottom-left-radius:4px; }
@@ -160,6 +161,16 @@
     /* Image */
     .msg-row.npc .msg-bubble.img-msg { padding:3px; }
     .img-ph { width:200px; max-width:100%; aspect-ratio:4/3; border-radius:calc(var(--radius) - 2px); background:var(--input-bg); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; text-align:center; padding:16px; line-height:1.5; }
+    .video-wrap { position:relative; display:inline-block; cursor:pointer; }
+    .video-wrap .play-btn { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,.55); border:none; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center; pointer-events:none; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+    .video-wrap:active .play-btn { background:rgba(0,0,0,.7); }
+
+    /* Video lightbox */
+    .video-lb { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.95); display:none; align-items:center; justify-content:center; flex-direction:column; }
+    .video-lb.active { display:flex; }
+    .video-lb video { max-width:95vw; max-height:90vh; border-radius:8px; }
+    .video-lb .lightbox-close { position:absolute; top:12px; right:12px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:22px; line-height:40px; text-align:center; cursor:pointer; z-index:10000; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+    .video-lb .lightbox-close:active { background:rgba(255,255,255,.3); }
 
     /* Voice */
     .msg-bubble.voice-msg { display:flex; align-items:center; gap:8px; min-width:170px; }
@@ -182,7 +193,8 @@
     .new-msg { animation: msgIn .25s ease; }
 
     /* Bottom panel — always visible */
-    .bottom-panel { flex-shrink:0; border-top:1px solid var(--border); background:var(--surface); min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
+    .bottom-panel { flex-shrink:0; border-top:1px solid #b9b9b9; background:#e8e9ed; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
+    [data-theme="dark"] .bottom-panel { border-top-color:#2a2a38; background:#111116; }
     .bottom-status { font-size:12px; color:var(--text-dim); text-align:center; min-height:16px; }
     .bottom-choices { display:flex; flex-direction:column; gap:6px; }
     .bottom-choices:empty { display:none; }
@@ -241,11 +253,12 @@
 <body data-theme="light">
 
   <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightbox-close">&times;</button><img id="lightbox-img" draggable="false"></div>
+  <div class="video-lb" id="videoLb"><button class="lightbox-close" id="videoLb-close">&times;</button><video id="videoLb-video" loop playsinline></video></div>
 
   <!-- Start -->
   <div class="screen active" id="startScreen">
     <div class="start-logo">backrooms</div>
-    <div class="start-title">Untold Stories<span>interactive fiction</span></div>
+    <div class="start-title">Chat<span>real-time messenger</span></div>
     <div class="start-divider"></div>
     <div class="start-sub" id="startSub"></div>
     <button class="start-btn" id="startBtn"></button>
@@ -362,7 +375,7 @@
 
     // ── i18n ──
     const STRINGS = {
-      start_sub:        { en:'Strangers are texting you.\nThey don\'t know where they are.\nHelp them get out.', ru:'Незнакомцы пишут тебе.\nОни не знают, где они.\nПомоги им выбраться.' },
+      start_sub:        { en:'Searching for signal...\n1 active channel found.\nSomeone is trying to reach you.', ru:'Поиск сигнала...\n1 активный канал найден.\nКто-то пытается до тебя достучаться.' },
       start_btn:        { en:'Start', ru:'Начать' },
       chats:            { en:'Chats', ru:'Чаты' },
       settings:         { en:'Settings', ru:'Настройки' },
@@ -422,7 +435,8 @@
       phase:'idle', node:'start', choiceNode:null, choiceAvailableAt:null, choiceDeadline:null,
       waitUntil:null, waitNextNode:null, waitChatNode:null, waitChatBusyUntil:null, pendingNode:null,
       usedOptionals:[], knowledgeFlags:[], currentScene:null,
-      playerName:null, inputNode:null, inputAvailableAt:null
+      playerName:null, inputNode:null, inputAvailableAt:null,
+      profileOverrides:null
     };
 
     let state = {
@@ -449,7 +463,13 @@
       const hdrName = $('chatHdrName');
       if (hdrName && meta) hdrName.textContent = L(meta.name);
       const hdrAv = $('chatHdrAv');
-      if (hdrAv && meta) hdrAv.textContent = meta.avatar || '?';
+      if (hdrAv && meta) {
+        if (meta.avatarImg) {
+          hdrAv.innerHTML = `<img src="${meta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+          hdrAv.textContent = meta.avatar || '?';
+        }
+      }
     }
 
     // Copy active story fields INTO state (for engine)
@@ -651,8 +671,11 @@
         } else {
           const grad = meta.avatarGradient ? `background:linear-gradient(135deg,${meta.avatarGradient[0]},${meta.avatarGradient[1]})` : '';
           const timeStr = lastMsg && lastMsg._ts ? fmtTime(lastMsg._ts) : '';
+          const avInner = meta.avatarImg
+            ? `<img src="${meta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+            : (meta.avatar || '?');
           item.innerHTML = `
-            <div class="ct-avatar" style="${grad};color:#fff;font-weight:600;">${meta.avatar || '?'}</div>
+            <div class="ct-avatar" style="${grad};color:#fff;font-weight:600;">${avInner}</div>
             <div class="ct-info"><div class="ct-name">${L(meta.name)}</div><div class="ct-preview">${preview}</div></div>
             <div class="ct-meta"><div class="ct-time">${timeStr}</div>${unread > 0 ? `<div class="ct-badge">${unread}</div>` : ''}</div>`;
           item.onclick = () => openStory(meta);
@@ -743,6 +766,11 @@
           t += 2000; // pause after image
           continue;
         }
+        if (msg.type === 'update_profile') {
+          t += msg.delay > 0 ? msg.delay : 0;
+          state.timeline.push({ ts:t, type:'update_profile', data:{...msg} });
+          continue;
+        }
         const text = L(msg.text) || '';
         const len = text.length;
         t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
@@ -816,6 +844,13 @@
         if (evt.type === 'msg') {
           state.history.push({ ...evt.data, _ts: evt.ts });
           updateChecksToRead();
+        } else if (evt.type === 'update_profile') {
+          const meta = storiesMeta.find(s => s.id === state.activeStory);
+          if (meta) {
+            if (evt.data.name) meta.name = evt.data.name;
+            if (evt.data.avatarImg) meta.avatarImg = evt.data.avatarImg;
+          }
+          state.profileOverrides = { name: evt.data.name, avatarImg: evt.data.avatarImg };
         }
       }
 
@@ -853,8 +888,10 @@
     function playerChoose(choiceIdx) {
       const node = scenario.nodes[state.choiceNode];
       if (!node || !node.choices || state.phase !== 'choice') return;
-      const ch = node.choices[choiceIdx];
+      // Block if optional response still playing
       const now = Date.now();
+      if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
+      const ch = node.choices[choiceIdx];
       state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
       state.choices.push(ch.tag);
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
@@ -863,15 +900,17 @@
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
       scheduleNode(ch.next, now + 1500);
-      save(); renderUI();
+      save(); renderUI(); updateBottomPanel();
     }
 
     function playerChooseOptional(choiceIdx) {
       const node = scenario.nodes[state.choiceNode];
       if (!node || !node.choices || state.phase !== 'choice') return;
+      // Block if previous optional response still playing
+      const now = Date.now();
+      if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
       const ch = node.choices[choiceIdx];
       if (!ch.optional || !ch.response) return;
-      const now = Date.now();
 
       // Add player message + knowledge flag
       state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
@@ -904,7 +943,7 @@
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
 
-      save(); renderUI();
+      save(); renderUI(); updateBottomPanel();
     }
 
     function submitInput(value) {
@@ -946,6 +985,20 @@
         addMsgDOM(state.history[i], i, lastRenderedCount > 0);
       }
       lastRenderedCount = newCount;
+      // Refresh chat header (name & avatar may change via update_profile)
+      const curMeta = storiesMeta.find(s => s.id === state.activeStory);
+      if (curMeta) {
+        const hn = $('chatHdrName');
+        if (hn) hn.textContent = L(curMeta.name);
+        const ha = $('chatHdrAv');
+        if (ha) {
+          if (curMeta.avatarImg) {
+            if (!ha.querySelector('img')) ha.innerHTML = `<img src="${curMeta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+          } else {
+            ha.textContent = curMeta.avatar || '?';
+          }
+        }
+      }
       updateAllChecks();
       updateTypingUI();
       updateBottomPanel();
@@ -1025,7 +1078,11 @@
         const av = document.createElement('div');
         av.className = 'msg-avatar';
         const stMeta = storiesMeta.find(s => s.id === state.activeStory);
-        av.textContent = stMeta ? stMeta.avatar : '?';
+        if (stMeta && stMeta.avatarImg) {
+          av.innerHTML = `<img src="${stMeta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+          av.textContent = stMeta ? stMeta.avatar : '?';
+        }
         row.appendChild(av);
       }
 
@@ -1057,11 +1114,25 @@
           img.style.cssText = 'width:100%;max-width:240px;border-radius:calc(var(--radius) - 2px);display:block;';
           img.loading = 'lazy';
           img.onerror = () => {
-            img.replaceWith(Object.assign(document.createElement('div'), {
+            const ph = Object.assign(document.createElement('div'), {
               className: 'img-ph', textContent: L(msg.alt) || 'photo'
-            }));
+            });
+            if (msg.video) img.parentElement.replaceWith(ph);
+            else img.replaceWith(ph);
           };
-          bubble.appendChild(img);
+          if (msg.video) {
+            const wrap = document.createElement('div');
+            wrap.className = 'video-wrap';
+            wrap.dataset.video = msg.video;
+            wrap.appendChild(img);
+            const btn = document.createElement('div');
+            btn.className = 'play-btn';
+            btn.innerHTML = '&#9654;';
+            wrap.appendChild(btn);
+            bubble.appendChild(wrap);
+          } else {
+            bubble.appendChild(img);
+          }
         } else {
           const ph = document.createElement('div');
           ph.className = 'img-ph';
@@ -1137,7 +1208,12 @@
         row.className = 'msg-row npc typing'; row.id = 'td';
         const av = document.createElement('div');
         const stMeta2 = storiesMeta.find(s => s.id === state.activeStory);
-        av.className = 'msg-avatar'; av.textContent = stMeta2 ? stMeta2.avatar : '?';
+        av.className = 'msg-avatar';
+        if (stMeta2 && stMeta2.avatarImg) {
+          av.innerHTML = `<img src="${stMeta2.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        } else {
+          av.textContent = stMeta2 ? stMeta2.avatar : '?';
+        }
         const dots = document.createElement('div');
         dots.className = 'typing-dots';
         dots.innerHTML = '<span></span><span></span><span></span>';
@@ -1207,15 +1283,18 @@
       if (!node || !node.choices) return;
       if (!state.usedOptionals) state.usedOptionals = [];
       if (!state.knowledgeFlags) state.knowledgeFlags = [];
+      const now = Date.now();
+      const optBusy = state.choiceAvailableAt && now < state.choiceAvailableAt;
 
       bottomChoices.innerHTML = '';
 
-      // Key choices
+      // Key choices (also blocked while optional response plays)
       node.choices.filter(ch => ch.key).forEach(ch => {
         const idx = node.choices.indexOf(ch);
         const btn = document.createElement('button');
         btn.className = 'choice-key';
         btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + L(ch.text);
+        btn.disabled = optBusy;
         btn.onclick = () => playerChoose(idx);
         bottomChoices.appendChild(btn);
       });
@@ -1227,6 +1306,7 @@
           const idx = node.choices.indexOf(ch);
           const btn = document.createElement('button');
           btn.className = 'choice-optional';
+          btn.disabled = optBusy;
           btn.textContent = L(ch.text);
           btn.onclick = () => playerChooseOptional(idx);
           bottomChoices.appendChild(btn);
@@ -1325,7 +1405,7 @@
         t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
-      // Block new questions until Lika finishes answering
+      // Block new questions until response finishes
       state.waitChatBusyUntil = t;
 
       setTimeout(() => {
@@ -1333,7 +1413,7 @@
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
 
-      save(); renderUI();
+      save(); renderUI(); updateBottomPanel();
     }
 
     function updateCountdowns(now) {
@@ -1619,6 +1699,16 @@
       storiesMeta = data.stories;
 
       if (load() && state.started) {
+        // Apply saved profile overrides
+        for (const [id, st] of Object.entries(state.stories)) {
+          if (st.profileOverrides) {
+            const m = storiesMeta.find(s => s.id === id);
+            if (m) {
+              if (st.profileOverrides.name) m.name = st.profileOverrides.name;
+              if (st.profileOverrides.avatarImg) m.avatarImg = st.profileOverrides.avatarImg;
+            }
+          }
+        }
         // Load active story scenario
         if (state.activeStory) {
           const meta = storiesMeta.find(s => s.id === state.activeStory);
@@ -1644,6 +1734,16 @@
 
       // Open on image click (delegated)
       document.addEventListener('click', e => {
+        // Video wrap — open video lightbox
+        const vWrap = e.target.closest('.video-wrap');
+        if (vWrap) {
+          const vLb = document.getElementById('videoLb');
+          const vVid = document.getElementById('videoLb-video');
+          vVid.src = vWrap.dataset.video;
+          vVid.play();
+          vLb.classList.add('active');
+          return;
+        }
         const img = e.target.closest('.img-msg img');
         if (!img) return;
         lbImg.src = img.src;
@@ -1736,6 +1836,16 @@
         }
         lastTap = now;
       });
+    })();
+
+    // === Video lightbox ===
+    (() => {
+      const vLb = document.getElementById('videoLb');
+      const vVid = document.getElementById('videoLb-video');
+      const closeVLb = () => { vVid.pause(); vVid.src = ''; vLb.classList.remove('active'); };
+      document.getElementById('videoLb-close').addEventListener('click', closeVLb);
+      vLb.addEventListener('click', e => { if (e.target === vLb) closeVLb(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && vLb.classList.contains('active')) closeVLb(); });
     })();
   </script>
 </body>
