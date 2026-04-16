@@ -145,28 +145,16 @@ let allFiles = [];
 let currentFilter = 'all';
 
 async function scanMedia() {
-  // Fetch directory listing — works with http-server's default index
   try {
-    const resp = await fetch(MEDIA_DIR);
-    const html = await resp.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const links = doc.querySelectorAll('a');
-    const files = [];
-    links.forEach(a => {
-      const href = decodeURIComponent(a.getAttribute('href') || '');
-      const name = href.replace(/\/$/, '').split('/').pop();
+    const resp = await fetch(MEDIA_DIR + 'files.json');
+    const names = await resp.json();
+    return names.map(name => {
       const ext = name.split('.').pop().toLowerCase();
-      if (ALL_EXT.includes(ext)) {
-        const type = IMG_EXT.includes(ext) ? 'image' : 'video';
-        files.push({ name, path: MEDIA_DIR + name, ext, type });
-      }
-    });
-    // Sort: act files first (by number), then test, then others
-    files.sort((a, b) => a.name.localeCompare(b.name));
-    return files;
+      const type = IMG_EXT.includes(ext) ? 'image' : 'video';
+      return { name, path: MEDIA_DIR + name, ext, type };
+    }).sort((a, b) => a.name.localeCompare(b.name));
   } catch(e) {
-    console.error('Failed to scan media:', e);
+    console.error('Failed to load media list:', e);
     return [];
   }
 }
