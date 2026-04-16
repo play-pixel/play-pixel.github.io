@@ -712,12 +712,18 @@
           state.timeline.push({ ts:t, type:'typing_end' });
           continue;
         }
-        const text = msg.text || msg.alt || '';
-        const len = text.length;
         if (msg.type === 'status') {
           state.timeline.push({ ts:t, type:'msg', data:{...msg} });
           t += 500; continue;
         }
+        if (msg.type === 'image') {
+          t += msg.delay > 0 ? msg.delay : 1500;
+          state.timeline.push({ ts:t, type:'msg', data:{...msg} });
+          t += 2000; // pause after image
+          continue;
+        }
+        const text = L(msg.text) || '';
+        const len = text.length;
         t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
         const typeTime = Math.max(1500, Math.min(len * 45, 4000));
         state.timeline.push({ ts:t, type:'typing_start' });
@@ -1000,22 +1006,22 @@
         bubble.appendChild(meta);
       } else if (msg.type === 'image') {
         bubble.className = 'msg-bubble img-msg';
-        if (msg.src && msg.src.startsWith('http')) {
+        if (msg.src) {
           const img = document.createElement('img');
           img.src = msg.src;
-          img.alt = msg.alt || '';
+          img.alt = L(msg.alt) || '';
           img.style.cssText = 'width:100%;max-width:240px;border-radius:calc(var(--radius) - 2px);display:block;';
           img.loading = 'lazy';
           img.onerror = () => {
             img.replaceWith(Object.assign(document.createElement('div'), {
-              className: 'img-ph', textContent: msg.alt || 'photo'
+              className: 'img-ph', textContent: L(msg.alt) || 'photo'
             }));
           };
           bubble.appendChild(img);
         } else {
           const ph = document.createElement('div');
           ph.className = 'img-ph';
-          ph.textContent = msg.alt || 'photo';
+          ph.textContent = L(msg.alt) || 'photo';
           bubble.appendChild(ph);
         }
       } else if (msg.type === 'voice') {
