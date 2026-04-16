@@ -209,6 +209,12 @@
           "key": true
         },
         {
+          "text": { "en": "Tell her your name", "ru": "Назвать своё имя" },
+          "next": "fc3_input_name",
+          "tag": "give_name",
+          "key": true
+        },
+        {
           "text": { "en": "Zoe — is that your full name?", "ru": "Зои — это полное имя?" },
           "tag": "ask_name",
           "optional": true,
@@ -231,6 +237,65 @@
           ]
         }
       ],
+      "scene": "intro"
+    },
+    "fc3_input_name": {
+      "messages": [],
+      "input": {
+        "placeholder": { "en": "Your name...", "ru": "Введи имя..." },
+        "saveAs": "playerName"
+      },
+      "next": "fc4_named",
+      "scene": "intro"
+    },
+    "fc4_named": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "{playerName}?", "ru": "{playerName}?" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok, nice to meet you", "ru": "ок, приятно познакомиться" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "although the circumstances kinda suck", "ru": "хотя обстоятельства так себе" },
+          "delay": 3500
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i don't know how to explain this normally", "ru": "я не знаю как это объяснить нормально" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i was walking home after my shift. through the subway station", "ru": "я шла домой после смены. через станцию метро" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "and", "ru": "и" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "fell through", "ru": "провалилась" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the step just disappeared under me", "ru": "ступенька просто исчезла подо мной" },
+          "delay": 4000
+        }
+      ],
+      "next": "fc5",
       "scene": "intro"
     },
     "fc4_noname": {
