@@ -1478,9 +1478,8 @@
       if (first) {
         scenario = activeScenario = await loadScenario(first.scenario);
         activateStory(first.id);
-        state.phase = 'playing';
         state.currentScene = scenario.scenes?.[0]?.id || null;
-        scheduleNode('start', Date.now());
+        // Don't schedule nodes here — openStory will do it when user opens the chat
       }
       save();
       renderContactList();
