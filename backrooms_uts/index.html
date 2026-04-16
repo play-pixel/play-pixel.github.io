@@ -301,6 +301,7 @@
       <div class="settings-row"><div class="settings-row-label" id="settingsNameLabel">Your name</div><input type="text" id="playerNameInput" placeholder="stranger" style="flex:1;max-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;text-align:right;"></div>
       <div class="settings-section">Оформление</div>
       <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="settings-row"><div class="settings-row-label" id="settingsVibLabel">Вибрация</div><label class="toggle"><input type="checkbox" id="vibToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Язык / Language</div>
       <div class="settings-row"><div class="settings-row-label">Язык интерфейса</div><div class="lang-options"><button class="lang-opt active" id="langRu">RU</button><button class="lang-opt" id="langEn">EN</button></div></div>
       <div class="settings-section">Разработка</div>
@@ -388,6 +389,7 @@
       search:           { en:'Search chats and people', ru:'Поиск по чатам и людям' },
       appearance:       { en:'Appearance', ru:'Оформление' },
       dark_theme:       { en:'Dark theme', ru:'Тёмная тема' },
+      vibration:        { en:'Vibration', ru:'Вибрация' },
       lang_section:     { en:'Language', ru:'Язык / Language' },
       lang_label:       { en:'Interface language', ru:'Язык интерфейса' },
       dev_section:      { en:'Development', ru:'Разработка' },
@@ -431,7 +433,8 @@
     }
 
     let scenario = null; // alias for activeScenario, set on story activation
-    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '' };
+    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true };
+    function vibrate(ms) { if (prefs.vibration && navigator.vibrate) navigator.vibrate(ms); }
     let currentScreen = 'startScreen';
     let lastRenderedCount = 0;
 
@@ -512,6 +515,7 @@
     function applyTheme() {
       document.body.setAttribute('data-theme', prefs.theme);
       $('themeToggle').checked = prefs.theme === 'dark';
+      $('vibToggle').checked = prefs.vibration !== false;
       $('testToggle').checked = prefs.testMode || false;
     }
 
@@ -543,6 +547,7 @@
       const labels = document.querySelectorAll('.settings-row-label');
       if (labels[0]) labels[0].textContent = t('your_name');
       if (labels[1]) labels[1].textContent = t('dark_theme');
+      $('settingsVibLabel').textContent = t('vibration');
       if (labels[2]) labels[2].textContent = t('lang_label');
       if (labels[3]) { labels[3].innerHTML = t('test_mode') + '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + t('test_mode_hint') + '</div>'; }
       if (labels[4]) labels[4].textContent = t('reset_progress');
@@ -849,6 +854,7 @@
         changed = true;
         if (evt.type === 'msg') {
           state.history.push({ ...evt.data, _ts: evt.ts });
+          if (evt.data.type !== 'status') vibrate(15);
           updateChecksToRead();
         } else if (evt.type === 'update_profile') {
           const meta = storiesMeta.find(s => s.id === state.activeStory);
@@ -899,6 +905,7 @@
       if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
       const ch = node.choices[choiceIdx];
       state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
+      vibrate(30);
       state.choices.push(ch.tag);
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
       setTimeout(() => {
@@ -920,6 +927,7 @@
 
       // Add player message + knowledge flag
       state.history.push({ type:'player', text:L(ch.text), checks:1, _ts:now });
+      vibrate(30);
       state.usedOptionals.push(ch.tag);
       if (ch.flag && !state.knowledgeFlags.includes(ch.flag)) {
         state.knowledgeFlags.push(ch.flag);
@@ -962,6 +970,7 @@
       state[saveAs] = text;
       if (saveAs === 'playerName') { prefs.playerName = text; savePrefs(); $('playerNameInput').value = text; }
       state.history.push({ type:'player', text:text, checks:1, _ts:now });
+      vibrate(30);
       state.inputNode = null; state.inputAvailableAt = null; state.phase = 'playing';
       setTimeout(() => {
         const pm = [...state.history].reverse().find(m => m.type === 'player');
@@ -1393,6 +1402,7 @@
       const now = Date.now();
 
       state.history.push({ type:'player', text:wc.text, checks:1, _ts:now });
+      vibrate(30);
       state.usedOptionals.push(wc.tag);
       if (wc.flag && !state.knowledgeFlags.includes(wc.flag)) {
         state.knowledgeFlags.push(wc.flag);
@@ -1682,6 +1692,7 @@
     $('tabChatsFromSettings').onclick = () => go('contactsScreen');
     $('settingsBack').onclick = () => go('contactsScreen');
     $('themeToggle').onchange = (e) => { prefs.theme = e.target.checked ? 'dark' : 'light'; applyTheme(); savePrefs(); };
+    $('vibToggle').onchange = (e) => { prefs.vibration = e.target.checked; savePrefs(); };
     $('testToggle').onchange = (e) => { prefs.testMode = e.target.checked; savePrefs(); };
     $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); applyLang(); };
     $('langEn').onclick = () => { prefs.lang='en'; savePrefs(); applyLang(); };
