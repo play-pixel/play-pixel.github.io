@@ -196,17 +196,11 @@
       "messages": [],
       "choices": [
         {
-          "text": { "en": "Doesn't matter what my name is. What happened?", "ru": "Не важно как меня зовут. Что случилось?" },
+          "text": { "en": "Not important. What happened?", "ru": "Не важно. Что случилось?" },
           "next": "fc4_noname",
           "tag": "noname",
           "key": true,
           "default": true
-        },
-        {
-          "text": { "en": "Let's skip names. Tell me what's going on", "ru": "Давай без имён. Расскажи что происходит" },
-          "next": "fc4_noname",
-          "tag": "anon",
-          "key": true
         },
         {
           "text": { "en": "Tell her your name", "ru": "Назвать своё имя" },
@@ -215,7 +209,7 @@
           "key": true
         },
         {
-          "text": { "en": "Zoe — is that your full name?", "ru": "Зои — это полное имя?" },
+          "text": { "en": "Zoe, is that your full name?", "ru": "Зои, это полное имя?" },
           "tag": "ask_name",
           "optional": true,
           "response": [
@@ -302,13 +296,13 @@
       "messages": [
         {
           "type": "text",
-          "text": { "en": "ok", "ru": "ок" },
+          "text": { "en": "ok fine", "ru": "ок ладно" },
           "delay": 3000
         },
         {
           "type": "text",
-          "text": { "en": "fine", "ru": "хорошо" },
-          "delay": 2500
+          "text": { "en": "i'll just call you stranger then", "ru": "тогда буду звать тебя друг" },
+          "delay": 3000
         },
         {
           "type": "typing",
@@ -383,7 +377,7 @@
           ]
         },
         {
-          "text": { "en": "The subway station — where exactly?", "ru": "Станция метро — где конкретно?" },
+          "text": { "en": "The subway station, where exactly?", "ru": "Станция метро, где конкретно?" },
           "tag": "ask_location",
           "optional": true,
           "response": [
@@ -834,7 +828,7 @@
             },
             {
               "type": "text",
-              "text": { "en": "morning rush is insane, but after 11 it gets chill", "ru": "утренний раш — безумие, но после 11 становится спокойно" }
+              "text": { "en": "morning rush is insane, but after 11 it gets chill", "ru": "утренний раш это безумие, но после 11 становится спокойно" }
             },
             {
               "type": "text",
