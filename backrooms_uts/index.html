@@ -1885,12 +1885,19 @@
       });
 
       // Touch pinch + drag
+      let pinching = false;
       lb.addEventListener('touchstart', e => {
         if (e.touches.length === 2) {
           e.preventDefault();
+          pinching = true;
+          dragging = false;
           initialDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
           initialScale = scale;
-        } else if (e.touches.length === 1 && scale > 1) {
+          // Track midpoint for pan-while-pinch
+          startX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          startY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          startPx = px; startPy = py;
+        } else if (e.touches.length === 1 && scale > 1 && !pinching) {
           e.preventDefault();
           dragging = true;
           startX = e.touches[0].clientX; startY = e.touches[0].clientY;
@@ -1898,10 +1905,15 @@
         }
       }, { passive: false });
       lb.addEventListener('touchmove', e => {
-        if (e.touches.length === 2) {
+        if (e.touches.length === 2 && pinching) {
           e.preventDefault();
           const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
           scale = Math.min(Math.max(initialScale * (dist / initialDist), 0.5), 5);
+          // Pan while pinching
+          const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          px = startPx + (mx - startX);
+          py = startPy + (my - startY);
           applyTransform();
         } else if (e.touches.length === 1 && dragging) {
           px = startPx + (e.touches[0].clientX - startX);
@@ -1910,10 +1922,20 @@
         }
       }, { passive: false });
       lb.addEventListener('touchend', e => {
-        if (e.touches.length < 2) initialDist = 0;
+        if (e.touches.length < 2) {
+          pinching = false;
+          initialDist = 0;
+        }
         if (e.touches.length === 0) {
           dragging = false;
-          if (scale <= 1.05) { scale = 1; px = 0; py = 0; applyTransform(); }
+          // Only snap back if barely zoomed
+          if (scale < 1.05) { scale = 1; px = 0; py = 0; applyTransform(); }
+        }
+        // After pinch, allow one-finger drag with remaining finger
+        if (e.touches.length === 1 && scale > 1) {
+          dragging = true;
+          startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+          startPx = px; startPy = py;
         }
       });
 
