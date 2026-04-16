@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media — Backrooms: Untold Stories</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg: #0e0e12;
+      --surface: #1a1a22;
+      --text: #e0e0e8;
+      --text-dim: #6a6a7a;
+      --accent: #3b82f6;
+      --border: #28283a;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; font-weight: 600; white-space: nowrap; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filters button {
+      background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+      transition: all .15s;
+    }
+    .filters button.active, .filters button:hover {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .stats { margin-left: auto; font-size: 13px; color: var(--text-dim); white-space: nowrap; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      padding: 20px 24px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .15s, border-color .15s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .card-preview {
+      width: 100%; aspect-ratio: 4/3;
+      display: flex; align-items: center; justify-content: center;
+      background: #111118; overflow: hidden; position: relative;
+    }
+    .card-preview img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .card-preview video {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .card-info {
+      padding: 10px 12px;
+    }
+    .card-name {
+      font-size: 13px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .card-meta {
+      font-size: 11px; color: var(--text-dim); margin-top: 3px;
+    }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      padding: 2px 6px; border-radius: 4px; margin-right: 4px;
+      text-transform: uppercase;
+    }
+    .badge-img { background: #1e3a5f; color: #60a5fa; }
+    .badge-vid { background: #3b1f4f; color: #c084fc; }
+
+    /* lightbox */
+    .lightbox {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,.92);
+      align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; color: #fff; font-size: 32px;
+      cursor: pointer; opacity: .7; transition: opacity .15s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+    .lightbox-content {
+      max-width: 90vw; max-height: 80vh; border-radius: 8px;
+    }
+    .lightbox-content img, .lightbox-content video {
+      max-width: 90vw; max-height: 80vh; border-radius: 8px;
+    }
+    .lightbox-label {
+      margin-top: 12px; font-size: 14px; color: #ccc;
+      text-align: center; max-width: 90vw;
+    }
+
+    .empty {
+      text-align: center; padding: 80px 24px;
+      color: var(--text-dim); font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Media Browser</h1>
+  <div class="filters">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="image">Images</button>
+    <button data-filter="video">Video</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="grid" id="grid"></div>
+<div class="empty" id="empty" style="display:none">No media files found</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <div class="lightbox-content" id="lightbox-content"></div>
+  <div class="lightbox-label" id="lightbox-label"></div>
+</div>
+
+<script>
+const MEDIA_DIR = 'media/';
+const IMG_EXT = ['jpg','jpeg','png','gif','webp'];
+const VID_EXT = ['mp4','webm'];
+const ALL_EXT = [...IMG_EXT, ...VID_EXT];
+
+let allFiles = [];
+let currentFilter = 'all';
+
+async function scanMedia() {
+  // Fetch directory listing — works with http-server's default index
+  try {
+    const resp = await fetch(MEDIA_DIR);
+    const html = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const links = doc.querySelectorAll('a');
+    const files = [];
+    links.forEach(a => {
+      const href = decodeURIComponent(a.getAttribute('href') || '');
+      const name = href.replace(/\/$/, '').split('/').pop();
+      const ext = name.split('.').pop().toLowerCase();
+      if (ALL_EXT.includes(ext)) {
+        const type = IMG_EXT.includes(ext) ? 'image' : 'video';
+        files.push({ name, path: MEDIA_DIR + name, ext, type });
+      }
+    });
+    // Sort: act files first (by number), then test, then others
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    return files;
+  } catch(e) {
+    console.error('Failed to scan media:', e);
+    return [];
+  }
+}
+
+function getFiltered() {
+  if (currentFilter === 'all') return allFiles;
+  return allFiles.filter(f => f.type === currentFilter);
+}
+
+function render() {
+  const files = getFiltered();
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const stats = document.getElementById('stats');
+
+  const imgCount = allFiles.filter(f => f.type === 'image').length;
+  const vidCount = allFiles.filter(f => f.type === 'video').length;
+  stats.textContent = `${imgCount} img, ${vidCount} vid — ${allFiles.length} total`;
+
+  if (!files.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = files.map((f, i) => `
+    <div class="card" onclick="openLightbox(${i})">
+      <div class="card-preview">
+        ${f.type === 'image'
+          ? `<img src="${f.path}" alt="${f.name}" loading="lazy">`
+          : `<video src="${f.path}" muted preload="metadata"></video>`
+        }
+      </div>
+      <div class="card-info">
+        <div class="card-name" title="${f.name}">${f.name}</div>
+        <div class="card-meta">
+          <span class="badge ${f.type === 'image' ? 'badge-img' : 'badge-vid'}">${f.ext}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openLightbox(idx) {
+  const files = getFiltered();
+  const f = files[idx];
+  if (!f) return;
+  const box = document.getElementById('lightbox');
+  const content = document.getElementById('lightbox-content');
+  const label = document.getElementById('lightbox-label');
+
+  if (f.type === 'image') {
+    content.innerHTML = `<img src="${f.path}" alt="${f.name}">`;
+  } else {
+    content.innerHTML = `<video src="${f.path}" controls autoplay style="max-width:90vw;max-height:80vh;border-radius:8px"></video>`;
+  }
+  label.textContent = f.name;
+  box.classList.add('open');
+}
+
+function closeLightbox() {
+  const box = document.getElementById('lightbox');
+  box.classList.remove('open');
+  document.getElementById('lightbox-content').innerHTML = '';
+}
+
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+document.querySelectorAll('.filters button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelector('.filters .active').classList.remove('active');
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+scanMedia().then(files => {
+  allFiles = files;
+  render();
+});
+</script>
+
+</body>
+</html>

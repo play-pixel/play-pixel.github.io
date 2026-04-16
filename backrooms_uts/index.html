@@ -222,17 +222,27 @@
     .admin-jump select { flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); font-size:11px; font-family:monospace; }
 
     .hidden { display:none !important; }
+
+    /* Lightbox */
+    .lightbox { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.92); display:none; align-items:center; justify-content:center; cursor:zoom-out; touch-action:none; }
+    .lightbox.active { display:flex; }
+    .lightbox img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:8px; transition:transform .15s ease; transform-origin:0 0; cursor:grab; user-select:none; -webkit-user-select:none; }
+    .lightbox img.grabbing { cursor:grabbing; }
+    .lightbox-close { position:absolute; top:12px; right:12px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:22px; line-height:40px; text-align:center; cursor:pointer; z-index:10000; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+    .lightbox-close:active { background:rgba(255,255,255,.3); }
   </style>
 </head>
 <body data-theme="light">
+
+  <div class="lightbox" id="lightbox"><button class="lightbox-close" id="lightbox-close">&times;</button><img id="lightbox-img" draggable="false"></div>
 
   <!-- Start -->
   <div class="screen active" id="startScreen">
     <div class="start-logo">backrooms</div>
     <div class="start-title">Untold Stories<span>interactive fiction</span></div>
     <div class="start-divider"></div>
-    <div class="start-sub">Незнакомцы пишут тебе.<br>Они не знают, где они.<br>Помоги им выбраться.</div>
-    <button class="start-btn" id="startBtn">Начать</button>
+    <div class="start-sub" id="startSub"></div>
+    <button class="start-btn" id="startBtn"></button>
     <div class="start-version">v0.5</div>
   </div>
 
@@ -289,7 +299,7 @@
     <div class="chat-hdr">
       <button class="chat-back" id="chatBack">&#8249;</button>
       <div class="chat-hdr-av">Л</div>
-      <div class="chat-hdr-info"><div class="chat-hdr-name">Неизвестный номер</div><div class="chat-hdr-status" id="hdrStatus">в сети</div></div>
+      <div class="chat-hdr-info"><div class="chat-hdr-name" id="chatHdrName"></div><div class="chat-hdr-status" id="hdrStatus"></div></div>
       <button class="admin-toggle" id="adminToggle" title="Admin">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       </button>
@@ -342,8 +352,52 @@
     const CHOICE_TIMEOUT_TEST = 60;   // 1 minute in test mode
     const TIME_SCALE_TEST = 60;       // 60x speed in test mode (15min → 15sec)
 
+    // ── i18n ──
+    const STRINGS = {
+      start_sub:        { en:'Strangers are texting you.\nThey don\'t know where they are.\nHelp them get out.', ru:'Незнакомцы пишут тебе.\nОни не знают, где они.\nПомоги им выбраться.' },
+      start_btn:        { en:'Start', ru:'Начать' },
+      chats:            { en:'Chats', ru:'Чаты' },
+      settings:         { en:'Settings', ru:'Настройки' },
+      search:           { en:'Search chats and people', ru:'Поиск по чатам и людям' },
+      appearance:       { en:'Appearance', ru:'Оформление' },
+      dark_theme:       { en:'Dark theme', ru:'Тёмная тема' },
+      lang_section:     { en:'Language', ru:'Язык / Language' },
+      lang_label:       { en:'Interface language', ru:'Язык интерфейса' },
+      dev_section:      { en:'Development', ru:'Разработка' },
+      test_mode:        { en:'Test mode', ru:'Режим тестирования' },
+      test_mode_hint:   { en:'Speeds up time 60x. Choice timeout — 1 min instead of 1 hour', ru:'Ускоряет время в 60x. Выбор — 1 мин вместо 1 часа' },
+      progress_section: { en:'Progress', ru:'Прогресс' },
+      reset_progress:   { en:'Reset progress', ru:'Сбросить прогресс' },
+      reset_btn:        { en:'Reset', ru:'Сбросить' },
+      reset_confirm:    { en:'Reset all progress?', ru:'Сбросить весь прогресс?' },
+      story_locked:     { en:'Story locked', ru:'История заблокирована' },
+      tap_to_start:     { en:'Tap to start', ru:'Нажми чтобы начать' },
+      unknown_number:   { en:'Unknown number', ru:'Неизвестный номер' },
+      online:           { en:'online', ru:'в сети' },
+      typing:           { en:'typing...', ru:'печатает...' },
+      away:             { en:'away', ru:'ушла' },
+      no_new_messages:  { en:'No new messages', ru:'Новых сообщений нет' },
+      auto_choice:      { en:'She didn\'t wait for your answer and decided herself', ru:'Она не дождалась ответа и решила сама' },
+      waiting_answer:   { en:'Waiting for your answer...', ru:'Ждёт ответа...' },
+      skip:             { en:'skip', ru:'пропустить' },
+      today:            { en:'Today', ru:'Сегодня' },
+      yesterday:        { en:'Yesterday', ru:'Вчера' },
+      node_label:       { en:'Node:', ru:'Нода:' },
+      story_label:      { en:'Story:', ru:'История:' },
+      jump_to_node:     { en:'Jump to node...', ru:'Перейти к ноде...' },
+    };
+
+    function t(key) { return (STRINGS[key] && STRINGS[key][prefs.lang]) || (STRINGS[key] && STRINGS[key].en) || key; }
+
+    // Resolve localized text from scenario (string or {en,ru} object)
+    function L(val) {
+      if (!val) return '';
+      if (typeof val === 'string') return val;
+      return val[prefs.lang] || val.en || val.ru || '';
+    }
+
     let scenario = null; // alias for activeScenario, set on story activation
-    let prefs = { theme: 'light', lang: 'ru', testMode: false };
+    let prefs = { theme: 'light', lang: 'en', testMode: false };
     let currentScreen = 'startScreen';
     let lastRenderedCount = 0;
 
@@ -374,6 +428,10 @@
       if (!state.stories[id]) state.stories[id] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE));
       // Copy story fields into state (engine reads state.timeline etc.)
       syncFromStories();
+      // Update chat header with story name
+      const meta = storiesMeta.find(s => s.id === id);
+      const hdrName = $('chatHdrName');
+      if (hdrName && meta) hdrName.textContent = L(meta.name);
     }
 
     // Copy active story fields INTO state (for engine)
@@ -405,12 +463,54 @@
     let unreadWhileScrolled = 0;
 
     // ── Prefs ───────────────────────
-    function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); }
+    function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); applyLang(); }
     function savePrefs() { localStorage.setItem(PREFS, JSON.stringify(prefs)); }
     function applyTheme() {
       document.body.setAttribute('data-theme', prefs.theme);
       $('themeToggle').checked = prefs.theme === 'dark';
       $('testToggle').checked = prefs.testMode || false;
+    }
+
+    function applyLang() {
+      document.documentElement.lang = prefs.lang;
+      // Start screen
+      $('startSub').innerHTML = t('start_sub').replace(/\n/g, '<br>');
+      $('startBtn').textContent = t('start_btn');
+      // Tab bars (contacts + settings screens)
+      document.querySelectorAll('.tab-item').forEach(tab => {
+        const svg = tab.querySelector('svg');
+        if (!svg) return;
+        const isChat = tab.querySelector('path[d*="M21 15"]');
+        tab.textContent = '';
+        tab.appendChild(svg);
+        tab.append(isChat ? t('chats') : t('settings'));
+      });
+      // Contacts header
+      const contactsH1 = document.querySelector('#contactsScreen .contacts-hdr h1');
+      if (contactsH1) contactsH1.textContent = t('chats');
+      const searchSpan = document.querySelector('.contacts-search span');
+      if (searchSpan) searchSpan.textContent = t('search');
+      // Settings
+      const settingsH1 = document.querySelector('#settingsScreen .settings-hdr h1');
+      if (settingsH1) settingsH1.textContent = t('settings');
+      const sections = document.querySelectorAll('.settings-section');
+      const sectionKeys = ['appearance','lang_section','dev_section','progress_section'];
+      sections.forEach((el, i) => { if (sectionKeys[i]) el.textContent = t(sectionKeys[i]); });
+      const labels = document.querySelectorAll('.settings-row-label');
+      if (labels[0]) labels[0].textContent = t('dark_theme');
+      if (labels[1]) labels[1].textContent = t('lang_label');
+      if (labels[2]) { labels[2].innerHTML = t('test_mode') + '<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">' + t('test_mode_hint') + '</div>'; }
+      if (labels[3]) labels[3].textContent = t('reset_progress');
+      $('settingsReset').textContent = t('reset_btn');
+      // Lang buttons active state
+      $('langRu').classList.toggle('active', prefs.lang === 'ru');
+      $('langEn').classList.toggle('active', prefs.lang === 'en');
+      // Chat header
+      const hdrName = document.querySelector('.chat-hdr-name');
+      if (hdrName && storiesMeta.length) {
+        const meta = storiesMeta.find(s => s.id === state.activeStory);
+        if (meta) hdrName.textContent = L(meta.name) || t('unknown_number');
+      }
     }
 
     // ── Save / Load ─────────────────
@@ -521,19 +621,19 @@
         const storyState = state.stories[meta.id];
         const unread = storyState ? storyState.history.length - (storyState._lastSeen || 0) : 0;
         const lastMsg = storyState ? [...storyState.history].reverse().find(m => m.type === 'text' || m.type === 'player') : null;
-        const preview = lastMsg ? lastMsg.text : (isLocked ? 'История заблокирована' : 'Нажми чтобы начать');
+        const preview = lastMsg ? L(lastMsg.text) : (isLocked ? t('story_locked') : t('tap_to_start'));
 
         if (isLocked) {
           item.innerHTML = `
             <div class="ct-avatar lock">?</div>
-            <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">История заблокирована</div></div>
+            <div class="ct-info"><div class="ct-name" style="color:var(--text-muted)">???</div><div class="ct-preview">${t('story_locked')}</div></div>
             <div class="ct-meta"><div class="ct-lock-icon">&#128274;</div></div>`;
         } else {
           const grad = meta.avatarGradient ? `background:linear-gradient(135deg,${meta.avatarGradient[0]},${meta.avatarGradient[1]})` : '';
           const timeStr = lastMsg && lastMsg._ts ? fmtTime(lastMsg._ts) : '';
           item.innerHTML = `
             <div class="ct-avatar" style="${grad};color:#fff;font-weight:600;">${meta.avatar || '?'}</div>
-            <div class="ct-info"><div class="ct-name">${meta.name}</div><div class="ct-preview">${preview}</div></div>
+            <div class="ct-info"><div class="ct-name">${L(meta.name)}</div><div class="ct-preview">${preview}</div></div>
             <div class="ct-meta"><div class="ct-time">${timeStr}</div>${unread > 0 ? `<div class="ct-badge">${unread}</div>` : ''}</div>`;
           item.onclick = () => openStory(meta);
         }
@@ -594,8 +694,8 @@
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       const diff = (today - msgDay) / 86400000;
-      if (diff === 0) return 'Сегодня';
-      if (diff === 1) return 'Вчера';
+      if (diff === 0) return t('today');
+      if (diff === 1) return t('yesterday');
       return d.toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
     }
 
@@ -713,7 +813,7 @@
       if (!node || !node.choices) return;
       const defIdx = node.choices.findIndex(c => c.default);
       const ch = node.choices[defIdx >= 0 ? defIdx : 0];
-      state.history.push({ type:'auto', text:'Лика не дождалась ответа и решила сама', _ts:now });
+      state.history.push({ type:'auto', text:t('auto_choice'), _ts:now });
       state.choices.push(ch.tag + '_auto');
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
       scheduleNode(ch.next, now + 1000);
@@ -874,7 +974,8 @@
       if (!isPlayer) {
         const av = document.createElement('div');
         av.className = 'msg-avatar';
-        av.textContent = 'Л';
+        const stMeta = storiesMeta.find(s => s.id === state.activeStory);
+        av.textContent = stMeta ? stMeta.avatar : 'A';
         row.appendChild(av);
       }
 
@@ -895,7 +996,7 @@
           ck.dataset.histIdx = histIdx;
           meta.appendChild(ck);
         }
-        bubble.textContent = msg.text;
+        bubble.textContent = L(msg.text);
         bubble.appendChild(meta);
       } else if (msg.type === 'image') {
         bubble.className = 'msg-bubble img-msg';
@@ -991,11 +1092,11 @@
         dots.innerHTML = '<span></span><span></span><span></span>';
         row.appendChild(av); row.appendChild(dots);
         chatArea.appendChild(row);
-        setStatus('печатает...', 'typing');
+        setStatus(t('typing'), 'typing');
         scroll();
       } else if (!isTyping && existing) {
         existing.remove();
-        setStatus('в сети', 'online');
+        setStatus(t('online'), 'online');
       }
     }
 
@@ -1024,7 +1125,7 @@
       } else if (state.phase === 'wait' && state.waitUntil) {
         renderWaitPanel(now);
       } else if (state.phase === 'done') {
-        bottomStatus.textContent = 'Новых сообщений нет';
+        bottomStatus.textContent = t('no_new_messages');
         bottomChoices.innerHTML = '';
       } else {
         // Playing or idle
@@ -1046,7 +1147,7 @@
         const idx = node.choices.indexOf(ch);
         const btn = document.createElement('button');
         btn.className = 'choice-key';
-        btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + ch.text;
+        btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + L(ch.text);
         btn.onclick = () => playerChoose(idx);
         bottomChoices.appendChild(btn);
       });
@@ -1058,7 +1159,7 @@
           const idx = node.choices.indexOf(ch);
           const btn = document.createElement('button');
           btn.className = 'choice-optional';
-          btn.textContent = ch.text;
+          btn.textContent = L(ch.text);
           btn.onclick = () => playerChooseOptional(idx);
           bottomChoices.appendChild(btn);
         });
@@ -1080,13 +1181,16 @@
         (!wc.requires || state.knowledgeFlags.includes(wc.requires))
       ) : [];
 
-      bottomStatus.innerHTML = 'Лика вернётся через ' + timeStr +
-        ' <button class="wait-skip" id="waitSkipBtn">пропустить</button>';
-
-      const skipBtn = $('waitSkipBtn');
-      if (skipBtn) skipBtn.onclick = () => {
-        state.waitUntil = Date.now(); save(); tick();
-      };
+      if (prefs.testMode) {
+        bottomStatus.innerHTML = timeStr +
+          ' <button class="wait-skip" id="waitSkipBtn">' + t('skip') + '</button>';
+        const skipBtn = $('waitSkipBtn');
+        if (skipBtn) skipBtn.onclick = () => {
+          state.waitUntil = Date.now(); save(); tick();
+        };
+      } else {
+        bottomStatus.innerHTML = '';
+      }
 
       bottomChoices.innerHTML = '';
       if (waitChats.length > 0) {
@@ -1094,14 +1198,14 @@
         waitChats.forEach(wc => {
           const btn = document.createElement('button');
           btn.className = 'choice-optional';
-          btn.textContent = wc.text;
+          btn.textContent = L(wc.text);
           btn.disabled = busy;
           btn.onclick = () => playerWaitChat(wc);
           bottomChoices.appendChild(btn);
         });
       }
 
-      setStatus('ушла', '');
+      setStatus(t('away'), '');
     }
 
     function playerWaitChat(wc) {
@@ -1145,8 +1249,8 @@
         const m = Math.floor(s / 60);
         const sec = s % 60;
         bottomStatus.textContent = m > 0
-          ? `Лика ждёт ответ... ${m}м ${sec.toString().padStart(2,'0')}с`
-          : `Лика ждёт ответ... ${s}с`;
+          ? `${t('waiting_answer')} ${m}:${sec.toString().padStart(2,'0')}`
+          : `${t('waiting_answer')} ${s}s`;
       }
       // Wait countdown handled in renderWaitPanel
     }
@@ -1395,9 +1499,9 @@
     $('settingsBack').onclick = () => go('contactsScreen');
     $('themeToggle').onchange = (e) => { prefs.theme = e.target.checked ? 'dark' : 'light'; applyTheme(); savePrefs(); };
     $('testToggle').onchange = (e) => { prefs.testMode = e.target.checked; savePrefs(); };
-    $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); $('langRu').classList.add('active'); $('langEn').classList.remove('active'); };
-    $('langEn').onclick = () => alert('English language coming soon!');
-    $('settingsReset').onclick = () => { if(confirm('Сбросить весь прогресс?')) { resetState(); go('startScreen'); } };
+    $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); applyLang(); };
+    $('langEn').onclick = () => { prefs.lang='en'; savePrefs(); applyLang(); };
+    $('settingsReset').onclick = () => { if(confirm(t('reset_confirm'))) { resetState(); go('startScreen'); } };
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && state.started && state.opened) {
@@ -1429,6 +1533,107 @@
         go('startScreen');
       }
       setInterval(tick, 500);
+    })();
+
+    // === Lightbox (pinch/zoom/drag) ===
+    (() => {
+      const lb = document.getElementById('lightbox');
+      const lbImg = document.getElementById('lightbox-img');
+      let scale = 1, px = 0, py = 0, startX, startY, startPx, startPy, dragging = false;
+      let initialDist = 0, initialScale = 1;
+
+      // Open on image click (delegated)
+      document.addEventListener('click', e => {
+        const img = e.target.closest('.img-msg img');
+        if (!img) return;
+        lbImg.src = img.src;
+        scale = 1; px = 0; py = 0;
+        applyTransform();
+        lb.classList.add('active');
+      });
+
+      // Close
+      const closeLb = () => lb.classList.remove('active');
+      lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+      document.getElementById('lightbox-close').addEventListener('click', closeLb);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+
+      function applyTransform() {
+        lbImg.style.transform = `translate(${px}px, ${py}px) scale(${scale})`;
+        lbImg.style.transformOrigin = 'center center';
+      }
+
+      // Mouse wheel zoom
+      lb.addEventListener('wheel', e => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        scale = Math.min(Math.max(scale * delta, 0.5), 5);
+        if (scale <= 1.05) { scale = 1; px = 0; py = 0; }
+        applyTransform();
+      }, { passive: false });
+
+      // Mouse drag
+      lbImg.addEventListener('mousedown', e => {
+        if (scale <= 1) return;
+        e.preventDefault();
+        dragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startPx = px; startPy = py;
+        lbImg.classList.add('grabbing');
+      });
+      window.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        px = startPx + (e.clientX - startX);
+        py = startPy + (e.clientY - startY);
+        applyTransform();
+      });
+      window.addEventListener('mouseup', () => {
+        dragging = false;
+        lbImg.classList.remove('grabbing');
+      });
+
+      // Touch pinch + drag
+      lb.addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
+          initialDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          initialScale = scale;
+        } else if (e.touches.length === 1 && scale > 1) {
+          dragging = true;
+          startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+          startPx = px; startPy = py;
+        }
+      }, { passive: true });
+      lb.addEventListener('touchmove', e => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          scale = Math.min(Math.max(initialScale * (dist / initialDist), 0.5), 5);
+          applyTransform();
+        } else if (e.touches.length === 1 && dragging) {
+          px = startPx + (e.touches[0].clientX - startX);
+          py = startPy + (e.touches[0].clientY - startY);
+          applyTransform();
+        }
+      }, { passive: false });
+      lb.addEventListener('touchend', e => {
+        if (e.touches.length < 2) initialDist = 0;
+        if (e.touches.length === 0) {
+          dragging = false;
+          if (scale <= 1.05) { scale = 1; px = 0; py = 0; applyTransform(); }
+        }
+      });
+
+      // Double-tap to zoom/reset
+      let lastTap = 0;
+      lbImg.addEventListener('touchend', e => {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          if (scale > 1.1) { scale = 1; px = 0; py = 0; }
+          else { scale = 2.5; }
+          applyTransform();
+        }
+        lastTap = now;
+      });
     })();
   </script>
 </body>

@@ -1,11 +1,11 @@
 {
   "stories": [
     {
-      "id": "lika",
-      "name": "Неизвестный номер",
-      "avatar": "Л",
+      "id": "zoe",
+      "name": { "en": "Unknown number", "ru": "Неизвестный номер" },
+      "avatar": "Z",
       "avatarGradient": ["#7c3aed", "#3b82f6"],
-      "scenario": "data/story_lika.json",
+      "scenario": "data/story_zoe.json",
       "unlocked": true,
       "order": 1
     },
@@ -14,7 +14,7 @@
       "name": "???",
       "avatar": "?",
       "locked": true,
-      "unlockAfter": "lika",
+      "unlockAfter": "zoe",
       "order": 2
     },
     {
