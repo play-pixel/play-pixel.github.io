@@ -643,13 +643,20 @@
       } catch(e) { console.error('Load error:', e); }
       return false;
     }
+    let storiesMetaOriginal = null; // saved on first load to reset profile overrides
+
     function resetState() {
       localStorage.removeItem(SAVE);
       state = { started:false, activeStory:null, stories:{} };
       // Also reset flat fields used by engine
       for (const k of Object.keys(EMPTY_STORY_STATE)) state[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
       lastRenderedCount = 0;
+      lastNpcMsgAt = 0;
       activeScenario = null;
+      // Reset storiesMeta to original (undo profile overrides)
+      if (storiesMetaOriginal) {
+        storiesMeta = JSON.parse(JSON.stringify(storiesMetaOriginal));
+      }
     }
 
     // ── Scenario loading ─────────────
@@ -1789,6 +1796,7 @@
       const resp = await fetch('./data/stories.json');
       const data = await resp.json();
       storiesMeta = data.stories;
+      storiesMetaOriginal = JSON.parse(JSON.stringify(data.stories));
 
       if (load() && state.started) {
         // Apply saved profile overrides
