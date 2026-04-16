@@ -407,8 +407,8 @@
         },
         {
           "type": "image",
-          "src": "https://upload.wikimedia.org/wikipedia/commons/f/fb/BackroomsRender2.png",
-          "alt": { "en": "endless corridor, fluorescent lights, yellow walls, damp carpet", "ru": "бесконечный коридор, флуоресцентные лампы, жёлтые стены, мокрый ковролин" },
+          "src": "media/act1_room_01.jpg",
+          "alt": { "en": "endless room, fluorescent lights, yellow walls, carpet", "ru": "бесконечная комната, флуоресцентные лампы, жёлтые стены, ковролин" },
           "delay": 0
         }
       ],
@@ -431,6 +431,18 @@
           "type": "text",
           "text": { "en": "i'm actually here", "ru": "я реально тут" },
           "delay": 3500
+        },
+        {
+          "type": "image",
+          "src": "media/act1_ceiling_02.jpg",
+          "alt": { "en": "ceiling with fluorescent lights", "ru": "потолок с лампами" },
+          "delay": 2000
+        },
+        {
+          "type": "image",
+          "src": "media/act1_panorama_04.jpg",
+          "alt": { "en": "panoramic view, columns stretching endlessly", "ru": "панорама, колонны уходят вдаль" },
+          "delay": 2000
         },
         {
           "type": "text",
@@ -672,6 +684,18 @@
           "delay": 4500
         },
         {
+          "type": "image",
+          "src": "media/act1_door_05.jpg",
+          "alt": { "en": "a closed door in the wall", "ru": "закрытая дверь в стене" },
+          "delay": 2000
+        },
+        {
+          "type": "image",
+          "src": "media/act1_carpet_03.jpg",
+          "alt": { "en": "carpet close-up", "ru": "ковролин крупно" },
+          "delay": 1500
+        },
+        {
           "type": "text",
           "text": { "en": "phone says 11:14 pm", "ru": "телефон показывает 23:14" },
           "delay": 3500
@@ -843,14 +867,20 @@
       "messages": [
         {
           "type": "image",
-          "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg/600px-Long_corridor_with_someone_sitting_on_the_floor_in_the_distance_at_Marina_Bay_MRT_Station_Singapore.jpg",
-          "alt": { "en": "bright wide corridor, lights working", "ru": "светлый широкий коридор, лампы работают" },
+          "src": "media/act1_fork_07.jpg",
+          "alt": { "en": "corridor splits into two paths", "ru": "коридор разделяется на два пути" },
           "delay": 0
         },
         {
           "type": "image",
-          "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/The_Corridor.jpg/600px-The_Corridor.jpg",
-          "alt": { "en": "dark narrow corridor", "ru": "тёмный узкий коридор" },
+          "src": "media/act1_bright_corridor_14.jpg",
+          "alt": { "en": "bright wide corridor, all lights working", "ru": "светлый широкий коридор, все лампы работают" },
+          "delay": 0
+        },
+        {
+          "type": "image",
+          "src": "media/act1_backpack_09.jpg",
+          "alt": { "en": "dark narrow corridor, something in the distance", "ru": "тёмный узкий коридор, что-то вдалеке" },
           "delay": 2000
         },
         {
@@ -979,6 +1009,12 @@
           "delay": 4000
         },
         {
+          "type": "image",
+          "src": "media/act1_deadend_10.jpg",
+          "alt": { "en": "wall blocking the corridor", "ru": "стена перегораживает коридор" },
+          "delay": 1500
+        },
+        {
           "type": "text",
           "text": { "en": "damn. it's a wall. just a wall", "ru": "чёрт. тут стена. просто стена" },
           "delay": 4000
@@ -1022,6 +1058,12 @@
           "type": "text",
           "text": { "en": "\"DON'T GO TOWARD THE LIGHT\"", "ru": "\"НЕ ХОДИ НА СВЕТ\"" },
           "delay": 4000
+        },
+        {
+          "type": "image",
+          "src": "media/act1_writing_08.jpg",
+          "alt": { "en": "scratched writing on the wall", "ru": "нацарапанная надпись на стене" },
+          "delay": 1500
         },
         {
           "type": "text",
@@ -1095,7 +1137,7 @@
       "messages": [
         {
           "type": "image",
-          "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Inevitable_end_of_corridor_%282098072225%29.jpg/600px-Inevitable_end_of_corridor_%282098072225%29.jpg",
+          "src": "media/act1_wall_12.jpg",
           "alt": { "en": "solid wall where a passage used to be", "ru": "сплошная стена на месте бывшего прохода" },
           "delay": 3000
         },
@@ -1128,6 +1170,12 @@
           "type": "text",
           "text": { "en": "there are wet footprints on the carpet", "ru": "тут мокрые следы на ковролине" },
           "delay": 0
+        },
+        {
+          "type": "image",
+          "src": "media/act1_wetprints_11.jpg",
+          "alt": { "en": "wet footprints on carpet", "ru": "мокрые следы на ковролине" },
+          "delay": 1500
         },
         {
           "type": "text",
@@ -1168,6 +1216,12 @@
           "type": "text",
           "text": { "en": "running", "ru": "бегу" },
           "delay": 1000
+        },
+        {
+          "type": "image",
+          "src": "media/act1_blur_13.jpg",
+          "alt": { "en": "blurry photo taken while running", "ru": "размытое фото на бегу" },
+          "delay": 500
         },
         {
           "type": "status",
