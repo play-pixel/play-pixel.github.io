@@ -47,6 +47,12 @@
     <div><b>SPACE</b> — bark</div>
 </div>
 <div id="reticle"></div>
+<div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#f0c36d; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
+    <div>
+        <div style="font-size:3rem; margin-bottom:0.5rem;">Good boy.</div>
+        <div style="font-size:1rem; opacity:0.6;">You found your way home.</div>
+    </div>
+</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -74,13 +80,14 @@ const MAX_WALLS = 24;
 
 const echoOrigins = [];
 const echoTimes = [];
+const echoColors = [];
 for (let i = 0; i < MAX_ECHOES; i++) {
     echoOrigins.push(new THREE.Vector3(0, -100, 0));
     echoTimes.push(-1);
+    echoColors.push(new THREE.Vector3(0.9, 0.97, 1.0));
 }
 const wallUniform = [];
 for (let i = 0; i < MAX_WALLS; i++) {
-    // degenerate AABB — min>max so ray tests always miss until we fill
     wallUniform.push(new THREE.Vector4(1e6, 1e6, -1e6, -1e6));
 }
 
@@ -92,6 +99,7 @@ const echoMaterial = new THREE.ShaderMaterial({
     uniforms: {
         uEchoOrigin: { value: echoOrigins },
         uEchoTime: { value: echoTimes },
+        uEchoColor: { value: echoColors },
         uWalls: { value: wallUniform },
     },
     vertexShader: `
@@ -107,6 +115,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         varying vec3 vWorldPos;
         uniform vec3 uEchoOrigin[${MAX_ECHOES}];
         uniform float uEchoTime[${MAX_ECHOES}];
+        uniform vec3 uEchoColor[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
         const float SPEED = 9.0;
         const float DURATION = 4.0;
@@ -136,7 +145,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         }
 
         void main() {
-            float lit = 0.0;
+            vec3 col = vec3(0.0);
             vec2 frag2D = vWorldPos.xz;
 
             for (int i = 0; i < ${MAX_ECHOES}; i++) {
@@ -145,7 +154,6 @@ const echoMaterial = new THREE.ShaderMaterial({
 
                 vec2 origin2D = uEchoOrigin[i].xz;
 
-                // Occlusion: does any wall block line origin→fragment?
                 bool blocked = false;
                 for (int j = 0; j < ${MAX_WALLS}; j++) {
                     if (rayBlockedByAABB(origin2D, frag2D, uWalls[j])) {
@@ -160,11 +168,12 @@ const echoMaterial = new THREE.ShaderMaterial({
                 float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront));
                 float inside = step(d, wavefront);
                 float afterglow = inside * (1.0 - smoothstep(0.0, DURATION, t));
-                lit = max(lit, ring * 2.5 + afterglow * 1.2);
+                float intensity = ring * 2.5 + afterglow * 1.2;
+                col += uEchoColor[i] * intensity;
             }
 
-            vec3 col = vec3(0.9, 0.97, 1.0);
-            gl_FragColor = vec4(col * lit, min(lit, 1.0));
+            float lit = max(col.r, max(col.g, col.b));
+            gl_FragColor = vec4(col, min(lit, 1.0));
         }
     `,
 });
@@ -268,17 +277,43 @@ let flashT = 0;
 let elapsed = 0;
 
 const echoes = [];
-for (let i = 0; i < MAX_ECHOES; i++) echoes.push({ origin: new THREE.Vector3(), start: -999, active: false });
+for (let i = 0; i < MAX_ECHOES; i++) {
+    echoes.push({
+        origin: new THREE.Vector3(),
+        color: new THREE.Vector3(0.9, 0.97, 1.0),
+        start: -999, active: false,
+    });
+}
+
+const COLOR_BARK  = new THREE.Vector3(0.9, 0.97, 1.0);
+const COLOR_OWNER = new THREE.Vector3(1.0, 0.75, 0.25);
+
+function spawnEcho(x, y, z, color) {
+    let slot = echoes.find(e => !e.active);
+    if (!slot) slot = echoes.reduce((a, b) => a.start < b.start ? a : b);
+    slot.origin.set(x, y, z);
+    slot.color.copy(color);
+    slot.start = elapsed;
+    slot.active = true;
+}
 
 function fireBark() {
     if (elapsed - lastBarkTime < BARK_COOLDOWN) return;
     lastBarkTime = elapsed;
-    let slot = echoes.find(e => !e.active);
-    if (!slot) slot = echoes.reduce((a, b) => a.start < b.start ? a : b);
-    slot.origin.set(dog.x, 0.6, dog.y);
-    slot.start = elapsed;
-    slot.active = true;
+    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK);
     flashT = 0.25;
+}
+
+// ----- Owner (goal) -----
+const owner = {
+    x: 6, y: -5,          // in NE bedroom
+    pulsePeriod: 3.5,     // seconds between calls
+    lastPulse: -10,
+};
+let won = false;
+function showWin() {
+    const el = document.getElementById('winOverlay');
+    if (el) el.style.display = 'flex';
 }
 
 // Use e.code (physical key) — layout-independent (RU/EN/etc.)
@@ -381,16 +416,33 @@ function animate() {
     const [ix, iy] = readMove();
     moveDog(ix, iy, dt);
 
+    // Owner auto-pulse (passive signal, navigation aid)
+    if (!won && elapsed - owner.lastPulse > owner.pulsePeriod) {
+        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER);
+        owner.lastPulse = elapsed;
+    }
+
+    // Win check — dog reached owner
+    if (!won) {
+        const d = Math.hypot(dog.x - owner.x, dog.y - owner.y);
+        if (d < 1.2) {
+            won = true;
+            showWin();
+        }
+    }
+
     // echoes
     for (const e of echoes) {
         if (e.active && elapsed - e.start > ECHO_DURATION) e.active = false;
     }
     const origUniform = echoMaterial.uniforms.uEchoOrigin.value;
+    const colorUniform = echoMaterial.uniforms.uEchoColor.value;
     const timeUniform = [];
     for (let i = 0; i < MAX_ECHOES; i++) {
         const e = echoes[i];
         if (e.active) {
             origUniform[i].copy(e.origin);
+            colorUniform[i].copy(e.color);
             timeUniform.push(elapsed - e.start);
         } else {
             origUniform[i].set(0, -100, 0);
