@@ -193,17 +193,48 @@ const echoMaterial = new THREE.ShaderMaterial({
 // ----- Level (walls as line-edges, floor grid) -----
 const walls = [];
 
-const solidMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const solidMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 2,
+});
+const GRID_STEP = 0.125;
+
+// Build a box wireframe with interior grid lines on all 5 visible faces (bottom skipped).
+function buildBoxWireGeom(w, h, d, step) {
+    const hw = w / 2, hh = h / 2, hd = d / 2;
+    const pts = [];
+    const eps = 1e-4;
+    function lineX(y, z, sign) { pts.push(-hw, y, z * sign, hw, y, z * sign); }
+    function lineY(x, z, sign) { pts.push(x * sign, -hh, z, x * sign, hh, z); }
+    function lineZ(x, y, sign) { pts.push(x, y * sign, -hd, x, y * sign, hd); }
+
+    // Front (z=+hd) and back (z=-hd): grid in XY
+    for (const zs of [1, -1]) {
+        for (let x = -hw; x <= hw + eps; x += step) pts.push(x, -hh, hd * zs, x, hh, hd * zs);
+        for (let y = -hh; y <= hh + eps; y += step) pts.push(-hw, y, hd * zs, hw, y, hd * zs);
+    }
+    // Right (x=+hw) and left (x=-hw): grid in YZ
+    for (const xs of [1, -1]) {
+        for (let y = -hh; y <= hh + eps; y += step) pts.push(hw * xs, y, -hd, hw * xs, y, hd);
+        for (let z = -hd; z <= hd + eps; z += step) pts.push(hw * xs, -hh, z, hw * xs, hh, z);
+    }
+    // Top (y=+hh): grid in XZ
+    for (let x = -hw; x <= hw + eps; x += step) pts.push(x, hh, -hd, x, hh, hd);
+    for (let z = -hd; z <= hd + eps; z += step) pts.push(-hw, hh, z, hw, hh, z);
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return geom;
+}
 
 function addBox(cx, cy, w, d, h = 1.5) {
     const box = new THREE.BoxGeometry(w, h, d);
-    // Solid black body — occludes camera view through walls
     const solid = new THREE.Mesh(box, solidMat);
     solid.position.set(cx, h / 2, cy);
     scene.add(solid);
-    // Line edges on top — lit by echoes
-    const edges = new THREE.EdgesGeometry(box);
-    const lines = new THREE.LineSegments(edges, echoMaterial);
+    const lines = new THREE.LineSegments(buildBoxWireGeom(w, h, d, GRID_STEP), echoMaterial);
     lines.position.set(cx, h / 2, cy);
     lines.renderOrder = 1;
     scene.add(lines);
