@@ -28,6 +28,38 @@
         background: #555; border-radius: 50%;
         pointer-events: none;
     }
+    #panel {
+        position: fixed; top: 12px; right: 12px;
+        font-size: 11px;
+        color: #c9d9ff;
+        z-index: 10;
+    }
+    #panelToggle {
+        background: rgba(0,0,0,0.6);
+        border: 1px solid #333;
+        color: #c9d9ff;
+        width: 28px; height: 28px;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 0;
+    }
+    #panelToggle:hover { background: rgba(30,30,60,0.8); }
+    #panelBody {
+        display: none;
+        margin-top: 6px;
+        padding: 8px 10px;
+        background: rgba(0,0,0,0.75);
+        border: 1px solid #333;
+        min-width: 220px;
+    }
+    #panel.open #panelBody { display: block; }
+    #panelBody .row {
+        display: flex; align-items: center; gap: 6px;
+        margin: 4px 0;
+    }
+    #panelBody .row label { flex: 1; white-space: nowrap; }
+    #panelBody .row input[type="range"] { flex: 1; }
+    #panelBody .row .val { width: 34px; text-align: right; color: #f0c36d; }
 </style>
 <script type="importmap">
 {
@@ -47,6 +79,10 @@
     <div><b>SPACE</b> — bark</div>
 </div>
 <div id="reticle"></div>
+<div id="panel">
+    <button id="panelToggle" type="button">⚙</button>
+    <div id="panelBody"></div>
+</div>
 <div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#f0c36d; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
     <div>
         <div style="font-size:3rem; margin-bottom:0.5rem;">Good boy.</div>
@@ -104,6 +140,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         uEchoColor: { value: echoColors },
         uEchoRange: { value: echoRanges },
         uWalls: { value: wallUniform },
+        uSpeed: { value: 9.0 },
     },
     vertexShader: `
         varying vec3 vWorldPos;
@@ -121,7 +158,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform vec3 uEchoColor[${MAX_ECHOES}];
         uniform float uEchoRange[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
-        const float SPEED = 9.0;
+        uniform float uSpeed;
         const float THICKNESS = 1.0;
 
         bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
@@ -167,11 +204,11 @@ const echoMaterial = new THREE.ShaderMaterial({
                 if (blocked) continue;
 
                 float range = uEchoRange[i];
-                float wavefrontLife = range / SPEED;      // time for ring to reach edge
-                float totalLife     = wavefrontLife * 2.0; // echo continues fading after
+                float wavefrontLife = range / uSpeed;
+                float totalLife     = wavefrontLife * 2.0;
                 float d = distance(vWorldPos, uEchoOrigin[i]);
                 if (d > range) continue;
-                float wavefront = t * SPEED;
+                float wavefront = t * uSpeed;
                 // ring: fades as wavefront approaches edge
                 float ringFade = 1.0 - smoothstep(wavefrontLife * 0.7, wavefrontLife, t);
                 float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront)) * ringFade;
@@ -351,9 +388,16 @@ for (let i = 0; i < MAX_ECHOES; i++) {
 
 const COLOR_BARK  = new THREE.Vector3(0.9, 0.97, 1.0);
 const COLOR_OWNER = new THREE.Vector3(0.45, 0.33, 0.11);
-const BARK_RANGE  = 4.5;
-const OWNER_RANGE = 9.0;
-const SIGNAL_SPEED = 9.0;
+
+const cfg = {
+    barkRange: 4.5,
+    ownerRange: 9.0,
+    signalSpeed: 9.0,
+    barkCooldown: 1.2,
+    ownerPeriod: 3.5,
+    mouseSens: 0.0025,
+    flashOnBark: 0.25,
+};
 
 function spawnEcho(x, y, z, color, range) {
     let slot = echoes.find(e => !e.active);
@@ -366,16 +410,15 @@ function spawnEcho(x, y, z, color, range) {
 }
 
 function fireBark() {
-    if (elapsed - lastBarkTime < BARK_COOLDOWN) return;
+    if (elapsed - lastBarkTime < cfg.barkCooldown) return;
     lastBarkTime = elapsed;
-    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, BARK_RANGE);
-    flashT = 0.25;
+    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, cfg.barkRange);
+    flashT = cfg.flashOnBark;
 }
 
 // ----- Owner (goal) -----
 const owner = {
-    x: 6, y: -5,          // in NE bedroom
-    pulsePeriod: 3.5,
+    x: 6, y: -5,
     lastPulse: -10,
 };
 
@@ -494,8 +537,8 @@ function animate() {
     elapsed += dt;
 
     // look
-    dog.yaw -= mouseDX * 0.0025;
-    dog.pitch -= mouseDY * 0.0025;
+    dog.yaw -= mouseDX * cfg.mouseSens;
+    dog.pitch -= mouseDY * cfg.mouseSens;
     dog.pitch = Math.max(-0.8, Math.min(0.4, dog.pitch));
     mouseDX = 0; mouseDY = 0;
 
@@ -504,8 +547,8 @@ function animate() {
     moveDog(ix, iy, dt);
 
     // Owner auto-pulse (passive signal, navigation aid)
-    if (!won && elapsed - owner.lastPulse > owner.pulsePeriod) {
-        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER, OWNER_RANGE);
+    if (!won && elapsed - owner.lastPulse > cfg.ownerPeriod) {
+        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER, cfg.ownerRange);
         owner.lastPulse = elapsed;
     }
 
@@ -520,8 +563,9 @@ function animate() {
 
     // echoes — expire after total life (2x wavefront life, matches shader)
     for (const e of echoes) {
-        if (e.active && elapsed - e.start > 2.0 * e.range / SIGNAL_SPEED) e.active = false;
+        if (e.active && elapsed - e.start > 2.0 * e.range / cfg.signalSpeed) e.active = false;
     }
+    echoMaterial.uniforms.uSpeed.value = cfg.signalSpeed;
     const origUniform = echoMaterial.uniforms.uEchoOrigin.value;
     const colorUniform = echoMaterial.uniforms.uEchoColor.value;
     const rangeUniform = echoMaterial.uniforms.uEchoRange.value;
@@ -564,6 +608,61 @@ window.addEventListener('resize', () => {
 });
 
 animate();
+
+// ----- Settings panel -----
+(function buildPanel() {
+    const params = [
+        { key: 'barkRange',     label: 'Bark range',     min: 1,    max: 15,   step: 0.5 },
+        { key: 'barkCooldown',  label: 'Bark cooldown',  min: 0.2,  max: 3,    step: 0.1 },
+        { key: 'ownerRange',    label: 'Owner range',    min: 2,    max: 20,   step: 0.5 },
+        { key: 'ownerPeriod',   label: 'Owner period',   min: 1,    max: 10,   step: 0.5 },
+        { key: 'signalSpeed',   label: 'Signal speed',   min: 2,    max: 25,   step: 0.5 },
+        { key: 'mouseSens',     label: 'Mouse sens',     min: 0.0005, max: 0.01, step: 0.0005 },
+        { key: 'flashOnBark',   label: 'Bark flash',     min: 0,    max: 1,    step: 0.05 },
+    ];
+    const body = document.getElementById('panelBody');
+    for (const p of params) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const label = document.createElement('label');
+        label.textContent = p.label;
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = p.min; input.max = p.max; input.step = p.step;
+        input.value = cfg[p.key];
+        const val = document.createElement('span');
+        val.className = 'val';
+        val.textContent = cfg[p.key];
+        input.addEventListener('input', () => {
+            cfg[p.key] = parseFloat(input.value);
+            val.textContent = input.value;
+            try { localStorage.setItem('ld59_cfg', JSON.stringify(cfg)); } catch (e) {}
+        });
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(val);
+        body.appendChild(row);
+    }
+    const panel = document.getElementById('panel');
+    document.getElementById('panelToggle').addEventListener('click', () => {
+        panel.classList.toggle('open');
+    });
+    // Load saved
+    try {
+        const saved = JSON.parse(localStorage.getItem('ld59_cfg') || 'null');
+        if (saved) {
+            Object.assign(cfg, saved);
+            for (const input of body.querySelectorAll('input[type=range]')) {
+                const key = input.previousSibling.textContent;
+                const p = params.find(x => x.label === key);
+                if (p) {
+                    input.value = cfg[p.key];
+                    input.nextSibling.textContent = cfg[p.key];
+                }
+            }
+        }
+    } catch (e) {}
+})();
 </script>
 </body>
 </html>
