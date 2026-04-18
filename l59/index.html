@@ -331,6 +331,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
+const CFG_VERSION = 2;
 const cfg = {
     barkRange: 3.5,
     barkCooldown: 2.2,
@@ -339,13 +340,13 @@ const cfg = {
     signalSpeed: 4.0,
     mouseSens: 0.0025,
     flashOnBark: 0.7,
-    fadeMul: 2.0,
+    fadeMul: 3.4,
     barkCone: 120,
     smellRange: 5.0,
     smellCount: 80,
     smellSize: 0.22,
-    soundRange: 4.0,       // spatial radius of sound echo (lights up walls this far)
-    soundHearRange: 6.0,   // dog-to-source distance at which sound fades out
+    soundRange: 2.5,
+    soundHearRange: 6.0,
 };
 
 // Smell zones — colored vapor drifting upward
@@ -832,7 +833,7 @@ animate();
             cfg[p.key] = parseFloat(input.value);
             val.textContent = input.value;
             if (p.onChange) p.onChange();
-            try { localStorage.setItem('ld59_cfg', JSON.stringify(cfg)); } catch (e) {}
+            try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
         });
         row.appendChild(label);
         row.appendChild(input);
@@ -847,9 +848,10 @@ animate();
     setInterval(() => {
         if (panel.classList.contains('open')) fireBark();
     }, 100);
-    // Load saved
+    // Load saved (version-scoped — older saves ignored)
     try {
-        const saved = JSON.parse(localStorage.getItem('ld59_cfg') || 'null');
+        localStorage.removeItem('ld59_cfg'); // clear old unversioned storage
+        const saved = JSON.parse(localStorage.getItem('ld59_cfg_v' + CFG_VERSION) || 'null');
         if (saved) {
             Object.assign(cfg, saved);
             for (const input of body.querySelectorAll('input[type=range]')) {
