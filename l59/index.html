@@ -344,7 +344,8 @@ const cfg = {
     smellRange: 5.0,
     smellCount: 80,
     smellSize: 0.22,
-    soundRange: 6.0,
+    soundRange: 4.0,       // spatial radius of sound echo (lights up walls this far)
+    soundHearRange: 6.0,   // dog-to-source distance at which sound fades out
 };
 
 // Smell zones — colored vapor drifting upward
@@ -707,12 +708,17 @@ function animate() {
         }
     }
 
-    // Ambient sounds (yellow) — range controlled by cfg.soundRange; shader does radial falloff
+    // Ambient sounds (yellow) — clarity dims with dog distance to source
     if (!won && !lost) {
         for (const s of sounds) {
             if (elapsed - s.lastPulse > s.period) {
                 s.lastPulse = elapsed;
-                spawnEcho(s.x, 0.8, s.y, COLOR_SOUND, cfg.soundRange);
+                const dToDog = Math.hypot(s.x - dog.x, s.y - dog.y);
+                // Hard cutoff past cfg.soundHearRange; linear fade from source
+                const clarity = Math.max(0, 1 - dToDog / cfg.soundHearRange);
+                if (clarity < 0.03) continue;
+                const dimmed = COLOR_SOUND.clone().multiplyScalar(clarity);
+                spawnEcho(s.x, 0.8, s.y, dimmed, cfg.soundRange);
             }
         }
     }
@@ -806,7 +812,8 @@ animate();
         { key: 'smellRange',    label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
         { key: 'smellCount',    label: 'Smell count',    min: 10,   max: 300,  step: 10, onChange: rebuildSmellZones },
         { key: 'smellSize',     label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
-        { key: 'soundRange',    label: 'Sound range',    min: 1,    max: 15,   step: 0.5 },
+        { key: 'soundRange',     label: 'Sound range',    min: 1, max: 15, step: 0.5 },
+        { key: 'soundHearRange', label: 'Sound clarity',  min: 1, max: 20, step: 0.5 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
