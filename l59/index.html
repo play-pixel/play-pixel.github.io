@@ -307,9 +307,30 @@ function fireBark() {
 // ----- Owner (goal) -----
 const owner = {
     x: 6, y: -5,          // in NE bedroom
-    pulsePeriod: 3.5,     // seconds between calls
+    pulsePeriod: 3.5,
     lastPulse: -10,
 };
+
+// Visible owner silhouette — lying body (torso + head), shows up when echoes reach it
+(function addOwnerMesh() {
+    const group = new THREE.Group();
+    group.position.set(owner.x, 0, owner.y);
+    // torso: long low box
+    const torso = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(1.7, 0.35, 0.6)),
+        echoMaterial
+    );
+    torso.position.set(0, 0.18, 0);
+    group.add(torso);
+    // head
+    const head = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(0.45, 0.35, 0.45)),
+        echoMaterial
+    );
+    head.position.set(1.05, 0.18, 0);
+    group.add(head);
+    scene.add(group);
+})();
 let won = false;
 function showWin() {
     const el = document.getElementById('winOverlay');
