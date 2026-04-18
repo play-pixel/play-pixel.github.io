@@ -330,6 +330,23 @@ function addCeiling(size, y) {
     scene.add(mesh);
 }
 
+// ----- Tunable config (declared early so level-building functions see it) -----
+const cfg = {
+    barkRange: 3.5,
+    barkCooldown: 2.2,
+    ownerRange: 2.5,
+    ownerPeriod: 2.0,
+    signalSpeed: 4.0,
+    mouseSens: 0.0025,
+    flashOnBark: 0.7,
+    fadeMul: 2.0,
+    barkCone: 120,
+    smellRange: 5.0,
+    smellCount: 80,
+    smellSize: 0.22,
+    soundRange: 6.0,
+};
+
 // Smell zones — colored vapor drifting upward
 const smellZones = [];
 const smellDefs = []; // persistent zone definitions, used to rebuild on count change
@@ -496,22 +513,6 @@ const COLOR_BARK    = new THREE.Vector3(0.9, 0.97, 1.0);
 const COLOR_OWNER   = new THREE.Vector3(0.1, 0.55, 0.15);   // green
 const COLOR_DANGER  = new THREE.Vector3(0.65, 0.08, 0.05);  // red
 const COLOR_SOUND   = new THREE.Vector3(0.55, 0.45, 0.05);  // yellow
-
-const cfg = {
-    barkRange: 3.5,
-    barkCooldown: 2.2,
-    ownerRange: 2.5,
-    ownerPeriod: 2.0,
-    signalSpeed: 4.0,
-    mouseSens: 0.0025,
-    flashOnBark: 0.7,
-    fadeMul: 2.0,
-    barkCone: 120,
-    smellRange: 5.0,
-    smellCount: 80,
-    smellSize: 0.22,
-    soundRange: 6.0, // ambient sounds fade past this distance
-};
 
 function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
     let slot = echoes.find(e => !e.active);
