@@ -213,18 +213,31 @@ function addBox(cx, cy, w, d, h = 1.5) {
     if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
 }
 
-function addFloorGrid(size, step) {
+function addGrid(y, size, step) {
     const positions = [];
     for (let i = -size; i <= size; i += step) {
-        positions.push(i, 0, -size, i, 0, size);
-        positions.push(-size, 0, i, size, 0, i);
+        positions.push(i, y, -size, i, y, size);
+        positions.push(-size, y, i, size, y, i);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    scene.add(new THREE.LineSegments(g, echoMaterial));
+    const grid = new THREE.LineSegments(g, echoMaterial);
+    grid.renderOrder = 1;
+    scene.add(grid);
+}
+function addFloorGrid(size, step) { addGrid(0, size, step); }
+
+function addCeiling(size, y) {
+    const geom = new THREE.PlaneGeometry(size * 2, size * 2);
+    const mesh = new THREE.Mesh(geom, solidMat);
+    mesh.rotation.x = Math.PI / 2;  // face downward
+    mesh.position.set(0, y, 0);
+    scene.add(mesh);
 }
 
 addFloorGrid(12, 0.125);
+addGrid(2.4, 12, 0.125);   // ceiling grid (lit by echoes)
+addCeiling(12, 2.4);       // solid ceiling — blocks view upward
 
 // ----- House layout -----
 // Coordinate system (top-down): X right, Y down.
