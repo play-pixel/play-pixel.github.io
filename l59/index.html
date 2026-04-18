@@ -760,9 +760,22 @@ window.addEventListener('resize', () => {
 });
 
 // ----- OBJ model loader (imported from editor) -----
+// Each instance references a library entry by libraryId; we parse library once.
+const parsedLibrary = new Map(); // libraryId → Group template
+function buildLibraryCache(modelLibrary = {}) {
+    for (const [id, entry] of Object.entries(modelLibrary)) {
+        try { parsedLibrary.set(id, objLoader.parse(entry.obj || '')); }
+        catch (e) { console.warn('lib parse failed', entry.name, e); }
+    }
+}
 function addModel(m) {
+    // Back-compat: accept inline `obj` text, or reference library via libraryId
+    let template = null;
+    if (m.libraryId && parsedLibrary.has(m.libraryId)) template = parsedLibrary.get(m.libraryId);
+    else if (m.obj) template = objLoader.parse(m.obj);
+    if (!template) return;
     try {
-        const parsed = objLoader.parse(m.obj || '');
+        const parsed = template.clone(true);
         const container = new THREE.Group();
         container.position.set(m.x || 0, m.yWorld || 0, m.y || 0);
         container.rotation.set(m.rx || 0, m.ry || 0, m.rz || 0);
@@ -771,9 +784,7 @@ function addModel(m) {
 
         parsed.traverse(c => {
             if (c.isMesh) {
-                // solid black body — occludes camera view
                 c.material = solidMat;
-                // overlay wireframe lit by echoes (edges only — no grid on arbitrary meshes)
                 const edges = new THREE.LineSegments(
                     new THREE.EdgesGeometry(c.geometry, 20),
                     echoMaterial
@@ -784,7 +795,7 @@ function addModel(m) {
         });
         container.add(parsed);
         scene.add(container);
-    } catch (e) { console.warn('model parse failed', m.name, e); }
+    } catch (e) { console.warn('model instance failed', e); }
 }
 
 // ----- DEFAULT LEVEL (current house) -----
@@ -839,8 +850,9 @@ function buildLevel(data) {
     addCeiling(12, 2.4);
 
     for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4);
-    for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1);
+    for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
     for (const s of data.smells || []) addSmellZone(s.cx, s.cy, s.radius, s.color);
+    buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
 
     if (data.soulStart) { dog.x = data.soulStart.x; dog.y = data.soulStart.y; }
