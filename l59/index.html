@@ -102,6 +102,8 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+const objLoader = new OBJLoader();
 
 // ----- Renderer, scene, camera -----
 const app = document.getElementById('app');
@@ -437,52 +439,11 @@ function updateSmellZones(dt) {
     }
 }
 
-addFloorGrid(12, cfg.gridStep);
-addGrid(2.4, 12, cfg.gridStep);   // ceiling grid (lit by echoes)
-addCeiling(12, 2.4);       // solid ceiling — blocks view upward
+// Scene built from level.json (or DEFAULT_LEVEL fallback) at bottom of script.
 
-// Smell zones (decorative for now, represent regions of smell)
-addSmellZone(6, -5, 1.5, 0x2e8b42);   // owner's smell (green)
-addSmellZone(-7.5, -7, 1.6, 0xaa2020); // stove/smoke (red)
-addSmellZone(8.5, 6.5, 1.6, 0x3060a0); // water/tub (blue)
-addSmellZone(-8, 6, 1.2, 0x806020);    // dining table (warm)
-
-// ----- House layout -----
-// Coordinate system (top-down): X right, Y down.
-// House outline: (-10,-8) to (10,8). One bedroom (NE), bathroom (SE), open living/kitchen (west).
-const T = 0.3;  // wall thickness
-const WH = 2.4; // wall height
-// Outer walls
-addBox(0, -8, 20, T, WH);   // north
-addBox(0,  8, 20, T, WH);   // south
-addBox(-10, 0, T, 16, WH);  // west
-addBox( 10, 0, T, 16, WH);  // east
-// Vertical interior wall at x=0, with doorway from y=-2 to y=2
-addBox(0, -5, T, 6, WH);
-addBox(0,  5, T, 6, WH);
-// Horizontal interior wall at y=0 (right half only), with doorway from x=4 to x=6
-addBox(2, 0, 4, T, WH);
-addBox(8, 0, 4, T, WH);
-
-// ----- Furniture (low primitives) -----
-// Living room / kitchen (west half)
-addBox(-8.5, -7, 0.9, 0.9, 1.3); // fridge
-addBox(-7,   -7, 1.2, 0.7, 0.85);// stove
-addBox(-4,   -6, 2.4, 1.0, 0.8); // counter
-addBox(-6,    3, 3.2, 1.2, 0.5); // sofa
-addBox(-4,    1, 1.4, 1.4, 0.45);// coffee table
-addBox(-8,    6, 1.5, 2.5, 0.75);// dining table
-// NE bedroom (owner's bedroom — goal)
-addBox( 7,   -5, 3.2, 2.0, 0.5); // bed
-addBox( 2.5, -7, 1.0, 0.6, 0.8); // nightstand
-// SE bathroom
-addBox( 8.5,  6.5, 1.2, 1.2, 0.5); // tub
-addBox( 8.5,  2.5, 0.8, 0.8, 0.7); // toilet
-addBox( 2.5,  6,   1.0, 0.8, 0.9); // sink
-
-// ----- Dog (camera carrier + collision) -----
+// ----- Dog / Soul (camera carrier + collision); start position set by level -----
 const dog = {
-    x: -5, y: -3, yaw: 0, pitch: 0,
+    x: 0, y: 0, yaw: 0, pitch: 0,
     radius: 0.3, speed: 3.2,
 };
 
@@ -559,30 +520,15 @@ function fireBark() {
     flashT = cfg.flashOnBark;
 }
 
-// ----- Owner (goal) -----
-const owner = {
-    x: 6, y: -5,
-    lastPulse: -10,
-};
-
-// ----- Dangers (red, touch = lose) -----
-const dangers = [
-    { x: -7.5, y: -7, r: 0.7, label: 'stove',   period: 2.8, lastPulse: 0 },
-    { x:  8.5, y:  6.5, r: 0.7, label: 'tub',   period: 3.2, lastPulse: 1 },
-];
-
-// ----- Ambient sound sources (yellow, decorative) -----
-const sounds = [
-    { x: -9,  y:  7,  period: 3.0, lastPulse: 0,   label: 'bird window' },
-    { x:  4,  y:  7,  period: 4.5, lastPulse: 1.5, label: 'clock tick' },
-    { x:  9,  y: -7,  period: 5.0, lastPulse: 2.8, label: 'bird' },
-];
-
+// ----- Owner / Body (goal) — position set by level -----
+const owner = { x: 0, y: 0, lastPulse: -10 };
+const dangers = [];
+const sounds = [];
 let lost = false;
 
 // Visible owner silhouette — lying body (torso + head). Solid body for camera occlusion,
-// line edges on top lit by echoes.
-(function addOwnerMesh() {
+// line edges on top lit by echoes. Called from buildLevel once owner position is known.
+function buildOwnerMesh() {
     const group = new THREE.Group();
     group.position.set(owner.x, 0, owner.y);
     function addPart(w, h, d, px, py, pz) {
@@ -598,7 +544,7 @@ let lost = false;
     addPart(1.7, 0.35, 0.6, 0, 0.18, 0);     // torso
     addPart(0.45, 0.35, 0.45, 1.05, 0.18, 0); // head
     scene.add(group);
-})();
+}
 let won = false;
 function showWin() {
     const el = document.getElementById('winOverlay');
@@ -813,7 +759,137 @@ window.addEventListener('resize', () => {
     composer.setSize(window.innerWidth, window.innerHeight);
 });
 
-animate();
+// ----- OBJ model loader (imported from editor) -----
+function addModel(m) {
+    try {
+        const parsed = objLoader.parse(m.obj || '');
+        const container = new THREE.Group();
+        container.position.set(m.x || 0, m.yWorld || 0, m.y || 0);
+        container.rotation.set(m.rx || 0, m.ry || 0, m.rz || 0);
+        const s = m.scale ?? 1;
+        container.scale.set(s, s, s);
+
+        parsed.traverse(c => {
+            if (c.isMesh) {
+                // solid black body — occludes camera view
+                c.material = solidMat;
+                // overlay wireframe lit by echoes (edges only — no grid on arbitrary meshes)
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(c.geometry, 20),
+                    echoMaterial
+                );
+                edges.renderOrder = 1;
+                c.add(edges);
+            }
+        });
+        container.add(parsed);
+        scene.add(container);
+    } catch (e) { console.warn('model parse failed', m.name, e); }
+}
+
+// ----- DEFAULT LEVEL (current house) -----
+const DEFAULT_LEVEL = {
+    soulStart: { x: -5, y: -3 },
+    body: { x: 6, y: -5 },
+    walls: [
+        { cx: 0, cy: -8, w: 20, d: 0.3, h: 2.4 },
+        { cx: 0, cy:  8, w: 20, d: 0.3, h: 2.4 },
+        { cx: -10, cy: 0, w: 0.3, d: 16, h: 2.4 },
+        { cx:  10, cy: 0, w: 0.3, d: 16, h: 2.4 },
+        { cx: 0, cy: -5, w: 0.3, d: 6, h: 2.4 },
+        { cx: 0, cy:  5, w: 0.3, d: 6, h: 2.4 },
+        { cx: 2, cy: 0, w: 4, d: 0.3, h: 2.4 },
+        { cx: 8, cy: 0, w: 4, d: 0.3, h: 2.4 },
+    ],
+    furniture: [
+        { cx: -8.5, cy: -7, w: 0.9, d: 0.9, h: 1.3, label: 'fridge' },
+        { cx: -7,   cy: -7, w: 1.2, d: 0.7, h: 0.85, label: 'stove' },
+        { cx: -4,   cy: -6, w: 2.4, d: 1.0, h: 0.8, label: 'counter' },
+        { cx: -6,   cy:  3, w: 3.2, d: 1.2, h: 0.5, label: 'sofa' },
+        { cx: -4,   cy:  1, w: 1.4, d: 1.4, h: 0.45, label: 'table' },
+        { cx: -8,   cy:  6, w: 1.5, d: 2.5, h: 0.75, label: 'dining' },
+        { cx:  7,   cy: -5, w: 3.2, d: 2.0, h: 0.5, label: 'bed' },
+        { cx:  2.5, cy: -7, w: 1.0, d: 0.6, h: 0.8, label: 'nightstand' },
+        { cx:  8.5, cy:  6.5, w: 1.2, d: 1.2, h: 0.5, label: 'tub' },
+        { cx:  8.5, cy:  2.5, w: 0.8, d: 0.8, h: 0.7, label: 'toilet' },
+        { cx:  2.5, cy:  6, w: 1.0, d: 0.8, h: 0.9, label: 'sink' },
+    ],
+    spirits: [
+        { x: -7.5, y: -7, label: 'stove', period: 2.8 },
+        { x:  8.5, y:  6.5, label: 'tub', period: 3.2 },
+    ],
+    sounds: [
+        { x: -9, y: 7, period: 3.0, label: 'bird window' },
+        { x: 4,  y: 7, period: 4.5, label: 'clock tick' },
+        { x: 9,  y: -7, period: 5.0, label: 'bird' },
+    ],
+    smells: [
+        { cx: 6, cy: -5, radius: 1.5, color: '#2e8b42' },
+        { cx: -7.5, cy: -7, radius: 1.6, color: '#aa2020' },
+        { cx: 8.5, cy: 6.5, radius: 1.6, color: '#3060a0' },
+        { cx: -8, cy: 6, radius: 1.2, color: '#806020' },
+    ],
+    models: [],
+};
+
+function buildLevel(data) {
+    // ground / ceiling grids
+    addFloorGrid(12, cfg.gridStep);
+    addGrid(2.4, 12, cfg.gridStep);
+    addCeiling(12, 2.4);
+
+    for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4);
+    for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1);
+    for (const s of data.smells || []) addSmellZone(s.cx, s.cy, s.radius, s.color);
+    for (const m of data.models || []) addModel(m);
+
+    if (data.soulStart) { dog.x = data.soulStart.x; dog.y = data.soulStart.y; }
+    if (data.body) { owner.x = data.body.x; owner.y = data.body.y; }
+
+    dangers.length = 0;
+    let i = 0;
+    for (const sp of data.spirits || []) {
+        dangers.push({
+            x: sp.x, y: sp.y,
+            r: sp.r ?? 0.7,
+            label: sp.label || 'spirit',
+            period: sp.period ?? 2.8,
+            lastPulse: i++ * 0.5,
+        });
+    }
+
+    sounds.length = 0;
+    i = 0;
+    for (const s of data.sounds || []) {
+        sounds.push({
+            x: s.x, y: s.y,
+            period: s.period ?? 3.0,
+            lastPulse: i++ * 0.3,
+            label: s.label || '',
+        });
+    }
+
+    buildOwnerMesh();
+}
+
+// Bootstrap: try to load level.json next to this page, else DEFAULT_LEVEL
+async function bootstrap() {
+    let data = DEFAULT_LEVEL;
+    try {
+        const res = await fetch('./level.json', { cache: 'no-cache' });
+        if (res.ok) {
+            data = await res.json();
+            console.log('[level] loaded from level.json');
+        } else {
+            console.log('[level] level.json not found, using default');
+        }
+    } catch (e) {
+        console.log('[level] fetch failed, using default', e.message);
+    }
+    buildLevel(data);
+    animate();
+}
+bootstrap();
 
 // ----- Settings panel -----
 (function buildPanel() {
