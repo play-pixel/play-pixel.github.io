@@ -322,6 +322,36 @@ function addBox(cx, cy, w, d, h = 1.5) {
     if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
 }
 
+// Free-3D cube (rotatable, not axis-aligned, not added to AABB walls)
+function addCube(d) {
+    const sx = d.sx ?? 1, sy = d.sy ?? 1, sz = d.sz ?? 1;
+    const geom = new THREE.BoxGeometry(sx, sy, sz);
+    const solid = new THREE.Mesh(geom, solidMat);
+    const lines = new THREE.LineSegments(buildBoxWireGeom(sx, sy, sz, cfg.gridStep), echoMaterial);
+    lines.renderOrder = 1;
+    const group = new THREE.Group();
+    group.add(solid);
+    group.add(lines);
+    group.position.set(d.x || 0, d.yWorld ?? 0.5, d.y || 0);
+    group.rotation.set(d.rx || 0, d.ry || 0, d.rz || 0);
+    scene.add(group);
+    registerGridMesh(lines, (step) => buildBoxWireGeom(sx, sy, sz, step));
+}
+
+// Low-poly sphere (icosahedron detail=1), wireframe scannable by echo
+function addSphere(d) {
+    const r = d.radius ?? 0.5;
+    const geom = new THREE.IcosahedronGeometry(r, 1);
+    const solid = new THREE.Mesh(geom, solidMat);
+    const lines = new THREE.LineSegments(new THREE.WireframeGeometry(geom), echoMaterial);
+    lines.renderOrder = 1;
+    const group = new THREE.Group();
+    group.add(solid);
+    group.add(lines);
+    group.position.set(d.x || 0, d.yWorld ?? r, d.y || 0);
+    scene.add(group);
+}
+
 function buildFlatGridGeom(y, size, step) {
     const positions = [];
     for (let i = -size; i <= size; i += step) {
@@ -851,6 +881,8 @@ function buildLevel(data) {
 
     for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4);
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
+    for (const c of data.cubes || []) addCube(c);
+    for (const sp of data.spheres || []) addSphere(sp);
     for (const s of data.smells || []) addSmellZone(s.cx, s.cy, s.radius, s.color);
     buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
