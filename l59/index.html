@@ -647,6 +647,13 @@ animate();
     document.getElementById('panelToggle').addEventListener('click', () => {
         panel.classList.toggle('open');
     });
+    // Auto-bark while panel is open, so you see tuning effects live
+    setInterval(() => {
+        if (panel.classList.contains('open')) {
+            lastBarkTime = -999; // bypass cooldown
+            fireBark();
+        }
+    }, 400);
     // Load saved
     try {
         const saved = JSON.parse(localStorage.getItem('ld59_cfg') || 'null');
