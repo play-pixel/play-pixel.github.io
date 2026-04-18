@@ -306,20 +306,24 @@ function buildBoxWireGeom(w, h, d, step) {
     return geom;
 }
 
-function addBox(cx, cy, w, d, h = 1.5) {
+function addBox(cx, cy, w, d, h = 1.5, baseY = 0) {
     const box = new THREE.BoxGeometry(w, h, d);
     const solid = new THREE.Mesh(box, solidMat);
-    solid.position.set(cx, h / 2, cy);
+    const posY = baseY + h / 2;
+    solid.position.set(cx, posY, cy);
     scene.add(solid);
     const lines = new THREE.LineSegments(buildBoxWireGeom(w, h, d, cfg.gridStep), echoMaterial);
-    lines.position.set(cx, h / 2, cy);
+    lines.position.set(cx, posY, cy);
     lines.renderOrder = 1;
     scene.add(lines);
     registerGridMesh(lines, (step) => buildBoxWireGeom(w, h, d, step));
-    const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
-    walls.push({ minX, minY, maxX, maxY });
-    const idx = walls.length - 1;
-    if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
+    // Only axis-aligned walls near ground level contribute to echo occlusion
+    if (baseY < 0.1) {
+        const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
+        walls.push({ minX, minY, maxX, maxY });
+        const idx = walls.length - 1;
+        if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
+    }
 }
 
 // Free-3D cube (rotatable, not axis-aligned, not added to AABB walls)
@@ -379,7 +383,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 5;
+const CFG_VERSION = 6;
 const cfg = {
     barkRange: 3.5,
     barkCooldown: 2.2,
@@ -397,9 +401,10 @@ const cfg = {
     soundHearRange: 6.0,
     gridStep: 0.125,
     moveSpeed: 3.2,
-    eyeHeight: 1.4,     // camera height above floor
-    bobAmplitude: 0.06, // how much camera bobs while walking (meters)
-    bobFrequency: 9,    // bob cycles per second while walking
+    eyeHeight: 1.4,
+    bobAmplitude: 0.06,
+    bobFrequency: 9,
+    ceilingHeight: 3.0,
 };
 
 // Smell zones — colored vapor drifting upward
@@ -897,11 +902,14 @@ const DEFAULT_LEVEL = {
 };
 
 async function buildLevel(data) {
+    const ch = data.ceilingHeight ?? cfg.ceilingHeight;
     addFloorGrid(12, cfg.gridStep);
-    addGrid(2.4, 12, cfg.gridStep);
-    addCeiling(12, 2.4);
+    // extra floor slabs (for multi-story levels)
+    for (const f of data.floors || []) addGrid(f.y, f.size ?? 12, cfg.gridStep);
+    addGrid(ch, 12, cfg.gridStep);
+    addCeiling(12, ch);
 
-    for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4);
+    for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4, w.baseY ?? 0);
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
     for (const c of data.cubes || []) addCube(c);
     for (const sp of data.spheres || []) addSphere(sp);
@@ -980,6 +988,7 @@ bootstrap();
         { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
         { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
         { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
+        { key: 'ceilingHeight',  label: 'Ceiling height', min: 1.5,  max: 6,    step: 0.1 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
