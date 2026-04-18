@@ -792,9 +792,18 @@ window.addEventListener('resize', () => {
 // ----- OBJ model loader (imported from editor) -----
 // Each instance references a library entry by libraryId; we parse library once.
 const parsedLibrary = new Map(); // libraryId → Group template
-function buildLibraryCache(modelLibrary = {}) {
+async function buildLibraryCache(modelLibrary = {}) {
     for (const [id, entry] of Object.entries(modelLibrary)) {
-        try { parsedLibrary.set(id, objLoader.parse(entry.obj || '')); }
+        let text = entry.obj;
+        if (!text && entry.path) {
+            try {
+                const r = await fetch('./' + entry.path, { cache: 'no-cache' });
+                if (r.ok) text = await r.text();
+                else console.warn('OBJ fetch failed', entry.path, r.status);
+            } catch (e) { console.warn('OBJ fetch error', entry.path, e); }
+        }
+        if (!text) continue;
+        try { parsedLibrary.set(id, objLoader.parse(text)); }
         catch (e) { console.warn('lib parse failed', entry.name, e); }
     }
 }
@@ -873,8 +882,7 @@ const DEFAULT_LEVEL = {
     models: [],
 };
 
-function buildLevel(data) {
-    // ground / ceiling grids
+async function buildLevel(data) {
     addFloorGrid(12, cfg.gridStep);
     addGrid(2.4, 12, cfg.gridStep);
     addCeiling(12, 2.4);
@@ -884,7 +892,7 @@ function buildLevel(data) {
     for (const c of data.cubes || []) addCube(c);
     for (const sp of data.spheres || []) addSphere(sp);
     for (const s of data.smells || []) addSmellZone(s.cx, s.cy, s.radius, s.color);
-    buildLibraryCache(data.modelLibrary || {});
+    await buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
 
     if (data.soulStart) { dog.x = data.soulStart.x; dog.y = data.soulStart.y; }
@@ -930,7 +938,7 @@ async function bootstrap() {
     } catch (e) {
         console.log('[level] fetch failed, using default', e.message);
     }
-    buildLevel(data);
+    await buildLevel(data);
     animate();
 }
 bootstrap();
