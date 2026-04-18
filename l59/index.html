@@ -118,8 +118,9 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform vec3 uEchoColor[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
         const float SPEED = 9.0;
-        const float DURATION = 4.0;
-        const float THICKNESS = 1.4;
+        const float DURATION = 1.0;
+        const float THICKNESS = 1.0;
+        const float MAX_RADIUS = 9.0;
 
         bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
             if (w.x > w.z) return false; // degenerate
@@ -163,12 +164,15 @@ const echoMaterial = new THREE.ShaderMaterial({
                 }
                 if (blocked) continue;
 
-                float wavefront = t * SPEED;
                 float d = distance(vWorldPos, uEchoOrigin[i]);
+                if (d > MAX_RADIUS) continue;
+                float wavefront = t * SPEED;
                 float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront));
                 float inside = step(d, wavefront);
                 float afterglow = inside * (1.0 - smoothstep(0.0, DURATION, t));
-                float intensity = ring * 2.5 + afterglow * 1.2;
+                // Radial falloff — signal weakens with distance
+                float falloff = 1.0 - smoothstep(MAX_RADIUS * 0.6, MAX_RADIUS, d);
+                float intensity = (ring * 2.5 + afterglow * 1.2) * falloff;
                 col += uEchoColor[i] * intensity;
             }
 
@@ -420,7 +424,7 @@ const noisePass = new ShaderPass(NoiseShader);
 composer.addPass(noisePass);
 
 // ----- Main loop -----
-const ECHO_DURATION = 4.0;
+const ECHO_DURATION = 1.0;
 const clock = new THREE.Clock();
 
 function animate() {
