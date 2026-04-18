@@ -81,10 +81,12 @@ const MAX_WALLS = 24;
 const echoOrigins = [];
 const echoTimes = [];
 const echoColors = [];
+const echoRanges = [];
 for (let i = 0; i < MAX_ECHOES; i++) {
     echoOrigins.push(new THREE.Vector3(0, -100, 0));
     echoTimes.push(-1);
     echoColors.push(new THREE.Vector3(0.9, 0.97, 1.0));
+    echoRanges.push(9.0);
 }
 const wallUniform = [];
 for (let i = 0; i < MAX_WALLS; i++) {
@@ -100,6 +102,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         uEchoOrigin: { value: echoOrigins },
         uEchoTime: { value: echoTimes },
         uEchoColor: { value: echoColors },
+        uEchoRange: { value: echoRanges },
         uWalls: { value: wallUniform },
     },
     vertexShader: `
@@ -116,11 +119,10 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform vec3 uEchoOrigin[${MAX_ECHOES}];
         uniform float uEchoTime[${MAX_ECHOES}];
         uniform vec3 uEchoColor[${MAX_ECHOES}];
+        uniform float uEchoRange[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
         const float SPEED = 9.0;
-        const float DURATION = 1.0;
         const float THICKNESS = 1.0;
-        const float MAX_RADIUS = 9.0;
 
         bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
             if (w.x > w.z) return false; // degenerate
@@ -164,14 +166,15 @@ const echoMaterial = new THREE.ShaderMaterial({
                 }
                 if (blocked) continue;
 
+                float range = uEchoRange[i];
+                float duration = range / SPEED;
                 float d = distance(vWorldPos, uEchoOrigin[i]);
-                if (d > MAX_RADIUS) continue;
+                if (d > range) continue;
                 float wavefront = t * SPEED;
                 float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront));
                 float inside = step(d, wavefront);
-                float afterglow = inside * (1.0 - smoothstep(0.0, DURATION, t));
-                // Radial falloff — signal weakens with distance
-                float falloff = 1.0 - smoothstep(MAX_RADIUS * 0.6, MAX_RADIUS, d);
+                float afterglow = inside * (1.0 - smoothstep(0.0, duration, t));
+                float falloff = 1.0 - smoothstep(range * 0.6, range, d);
                 float intensity = (ring * 2.5 + afterglow * 1.2) * falloff;
                 col += uEchoColor[i] * intensity;
             }
@@ -292,18 +295,23 @@ for (let i = 0; i < MAX_ECHOES; i++) {
     echoes.push({
         origin: new THREE.Vector3(),
         color: new THREE.Vector3(0.9, 0.97, 1.0),
+        range: 4.5,
         start: -999, active: false,
     });
 }
 
 const COLOR_BARK  = new THREE.Vector3(0.9, 0.97, 1.0);
 const COLOR_OWNER = new THREE.Vector3(0.45, 0.33, 0.11);
+const BARK_RANGE  = 4.5;
+const OWNER_RANGE = 9.0;
+const SIGNAL_SPEED = 9.0;
 
-function spawnEcho(x, y, z, color) {
+function spawnEcho(x, y, z, color, range) {
     let slot = echoes.find(e => !e.active);
     if (!slot) slot = echoes.reduce((a, b) => a.start < b.start ? a : b);
     slot.origin.set(x, y, z);
     slot.color.copy(color);
+    slot.range = range;
     slot.start = elapsed;
     slot.active = true;
 }
@@ -311,7 +319,7 @@ function spawnEcho(x, y, z, color) {
 function fireBark() {
     if (elapsed - lastBarkTime < BARK_COOLDOWN) return;
     lastBarkTime = elapsed;
-    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK);
+    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, BARK_RANGE);
     flashT = 0.25;
 }
 
@@ -430,7 +438,6 @@ const noisePass = new ShaderPass(NoiseShader);
 composer.addPass(noisePass);
 
 // ----- Main loop -----
-const ECHO_DURATION = 1.0;
 const clock = new THREE.Clock();
 
 function animate() {
@@ -449,7 +456,7 @@ function animate() {
 
     // Owner auto-pulse (passive signal, navigation aid)
     if (!won && elapsed - owner.lastPulse > owner.pulsePeriod) {
-        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER);
+        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER, OWNER_RANGE);
         owner.lastPulse = elapsed;
     }
 
@@ -462,18 +469,20 @@ function animate() {
         }
     }
 
-    // echoes
+    // echoes — expire based on per-echo duration (range / speed)
     for (const e of echoes) {
-        if (e.active && elapsed - e.start > ECHO_DURATION) e.active = false;
+        if (e.active && elapsed - e.start > e.range / SIGNAL_SPEED) e.active = false;
     }
     const origUniform = echoMaterial.uniforms.uEchoOrigin.value;
     const colorUniform = echoMaterial.uniforms.uEchoColor.value;
+    const rangeUniform = echoMaterial.uniforms.uEchoRange.value;
     const timeUniform = [];
     for (let i = 0; i < MAX_ECHOES; i++) {
         const e = echoes[i];
         if (e.active) {
             origUniform[i].copy(e.origin);
             colorUniform[i].copy(e.color);
+            rangeUniform[i] = e.range;
             timeUniform.push(elapsed - e.start);
         } else {
             origUniform[i].set(0, -100, 0);
