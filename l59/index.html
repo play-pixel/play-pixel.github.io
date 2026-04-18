@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Good Boy — LD59</title>
+<title>Soul Beat — LD59</title>
 <style>
     html, body {
         margin: 0; padding: 0; height: 100%;
@@ -76,7 +76,7 @@
     <div><b>CLICK</b> — capture mouse</div>
     <div><b>WASD</b> — move</div>
     <div><b>MOUSE</b> — look</div>
-    <div><b>SPACE</b> — bark</div>
+    <div><b>SPACE</b> — beat</div>
 </div>
 <div id="reticle"></div>
 <div id="panel">
@@ -85,8 +85,8 @@
 </div>
 <div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#7dd97a; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
     <div>
-        <div style="font-size:3rem; margin-bottom:0.5rem;">Good boy.</div>
-        <div style="font-size:1rem; opacity:0.6;">You found him.</div>
+        <div style="font-size:3rem; margin-bottom:0.5rem;">Returned.</div>
+        <div style="font-size:1rem; opacity:0.6;">You made it back to your body.</div>
     </div>
 </div>
 <div id="loseOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#ea4d45; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
@@ -385,17 +385,17 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 6;
+const CFG_VERSION = 7;
 const cfg = {
-    barkRange: 3.5,
-    barkCooldown: 2.2,
-    ownerRange: 2.5,
-    ownerPeriod: 2.0,
+    beatRange: 3.5,
+    beatCooldown: 2.2,
+    bodyRange: 2.5,
+    bodyPulsePeriod: 2.0,
     signalSpeed: 4.0,
     mouseSens: 0.0025,
-    flashOnBark: 0.7,
+    flashOnBeat: 0.7,
     fadeMul: 3.4,
-    barkCone: 120,
+    beatCone: 120,
     smellRange: 5.0,
     smellCount: 80,
     smellSize: 0.22,
@@ -470,9 +470,9 @@ function updateSmellZones(dt) {
         }
         s.geom.attributes.position.needsUpdate = true;
         // distance-based fade: full opacity close, invisible beyond cfg.smellRange
-        const distToDog = Math.hypot(s.cx - dog.x, s.cy - dog.y);
+        const distToSoul = Math.hypot(s.cx - soul.x, s.cy - soul.y);
         const strength = 1.0 - Math.min(1, Math.max(0,
-            (distToDog - cfg.smellRange * 0.3) / (cfg.smellRange * 0.7)
+            (distToSoul - cfg.smellRange * 0.3) / (cfg.smellRange * 0.7)
         ));
         s.mat.opacity = 0.6 * strength;
         s.mat.size = cfg.smellSize;
@@ -482,8 +482,8 @@ function updateSmellZones(dt) {
 
 // Scene built from level.json (or DEFAULT_LEVEL fallback) at bottom of script.
 
-// ----- Dog / Soul (camera carrier + collision); start position set by level -----
-const dog = {
+// ----- Soul (camera carrier + collision); start position set by level -----
+const soul = {
     x: 0, y: 0, yaw: 0, pitch: 0,
     radius: 0.3,
     floorY: 0,   // current feet Y (updated each frame by slope raycast)
@@ -496,48 +496,48 @@ const slopeDirDown = new THREE.Vector3(0, -1, 0);
 const MAX_SLOPE_COS = Math.cos(40 * Math.PI / 180); // ~0.766 for 40°
 
 function updateFloorY() {
-    slopeRaycaster.set(new THREE.Vector3(dog.x, dog.floorY + 3, dog.y), slopeDirDown);
+    slopeRaycaster.set(new THREE.Vector3(soul.x, soul.floorY + 3, soul.y), slopeDirDown);
     slopeRaycaster.far = 8;
     const hits = slopeRaycaster.intersectObjects(walkableMeshes, true);
     for (const h of hits) {
         if (!h.face) continue;
         const worldNormal = h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize();
         if (worldNormal.y < MAX_SLOPE_COS) continue; // too steep
-        dog.floorY = h.point.y;
+        soul.floorY = h.point.y;
         return;
     }
     // nothing below — stay at ground
-    dog.floorY = 0;
+    soul.floorY = 0;
 }
 
-function dogCollides(x, y) {
+function soulCollides(x, y) {
     for (const w of walls) {
         const cx = Math.max(w.minX, Math.min(x, w.maxX));
         const cy = Math.max(w.minY, Math.min(y, w.maxY));
         const dx = x - cx, dy = y - cy;
-        if (dx * dx + dy * dy < dog.radius * dog.radius) return true;
+        if (dx * dx + dy * dy < soul.radius * soul.radius) return true;
     }
     return false;
 }
 
-function moveDog(ix, iy, dt) {
+function moveSoul(ix, iy, dt) {
     if (ix === 0 && iy === 0) return;
-    const s = Math.sin(dog.yaw), c = Math.cos(dog.yaw);
+    const s = Math.sin(soul.yaw), c = Math.cos(soul.yaw);
     const speed = cfg.moveSpeed;
     const dx = (iy * s + ix * c) * speed * dt;
     const dy = (iy * c - ix * s) * speed * dt;
-    const nx = dog.x + dx;
-    if (!dogCollides(nx, dog.y)) dog.x = nx;
-    const ny = dog.y + dy;
-    if (!dogCollides(dog.x, ny)) dog.y = ny;
+    const nx = soul.x + dx;
+    if (!soulCollides(nx, soul.y)) soul.x = nx;
+    const ny = soul.y + dy;
+    if (!soulCollides(soul.x, ny)) soul.y = ny;
 }
 
 // ----- Input (old-style handlers) -----
 const keys = new Set();
 let mouseDX = 0, mouseDY = 0, locked = false;
 
-const BARK_COOLDOWN = 1.2;
-let lastBarkTime = -999;
+const BEAT_COOLDOWN = 1.2;
+let lastBeatTime = -999;
 let flashT = 0;
 let elapsed = 0;
 
@@ -553,8 +553,8 @@ for (let i = 0; i < MAX_ECHOES; i++) {
     });
 }
 
-const COLOR_BARK    = new THREE.Vector3(0.9, 0.97, 1.0);
-const COLOR_OWNER   = new THREE.Vector3(0.1, 0.55, 0.15);   // green
+const COLOR_BEAT    = new THREE.Vector3(0.9, 0.97, 1.0);
+const COLOR_BODY   = new THREE.Vector3(0.1, 0.55, 0.15);   // green
 const COLOR_DANGER  = new THREE.Vector3(0.65, 0.08, 0.05);  // red
 const COLOR_SOUND   = new THREE.Vector3(0.55, 0.45, 0.05);  // yellow
 
@@ -574,27 +574,27 @@ function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
     slot.active = true;
 }
 
-function fireBark() {
-    if (elapsed - lastBarkTime < cfg.barkCooldown) return;
-    lastBarkTime = elapsed;
-    // Directional: 120° cone = 60° half-angle, forward = dog's facing
-    const fx = Math.sin(dog.yaw);
-    const fz = Math.cos(dog.yaw);
-    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, cfg.barkRange, fx, fz, cfg.barkCone / 2);
-    flashT = cfg.flashOnBark;
+function fireBeat() {
+    if (elapsed - lastBeatTime < cfg.beatCooldown) return;
+    lastBeatTime = elapsed;
+    // Directional: 120° cone = 60° half-angle, forward = soul's facing
+    const fx = Math.sin(soul.yaw);
+    const fz = Math.cos(soul.yaw);
+    spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
+    flashT = cfg.flashOnBeat;
 }
 
-// ----- Owner / Body (goal) — position set by level -----
-const owner = { x: 0, y: 0, lastPulse: -10 };
+// ----- Body (goal) — position set by level -----
+const body = { x: 0, y: 0, lastPulse: -10 };
 const dangers = [];
 const sounds = [];
 let lost = false;
 
-// Visible owner silhouette — lying body (torso + head). Solid body for camera occlusion,
-// line edges on top lit by echoes. Called from buildLevel once owner position is known.
-function buildOwnerMesh() {
+// Visible body silhouette — lying (torso + head). Solid body for camera occlusion,
+// line edges on top lit by echoes. Called from buildLevel once body position is known.
+function buildBodyMesh() {
     const group = new THREE.Group();
-    group.position.set(owner.x, 0, owner.y);
+    group.position.set(body.x, 0, body.y);
     function addPart(w, h, d, px, py, pz) {
         const geom = new THREE.BoxGeometry(w, h, d);
         const solid = new THREE.Mesh(geom, solidMat);
@@ -625,7 +625,7 @@ function showLose(what) {
 window.onkeydown = (e) => {
     keys.add(e.code);
     if (e.code === 'Space') {
-        fireBark();
+        fireBeat();
         e.preventDefault();
     }
 };
@@ -633,7 +633,7 @@ window.onkeyup = (e) => { keys.delete(e.code); };
 window.onblur = () => keys.clear();
 
 canvas.onmousedown = (e) => {
-    fireBark();
+    fireBeat();
     if (!locked) canvas.requestPointerLock();
     e.preventDefault();
 };
@@ -713,19 +713,19 @@ function animate() {
     elapsed += dt;
 
     // look
-    dog.yaw -= mouseDX * cfg.mouseSens;
-    dog.pitch -= mouseDY * cfg.mouseSens;
-    dog.pitch = Math.max(-0.8, Math.min(0.4, dog.pitch));
+    soul.yaw -= mouseDX * cfg.mouseSens;
+    soul.pitch -= mouseDY * cfg.mouseSens;
+    soul.pitch = Math.max(-0.8, Math.min(0.4, soul.pitch));
     mouseDX = 0; mouseDY = 0;
 
     // move
     const [ix, iy] = readMove();
-    moveDog(ix, iy, dt);
+    moveSoul(ix, iy, dt);
 
-    // Owner auto-pulse (green, navigation aid)
-    if (!won && !lost && elapsed - owner.lastPulse > cfg.ownerPeriod) {
-        spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER, cfg.ownerRange);
-        owner.lastPulse = elapsed;
+    // Body auto-pulse (green, navigation aid)
+    if (!won && !lost && elapsed - body.lastPulse > cfg.bodyPulsePeriod) {
+        spawnEcho(body.x, 0.6, body.y, COLOR_BODY, cfg.bodyRange);
+        body.lastPulse = elapsed;
     }
 
     // Dangers auto-pulse (red)
@@ -738,14 +738,14 @@ function animate() {
         }
     }
 
-    // Ambient sounds (yellow) — clarity dims with dog distance to source
+    // Ambient sounds (yellow) — clarity dims with soul distance to source
     if (!won && !lost) {
         for (const s of sounds) {
             if (elapsed - s.lastPulse > s.period) {
                 s.lastPulse = elapsed;
-                const dToDog = Math.hypot(s.x - dog.x, s.y - dog.y);
+                const dToSoul = Math.hypot(s.x - soul.x, s.y - soul.y);
                 // Hard cutoff past cfg.soundHearRange; linear fade from source
-                const clarity = Math.max(0, 1 - dToDog / cfg.soundHearRange);
+                const clarity = Math.max(0, 1 - dToSoul / cfg.soundHearRange);
                 if (clarity < 0.03) continue;
                 const dimmed = COLOR_SOUND.clone().multiplyScalar(clarity);
                 spawnEcho(s.x, 0.8, s.y, dimmed, cfg.soundRange);
@@ -753,17 +753,17 @@ function animate() {
         }
     }
 
-    // Win check — dog reached owner
+    // Win check — soul reached body
     if (!won && !lost) {
-        const d = Math.hypot(dog.x - owner.x, dog.y - owner.y);
+        const d = Math.hypot(soul.x - body.x, soul.y - body.y);
         if (d < 1.2) {
             won = true;
             showWin();
         }
         // Lose check — touched a danger
         for (const dg of dangers) {
-            const dd = Math.hypot(dog.x - dg.x, dog.y - dg.y);
-            if (dd < dg.r + dog.radius) {
+            const dd = Math.hypot(soul.x - dg.x, soul.y - dg.y);
+            if (dd < dg.r + soul.radius) {
                 lost = true;
                 showLose(dg.label);
                 break;
@@ -810,12 +810,12 @@ function animate() {
     if (!moving) bobSettle = Math.max(0, bobSettle - dt * 4);
     else bobSettle = 1;
 
-    const headY = dog.floorY + cfg.eyeHeight + bobY * bobSettle;
-    camera.position.set(dog.x, headY, dog.y);
-    const fx = Math.sin(dog.yaw) * Math.cos(dog.pitch);
-    const fy = Math.sin(dog.pitch);
-    const fz = Math.cos(dog.yaw) * Math.cos(dog.pitch);
-    camera.lookAt(dog.x + fx, headY + fy, dog.y + fz);
+    const headY = soul.floorY + cfg.eyeHeight + bobY * bobSettle;
+    camera.position.set(soul.x, headY, soul.y);
+    const fx = Math.sin(soul.yaw) * Math.cos(soul.pitch);
+    const fy = Math.sin(soul.pitch);
+    const fz = Math.cos(soul.yaw) * Math.cos(soul.pitch);
+    camera.lookAt(soul.x + fx, headY + fy, soul.y + fz);
     // keep echo-listener at camera height for positional audio consistency
 
 
@@ -943,8 +943,8 @@ async function buildLevel(data) {
     await buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
 
-    if (data.soulStart) { dog.x = data.soulStart.x; dog.y = data.soulStart.y; }
-    if (data.body) { owner.x = data.body.x; owner.y = data.body.y; }
+    if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; }
+    if (data.body) { body.x = data.body.x; body.y = data.body.y; }
 
     dangers.length = 0;
     let i = 0;
@@ -969,7 +969,7 @@ async function buildLevel(data) {
         });
     }
 
-    buildOwnerMesh();
+    buildBodyMesh();
 }
 
 // Bootstrap: try to load level.json next to this page, else DEFAULT_LEVEL
@@ -994,15 +994,15 @@ bootstrap();
 // ----- Settings panel -----
 (function buildPanel() {
     const params = [
-        { key: 'barkRange',     label: 'Bark range',     min: 1,    max: 15,   step: 0.5 },
-        { key: 'barkCooldown',  label: 'Bark cooldown',  min: 0.2,  max: 3,    step: 0.1 },
-        { key: 'ownerRange',    label: 'Owner range',    min: 2,    max: 20,   step: 0.5 },
-        { key: 'ownerPeriod',   label: 'Owner period',   min: 1,    max: 10,   step: 0.5 },
+        { key: 'beatRange',     label: 'Beat range',     min: 1,    max: 15,   step: 0.5 },
+        { key: 'beatCooldown',  label: 'Beat cooldown',  min: 0.2,  max: 3,    step: 0.1 },
+        { key: 'bodyRange',    label: 'Body range',     min: 2,    max: 20,   step: 0.5 },
+        { key: 'bodyPulsePeriod',   label: 'Body pulse',     min: 1,    max: 10,   step: 0.5 },
         { key: 'signalSpeed',   label: 'Signal speed',   min: 2,    max: 25,   step: 0.5 },
         { key: 'mouseSens',     label: 'Mouse sens',     min: 0.0005, max: 0.01, step: 0.0005 },
-        { key: 'flashOnBark',   label: 'Bark flash',     min: 0,    max: 1,    step: 0.05 },
+        { key: 'flashOnBeat',   label: 'Beat flash',     min: 0,    max: 1,    step: 0.05 },
         { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
-        { key: 'barkCone',      label: 'Bark cone (deg)',min: 30,   max: 360,  step: 5 },
+        { key: 'beatCone',      label: 'Beat cone (deg)',min: 30,   max: 360,  step: 5 },
         { key: 'smellRange',    label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
         { key: 'smellCount',    label: 'Smell count',    min: 10,   max: 300,  step: 10, onChange: rebuildSmellZones },
         { key: 'smellSize',     label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
@@ -1043,9 +1043,9 @@ bootstrap();
     document.getElementById('panelToggle').addEventListener('click', () => {
         panel.classList.toggle('open');
     });
-    // Auto-bark while panel is open, respecting cfg.barkCooldown
+    // Auto-beat while panel is open, respecting cfg.beatCooldown
     setInterval(() => {
-        if (panel.classList.contains('open')) fireBark();
+        if (panel.classList.contains('open')) fireBeat();
     }, 100);
     // Load saved (version-scoped — older saves ignored)
     try {
