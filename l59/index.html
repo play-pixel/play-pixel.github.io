@@ -94,7 +94,7 @@ for (let i = 0; i < MAX_WALLS; i++) {
 const echoMaterial = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
-    depthTest: false,
+    depthTest: true,
     blending: THREE.AdditiveBlending,
     uniforms: {
         uEchoOrigin: { value: echoOrigins },
@@ -185,15 +185,22 @@ const echoMaterial = new THREE.ShaderMaterial({
 // ----- Level (walls as line-edges, floor grid) -----
 const walls = [];
 
+const solidMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
 function addBox(cx, cy, w, d, h = 1.5) {
     const box = new THREE.BoxGeometry(w, h, d);
+    // Solid black body — occludes camera view through walls
+    const solid = new THREE.Mesh(box, solidMat);
+    solid.position.set(cx, h / 2, cy);
+    scene.add(solid);
+    // Line edges on top — lit by echoes
     const edges = new THREE.EdgesGeometry(box);
-    const mesh = new THREE.LineSegments(edges, echoMaterial);
-    mesh.position.set(cx, h / 2, cy);
-    scene.add(mesh);
+    const lines = new THREE.LineSegments(edges, echoMaterial);
+    lines.position.set(cx, h / 2, cy);
+    lines.renderOrder = 1;
+    scene.add(lines);
     const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
     walls.push({ minX, minY, maxX, maxY });
-    // mirror to shader uniform (for ray occlusion of echo)
     const idx = walls.length - 1;
     if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
 }
@@ -290,7 +297,7 @@ for (let i = 0; i < MAX_ECHOES; i++) {
 }
 
 const COLOR_BARK  = new THREE.Vector3(0.9, 0.97, 1.0);
-const COLOR_OWNER = new THREE.Vector3(1.0, 0.75, 0.25);
+const COLOR_OWNER = new THREE.Vector3(0.45, 0.33, 0.11);
 
 function spawnEcho(x, y, z, color) {
     let slot = echoes.find(e => !e.active);
@@ -315,24 +322,23 @@ const owner = {
     lastPulse: -10,
 };
 
-// Visible owner silhouette — lying body (torso + head), shows up when echoes reach it
+// Visible owner silhouette — lying body (torso + head). Solid body for camera occlusion,
+// line edges on top lit by echoes.
 (function addOwnerMesh() {
     const group = new THREE.Group();
     group.position.set(owner.x, 0, owner.y);
-    // torso: long low box
-    const torso = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(1.7, 0.35, 0.6)),
-        echoMaterial
-    );
-    torso.position.set(0, 0.18, 0);
-    group.add(torso);
-    // head
-    const head = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(0.45, 0.35, 0.45)),
-        echoMaterial
-    );
-    head.position.set(1.05, 0.18, 0);
-    group.add(head);
+    function addPart(w, h, d, px, py, pz) {
+        const geom = new THREE.BoxGeometry(w, h, d);
+        const solid = new THREE.Mesh(geom, solidMat);
+        solid.position.set(px, py, pz);
+        group.add(solid);
+        const lines = new THREE.LineSegments(new THREE.EdgesGeometry(geom), echoMaterial);
+        lines.position.set(px, py, pz);
+        lines.renderOrder = 1;
+        group.add(lines);
+    }
+    addPart(1.7, 0.35, 0.6, 0, 0.18, 0);     // torso
+    addPart(0.45, 0.35, 0.45, 1.05, 0.18, 0); // head
     scene.add(group);
 })();
 let won = false;
