@@ -330,18 +330,20 @@ function addCeiling(size, y) {
     scene.add(mesh);
 }
 
-// Smell zone — colored vapor hanging in the air (drifting particle cloud)
+// Smell zones — colored vapor drifting upward
 const smellZones = [];
-function addSmellZone(cx, cy, radius, color) {
-    const N = 80;
+const smellDefs = []; // persistent zone definitions, used to rebuild on count change
+
+function buildSmellZone(def) {
+    const N = cfg.smellCount;
     const positions = new Float32Array(N * 3);
     const velocities = new Array(N);
     function spawnParticle(i, startYRand) {
-        const r = Math.sqrt(Math.random()) * radius;
+        const r = Math.sqrt(Math.random()) * def.radius;
         const a = Math.random() * Math.PI * 2;
-        positions[i*3]   = cx + r * Math.cos(a);
+        positions[i*3]   = def.cx + r * Math.cos(a);
         positions[i*3+1] = startYRand ? Math.random() * 2.0 : 0.05 + Math.random() * 0.2;
-        positions[i*3+2] = cy + r * Math.sin(a);
+        positions[i*3+2] = def.cy + r * Math.sin(a);
         velocities[i] = {
             vy: 0.08 + Math.random() * 0.12,
             dx: (Math.random() - 0.5) * 0.08,
@@ -352,13 +354,29 @@ function addSmellZone(cx, cy, radius, color) {
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
-        color, size: 0.22, transparent: true, opacity: 0.55,
+        color: def.color, size: cfg.smellSize, transparent: true, opacity: 0.55,
         blending: THREE.AdditiveBlending, depthWrite: false,
         sizeAttenuation: true,
     });
     const points = new THREE.Points(geom, mat);
     scene.add(points);
-    smellZones.push({ cx, cy, radius, positions, velocities, geom, mat, spawnParticle });
+    return { ...def, positions, velocities, geom, mat, points, spawnParticle };
+}
+
+function addSmellZone(cx, cy, radius, color) {
+    const def = { cx, cy, radius, color };
+    smellDefs.push(def);
+    smellZones.push(buildSmellZone(def));
+}
+
+function rebuildSmellZones() {
+    for (const z of smellZones) {
+        scene.remove(z.points);
+        z.geom.dispose();
+        z.mat.dispose();
+    }
+    smellZones.length = 0;
+    for (const d of smellDefs) smellZones.push(buildSmellZone(d));
 }
 
 function updateSmellZones(dt) {
@@ -378,6 +396,7 @@ function updateSmellZones(dt) {
             (distToDog - cfg.smellRange * 0.3) / (cfg.smellRange * 0.7)
         ));
         s.mat.opacity = 0.6 * strength;
+        s.mat.size = cfg.smellSize;
         s.mat.visible = strength > 0.01;
     }
 }
@@ -488,7 +507,9 @@ const cfg = {
     flashOnBark: 0.7,
     fadeMul: 2.0,
     barkCone: 120,
-    smellRange: 5.0, // dog sees vapor only within this distance
+    smellRange: 5.0,
+    smellCount: 80,  // particles per zone
+    smellSize: 0.22, // particle size
 };
 
 function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
@@ -781,6 +802,8 @@ animate();
         { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
         { key: 'barkCone',      label: 'Bark cone (deg)',min: 30,   max: 360,  step: 5 },
         { key: 'smellRange',    label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
+        { key: 'smellCount',    label: 'Smell count',    min: 10,   max: 300,  step: 10, onChange: rebuildSmellZones },
+        { key: 'smellSize',     label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
@@ -798,6 +821,7 @@ animate();
         input.addEventListener('input', () => {
             cfg[p.key] = parseFloat(input.value);
             val.textContent = input.value;
+            if (p.onChange) p.onChange();
             try { localStorage.setItem('ld59_cfg', JSON.stringify(cfg)); } catch (e) {}
         });
         row.appendChild(label);
