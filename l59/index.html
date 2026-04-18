@@ -358,7 +358,7 @@ function addSmellZone(cx, cy, radius, color) {
     });
     const points = new THREE.Points(geom, mat);
     scene.add(points);
-    smellZones.push({ cx, cy, radius, positions, velocities, geom, spawnParticle });
+    smellZones.push({ cx, cy, radius, positions, velocities, geom, mat, spawnParticle });
 }
 
 function updateSmellZones(dt) {
@@ -372,6 +372,13 @@ function updateSmellZones(dt) {
             if (s.positions[i*3 + 1] > 2.25) s.spawnParticle(i, false);
         }
         s.geom.attributes.position.needsUpdate = true;
+        // distance-based fade: full opacity close, invisible beyond cfg.smellRange
+        const distToDog = Math.hypot(s.cx - dog.x, s.cy - dog.y);
+        const strength = 1.0 - Math.min(1, Math.max(0,
+            (distToDog - cfg.smellRange * 0.3) / (cfg.smellRange * 0.7)
+        ));
+        s.mat.opacity = 0.6 * strength;
+        s.mat.visible = strength > 0.01;
     }
 }
 
@@ -480,7 +487,8 @@ const cfg = {
     mouseSens: 0.0025,
     flashOnBark: 0.7,
     fadeMul: 2.0,
-    barkCone: 120,  // cone aperture in degrees (full angle)
+    barkCone: 120,
+    smellRange: 5.0, // dog sees vapor only within this distance
 };
 
 function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
@@ -772,6 +780,7 @@ animate();
         { key: 'flashOnBark',   label: 'Bark flash',     min: 0,    max: 1,    step: 0.05 },
         { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
         { key: 'barkCone',      label: 'Bark cone (deg)',min: 30,   max: 360,  step: 5 },
+        { key: 'smellRange',    label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
