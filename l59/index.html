@@ -263,7 +263,18 @@ const solidMat = new THREE.MeshBasicMaterial({
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 2,
 });
-const GRID_STEP = 0.0625;
+// Registry for all grid wireframes — slider can rebuild them live
+const gridMeshes = [];
+function registerGridMesh(mesh, rebuildFn) {
+    gridMeshes.push({ mesh, rebuildFn });
+}
+function rebuildAllGrids(newStep) {
+    for (const { mesh, rebuildFn } of gridMeshes) {
+        const oldGeom = mesh.geometry;
+        mesh.geometry = rebuildFn(newStep);
+        oldGeom.dispose();
+    }
+}
 
 // Build a box wireframe with interior grid lines on all 5 visible faces (bottom skipped).
 function buildBoxWireGeom(w, h, d, step) {
@@ -298,17 +309,18 @@ function addBox(cx, cy, w, d, h = 1.5) {
     const solid = new THREE.Mesh(box, solidMat);
     solid.position.set(cx, h / 2, cy);
     scene.add(solid);
-    const lines = new THREE.LineSegments(buildBoxWireGeom(w, h, d, GRID_STEP), echoMaterial);
+    const lines = new THREE.LineSegments(buildBoxWireGeom(w, h, d, cfg.gridStep), echoMaterial);
     lines.position.set(cx, h / 2, cy);
     lines.renderOrder = 1;
     scene.add(lines);
+    registerGridMesh(lines, (step) => buildBoxWireGeom(w, h, d, step));
     const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
     walls.push({ minX, minY, maxX, maxY });
     const idx = walls.length - 1;
     if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
 }
 
-function addGrid(y, size, step) {
+function buildFlatGridGeom(y, size, step) {
     const positions = [];
     for (let i = -size; i <= size; i += step) {
         positions.push(i, y, -size, i, y, size);
@@ -316,9 +328,13 @@ function addGrid(y, size, step) {
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    const grid = new THREE.LineSegments(g, echoMaterial);
+    return g;
+}
+function addGrid(y, size, step) {
+    const grid = new THREE.LineSegments(buildFlatGridGeom(y, size, step), echoMaterial);
     grid.renderOrder = 1;
     scene.add(grid);
+    registerGridMesh(grid, (s) => buildFlatGridGeom(y, size, s));
 }
 function addFloorGrid(size, step) { addGrid(0, size, step); }
 
@@ -331,7 +347,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 2;
+const CFG_VERSION = 3;
 const cfg = {
     barkRange: 3.5,
     barkCooldown: 2.2,
@@ -347,6 +363,7 @@ const cfg = {
     smellSize: 0.22,
     soundRange: 2.5,
     soundHearRange: 6.0,
+    gridStep: 0.125,   // wireframe grid step (smaller = denser, quadratic cost)
 };
 
 // Smell zones — colored vapor drifting upward
@@ -420,8 +437,8 @@ function updateSmellZones(dt) {
     }
 }
 
-addFloorGrid(12, 0.0625);
-addGrid(2.4, 12, 0.0625);   // ceiling grid (lit by echoes)
+addFloorGrid(12, cfg.gridStep);
+addGrid(2.4, 12, cfg.gridStep);   // ceiling grid (lit by echoes)
 addCeiling(12, 2.4);       // solid ceiling — blocks view upward
 
 // Smell zones (decorative for now, represent regions of smell)
@@ -815,6 +832,8 @@ animate();
         { key: 'smellSize',     label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
         { key: 'soundRange',     label: 'Sound range',    min: 1, max: 15, step: 0.5 },
         { key: 'soundHearRange', label: 'Sound clarity',  min: 1, max: 20, step: 0.5 },
+        { key: 'gridStep',       label: 'Grid step',      min: 0.03125, max: 0.5, step: 0.03125,
+          onChange: () => rebuildAllGrids(cfg.gridStep) },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
