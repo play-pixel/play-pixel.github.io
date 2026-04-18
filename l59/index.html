@@ -263,7 +263,7 @@ const solidMat = new THREE.MeshBasicMaterial({
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 2,
 });
-const GRID_STEP = 0.125;
+const GRID_STEP = 0.0625;
 
 // Build a box wireframe with interior grid lines on all 5 visible faces (bottom skipped).
 function buildBoxWireGeom(w, h, d, step) {
@@ -420,8 +420,8 @@ function updateSmellZones(dt) {
     }
 }
 
-addFloorGrid(12, 0.125);
-addGrid(2.4, 12, 0.125);   // ceiling grid (lit by echoes)
+addFloorGrid(12, 0.0625);
+addGrid(2.4, 12, 0.0625);   // ceiling grid (lit by echoes)
 addCeiling(12, 2.4);       // solid ceiling — blocks view upward
 
 // Smell zones (decorative for now, represent regions of smell)
