@@ -281,14 +281,15 @@ function fireBark() {
     flashT = 0.25;
 }
 
+// Use e.code (physical key) — layout-independent (RU/EN/etc.)
 window.onkeydown = (e) => {
-    keys.add(e.key.toLowerCase());
-    if (e.code === 'Space' || e.key === ' ') {
+    keys.add(e.code);
+    if (e.code === 'Space') {
         fireBark();
         e.preventDefault();
     }
 };
-window.onkeyup = (e) => { keys.delete(e.key.toLowerCase()); };
+window.onkeyup = (e) => { keys.delete(e.code); };
 window.onblur = () => keys.clear();
 
 canvas.onmousedown = (e) => {
@@ -307,10 +308,10 @@ document.onmousemove = (e) => {
 
 function readMove() {
     let x = 0, y = 0;
-    if (keys.has('w') || keys.has('arrowup')) y += 1;
-    if (keys.has('s') || keys.has('arrowdown')) y -= 1;
-    if (keys.has('a') || keys.has('arrowleft')) x += 1;
-    if (keys.has('d') || keys.has('arrowright')) x -= 1;
+    if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1;
+    if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) x += 1;
+    if (keys.has('KeyD') || keys.has('ArrowRight')) x -= 1;
     const l = Math.hypot(x, y);
     if (l > 0) { x /= l; y /= l; }
     return [x, y];
