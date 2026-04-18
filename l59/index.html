@@ -10,8 +10,13 @@
         background: #000; overflow: hidden;
         font-family: system-ui, sans-serif; color: #aaa;
         cursor: crosshair;
+        touch-action: none;
+        overscroll-behavior: none;
+        -webkit-user-select: none;
+        user-select: none;
     }
-    #app { width: 100vw; height: 100vh; }
+    #app { width: 100vw; height: 100vh; touch-action: none; }
+    #app canvas { touch-action: none; display: block; }
     #hud {
         position: fixed; top: 12px; left: 12px;
         padding: 8px 12px;
@@ -60,6 +65,44 @@
     #panelBody .row label { flex: 1; white-space: nowrap; }
     #panelBody .row input[type="range"] { flex: 1; }
     #panelBody .row .val { width: 34px; text-align: right; color: #f0c36d; }
+    #joystick {
+        position: fixed;
+        right: 24px; bottom: 24px;
+        width: 140px; height: 140px;
+        border: 2px solid rgba(200,220,255,0.35);
+        border-radius: 50%;
+        background: rgba(0,0,0,0.28);
+        touch-action: none;
+        z-index: 20;
+        display: none;
+    }
+    #joystick.on { display: block; }
+    #joyKnob {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 60px; height: 60px; margin: -30px 0 0 -30px;
+        border: 2px solid rgba(200,220,255,0.7);
+        border-radius: 50%;
+        background: rgba(40,60,100,0.55);
+        pointer-events: none;
+    }
+    #beatBtn {
+        position: fixed;
+        left: 24px; bottom: 24px;
+        width: 90px; height: 90px;
+        border: 2px solid rgba(255,150,150,0.5);
+        border-radius: 50%;
+        background: rgba(60,20,20,0.45);
+        color: #f0c0c0;
+        font-family: system-ui, sans-serif;
+        font-size: 14px; letter-spacing: 0.1em;
+        touch-action: none;
+        z-index: 20;
+        display: none;
+        user-select: none;
+    }
+    #beatBtn.on { display: flex; align-items: center; justify-content: center; }
+    #beatBtn:active { background: rgba(120,40,40,0.7); }
 </style>
 <script type="importmap">
 {
@@ -79,6 +122,8 @@
     <div><b>SPACE</b> — beat</div>
 </div>
 <div id="reticle"></div>
+<div id="joystick"><div id="joyKnob"></div></div>
+<button id="beatBtn" type="button">BEAT</button>
 <div id="panel">
     <button id="panelToggle" type="button">⚙</button>
     <div id="panelBody"></div>
@@ -113,6 +158,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000, 1);
 app.appendChild(renderer.domElement);
 const canvas = renderer.domElement;
+canvas.style.touchAction = 'none';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -138,8 +184,10 @@ for (let i = 0; i < MAX_ECHOES; i++) {
     echoCones.push(-2.0);
 }
 const wallUniform = [];
+const wallYTopUniform = [];
 for (let i = 0; i < MAX_WALLS; i++) {
     wallUniform.push(new THREE.Vector4(1e6, 1e6, -1e6, -1e6));
+    wallYTopUniform.push(1e6); // very tall by default so top never allows bypass
 }
 
 const echoMaterial = new THREE.ShaderMaterial({
@@ -155,6 +203,7 @@ const echoMaterial = new THREE.ShaderMaterial({
         uEchoForward: { value: echoForwards },
         uEchoCone: { value: echoCones },
         uWalls: { value: wallUniform },
+        uWallYTop: { value: wallYTopUniform },
         uSpeed: { value: 9.0 },
         uFadeMul: { value: 2.0 },
     },
@@ -176,13 +225,14 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform vec2 uEchoForward[${MAX_ECHOES}];
         uniform float uEchoCone[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
+        uniform float uWallYTop[${MAX_WALLS}];
         uniform float uSpeed;
         uniform float uFadeMul;
         const float THICKNESS = 1.0;
 
-        bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
+        bool rayBlockedByAABB(vec2 a, vec2 b, float ay, float by, vec4 w, float wTop) {
             if (w.x > w.z) return false; // degenerate
-            // if origin is inside this wall, don't count it
+            // if origin is inside this wall XZ, don't count it
             if (a.x >= w.x && a.x <= w.z && a.y >= w.y && a.y <= w.w) return false;
             vec2 d = b - a;
             vec2 safe = vec2(
@@ -197,9 +247,11 @@ const echoMaterial = new THREE.ShaderMaterial({
             float tEnter = max(tMin2.x, tMin2.y);
             float tExit  = min(tMax2.x, tMax2.y);
             if (tEnter > tExit) return false;
-            // Ray tangent to surface (tEnter ≈ 1) means fragment is on near face → visible.
-            // Ray passes through AABB interior (tEnter < 1) → fragment is on back/side edge → blocked.
             if (tEnter >= 0.999 || tExit <= 0.0) return false;
+            // 3D pass-over: if ray's Y at both wall-crossing points stays above wall top, not blocked.
+            float yEnter = ay + tEnter * (by - ay);
+            float yExit  = ay + tExit  * (by - ay);
+            if (min(yEnter, yExit) > wTop + 0.02) return false;
             return true;
         }
 
@@ -215,7 +267,7 @@ const echoMaterial = new THREE.ShaderMaterial({
 
                 bool blocked = false;
                 for (int j = 0; j < ${MAX_WALLS}; j++) {
-                    if (rayBlockedByAABB(origin2D, frag2D, uWalls[j])) {
+                    if (rayBlockedByAABB(origin2D, frag2D, uEchoOrigin[i].y, vWorldPos.y, uWalls[j], uWallYTop[j])) {
                         blocked = true;
                         break;
                     }
@@ -323,7 +375,10 @@ function addBox(cx, cy, w, d, h = 1.5, baseY = 0) {
         const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
         walls.push({ minX, minY, maxX, maxY });
         const idx = walls.length - 1;
-        if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
+        if (idx < MAX_WALLS) {
+            wallUniform[idx].set(minX, minY, maxX, maxY);
+            wallYTopUniform[idx] = baseY + h;
+        }
     }
 }
 
@@ -407,6 +462,8 @@ const cfg = {
     bobAmplitude: 0.03,
     bobFrequency: 2,
     ceilingHeight: 3.0,
+    virtualJoystick: (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) ? 1 : 0,
+    touchLookSens: 0.006,
 };
 
 // Smell zones — colored vapor drifting upward
@@ -638,6 +695,7 @@ window.onkeyup = (e) => { keys.delete(e.code); };
 window.onblur = () => keys.clear();
 
 canvas.onmousedown = (e) => {
+    if (cfg.virtualJoystick) return; // touch path handles input on mobile
     fireBeat();
     if (!locked) canvas.requestPointerLock();
     e.preventDefault();
@@ -651,12 +709,106 @@ document.onmousemove = (e) => {
     mouseDY += e.movementY;
 };
 
+// ----- Touch / virtual joystick -----
+const joyEl = document.getElementById('joystick');
+const joyKnob = document.getElementById('joyKnob');
+const beatBtn = document.getElementById('beatBtn');
+const joy = { active: false, pid: -1, dx: 0, dy: 0, radius: 60 };
+let lookPid = -1;
+let lookLastX = 0, lookLastY = 0;
+
+function applyJoystickVisibility() {
+    const on = !!cfg.virtualJoystick;
+    joyEl.classList.toggle('on', on);
+    beatBtn.classList.toggle('on', on);
+    const hud = document.getElementById('hud');
+    if (hud) hud.style.display = on ? 'none' : '';
+}
+applyJoystickVisibility();
+
+function joyReset() {
+    joy.active = false; joy.pid = -1; joy.dx = 0; joy.dy = 0;
+    joyKnob.style.transform = '';
+}
+function joyUpdateKnob() {
+    joyKnob.style.transform = `translate(${joy.dx * joy.radius}px, ${joy.dy * joy.radius}px)`;
+}
+
+joyEl.addEventListener('pointerdown', (e) => {
+    if (!cfg.virtualJoystick) return;
+    joy.active = true; joy.pid = e.pointerId;
+    const rect = joyEl.getBoundingClientRect();
+    joy.cx = rect.left + rect.width / 2;
+    joy.cy = rect.top + rect.height / 2;
+    joy.radius = rect.width / 2 - 10;
+    const rx = (e.clientX - joy.cx) / joy.radius;
+    const ry = (e.clientY - joy.cy) / joy.radius;
+    const l = Math.hypot(rx, ry);
+    joy.dx = l > 1 ? rx / l : rx;
+    joy.dy = l > 1 ? ry / l : ry;
+    joyUpdateKnob();
+    joyEl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+});
+joyEl.addEventListener('pointermove', (e) => {
+    if (!joy.active || e.pointerId !== joy.pid) return;
+    const rx = (e.clientX - joy.cx) / joy.radius;
+    const ry = (e.clientY - joy.cy) / joy.radius;
+    const l = Math.hypot(rx, ry);
+    joy.dx = l > 1 ? rx / l : rx;
+    joy.dy = l > 1 ? ry / l : ry;
+    joyUpdateKnob();
+});
+function joyEnd(e) {
+    if (e.pointerId !== joy.pid) return;
+    joyReset();
+}
+joyEl.addEventListener('pointerup', joyEnd);
+joyEl.addEventListener('pointercancel', joyEnd);
+
+beatBtn.addEventListener('pointerdown', (e) => {
+    if (!cfg.virtualJoystick) return;
+    fireBeat();
+    e.preventDefault();
+    e.stopPropagation();
+});
+
+// Camera rotation via touch/drag on canvas (only when joystick mode is on)
+canvas.addEventListener('pointerdown', (e) => {
+    if (!cfg.virtualJoystick) return;
+    if (e.pointerType === 'mouse') return; // leave mouse to pointerlock path
+    if (lookPid !== -1) return;
+    lookPid = e.pointerId;
+    lookLastX = e.clientX; lookLastY = e.clientY;
+    canvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+});
+canvas.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== lookPid) return;
+    mouseDX += (e.clientX - lookLastX) * (cfg.touchLookSens / cfg.mouseSens);
+    mouseDY += (e.clientY - lookLastY) * (cfg.touchLookSens / cfg.mouseSens);
+    lookLastX = e.clientX; lookLastY = e.clientY;
+});
+function lookEnd(e) {
+    if (e.pointerId !== lookPid) return;
+    // short tap with no drag → beat
+    lookPid = -1;
+}
+canvas.addEventListener('pointerup', lookEnd);
+canvas.addEventListener('pointercancel', lookEnd);
+
 function readMove() {
     let x = 0, y = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) x += 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) x -= 1;
+    if (cfg.virtualJoystick && joy.active) {
+        // joy.dy: screen-down positive, want "up on stick" = forward (y+1)
+        // joy.dx: screen-right positive, want "right on stick" = strafe-right (x-1 in current scheme)
+        y += -joy.dy;
+        x += -joy.dx;
+    }
     const l = Math.hypot(x, y);
     if (l > 0) { x /= l; y /= l; }
     return [x, y];
@@ -733,11 +885,37 @@ function animate() {
         body.lastPulse = elapsed;
     }
 
-    // Dangers auto-pulse (red)
+    // Dangers auto-pulse (red) + patrol AI
     if (!won && !lost) {
         for (const d of dangers) {
+            // patrol: move toward current waypoint
+            if (d.waypoints && d.waypoints.length > 0) {
+                const wp = d.waypoints[d.wpIdx % d.waypoints.length];
+                const ddx = wp.x - d.x, ddy = wp.y - d.y;
+                const dist = Math.hypot(ddx, ddy);
+                if (dist < 0.15) {
+                    d.wpIdx = (d.wpIdx + 1) % d.waypoints.length;
+                } else {
+                    const step = Math.min(d.speed * dt, dist);
+                    const nx = d.x + (ddx / dist) * step;
+                    const ny = d.y + (ddy / dist) * step;
+                    d.x = nx; d.y = ny;
+                    // slerp yaw toward movement direction
+                    const targetYaw = Math.atan2(ddx, ddy);
+                    let dy = targetYaw - d.yaw;
+                    while (dy > Math.PI) dy -= 2 * Math.PI;
+                    while (dy < -Math.PI) dy += 2 * Math.PI;
+                    const turnStep = d.turnRate * dt;
+                    d.yaw += Math.max(-turnStep, Math.min(turnStep, dy));
+                }
+            }
+            if (d.mesh) {
+                d.mesh.position.set(d.x, 0, d.y);
+                d.mesh.rotation.y = d.yaw;
+            }
             if (elapsed - d.lastPulse > d.period) {
-                spawnEcho(d.x, 0.5, d.y, COLOR_DANGER, 2.5);
+                const col = d.hostile ? COLOR_DANGER : COLOR_BODY.clone().multiplyScalar(0.3).add(new THREE.Color(0.6, 0.6, 0.6));
+                spawnEcho(d.x, 0.8, d.y, d.hostile ? COLOR_DANGER : new THREE.Color(0.7, 0.7, 0.8), 2.5);
                 d.lastPulse = elapsed;
             }
         }
@@ -765,8 +943,9 @@ function animate() {
             won = true;
             showWin();
         }
-        // Lose check — touched a danger
+        // Lose check — touched a hostile spirit
         for (const dg of dangers) {
+            if (!dg.hostile) continue;
             const dd = Math.hypot(soul.x - dg.x, soul.y - dg.y);
             if (dd < dg.r + soul.radius) {
                 lost = true;
@@ -855,7 +1034,11 @@ async function buildLibraryCache(modelLibrary = {}) {
             } catch (e) { console.warn('OBJ fetch error', entry.path, e); }
         }
         if (!text) continue;
-        try { parsedLibrary.set(id, objLoader.parse(text)); }
+        try {
+            const parsed = objLoader.parse(text);
+            parsedLibrary.set(id, parsed);
+            if (entry.name) spiritModelByName.set(entry.name, parsed);
+        }
         catch (e) { console.warn('lib parse failed', entry.name, e); }
     }
 }
@@ -888,6 +1071,50 @@ function addModel(m) {
         scene.add(container);
     } catch (e) { console.warn('model instance failed', e); }
 }
+
+// ----- Spirit mesh builder -----
+function buildSpiritMesh(sp, hostile) {
+    const group = new THREE.Group();
+    let template = null;
+    if (sp.modelName) {
+        for (const entry of parsedLibrary.values()) {
+            // parsedLibrary stores by id, so can't lookup by name directly — fallback below
+        }
+        // look up by name via state's level library kept in a weak cache
+        if (spiritModelByName.has(sp.modelName)) template = spiritModelByName.get(sp.modelName);
+    }
+    if (template) {
+        const parsed = template.clone(true);
+        parsed.traverse(c => {
+            if (c.isMesh) {
+                c.material = solidMat;
+                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), echoMaterial);
+                edges.renderOrder = 1;
+                c.add(edges);
+            }
+        });
+        group.add(parsed);
+    } else {
+        // default wireframe silhouette — tall cone + head
+        const mat = solidMat;
+        const coneGeom = new THREE.ConeGeometry(0.35, 1.4, 10);
+        const body = new THREE.Mesh(coneGeom, mat);
+        body.position.y = 0.7;
+        const headGeom = new THREE.SphereGeometry(0.22, 10, 8);
+        const head = new THREE.Mesh(headGeom, mat);
+        head.position.y = 1.55;
+        const bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(coneGeom, 20), echoMaterial);
+        bodyEdges.renderOrder = 1;
+        body.add(bodyEdges);
+        const headEdges = new THREE.LineSegments(new THREE.EdgesGeometry(headGeom, 20), echoMaterial);
+        headEdges.renderOrder = 1;
+        head.add(headEdges);
+        group.add(body); group.add(head);
+    }
+    return group;
+}
+// named-model cache populated at level load
+const spiritModelByName = new Map();
 
 // ----- DEFAULT LEVEL (current house) -----
 const DEFAULT_LEVEL = {
@@ -951,16 +1178,29 @@ async function buildLevel(data) {
     if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; }
     if (data.body) { body.x = data.body.x; body.y = data.body.y; }
 
+    // clear old spirit meshes
+    for (const d of dangers) if (d.mesh) scene.remove(d.mesh);
     dangers.length = 0;
     let i = 0;
     for (const sp of data.spirits || []) {
-        dangers.push({
+        const hostile = sp.hostile !== false;
+        const d = {
             x: sp.x, y: sp.y,
+            yaw: 0,
             r: sp.r ?? 0.7,
             label: sp.label || 'spirit',
             period: sp.period ?? 2.8,
             lastPulse: i++ * 0.5,
-        });
+            hostile,
+            speed: sp.speed ?? 1.0,
+            turnRate: sp.turnRate ?? 2.0,
+            waypoints: (sp.waypoints || []).map(w => Array.isArray(w) ? { x: w[0], y: w[1] } : { x: w.x, y: w.y }),
+            wpIdx: 0,
+            mesh: buildSpiritMesh(sp, hostile),
+        };
+        d.mesh.position.set(d.x, 0, d.y);
+        scene.add(d.mesh);
+        dangers.push(d);
     }
 
     sounds.length = 0;
@@ -1019,6 +1259,7 @@ bootstrap();
         { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
         { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
         { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
+        { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
@@ -1027,6 +1268,19 @@ bootstrap();
         const label = document.createElement('label');
         label.textContent = p.label;
         const input = document.createElement('input');
+        if (p.type === 'bool') {
+            input.type = 'checkbox';
+            input.checked = !!cfg[p.key];
+            input.addEventListener('change', () => {
+                cfg[p.key] = input.checked ? 1 : 0;
+                if (p.onChange) p.onChange();
+                try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
+            });
+            row.appendChild(label);
+            row.appendChild(input);
+            body.appendChild(row);
+            continue;
+        }
         input.type = 'range';
         input.min = p.min; input.max = p.max; input.step = p.step;
         input.value = cfg[p.key];
@@ -1066,6 +1320,12 @@ bootstrap();
                     input.nextSibling.textContent = cfg[p.key];
                 }
             }
+            for (const input of body.querySelectorAll('input[type=checkbox]')) {
+                const key = input.previousSibling.textContent;
+                const p = params.find(x => x.label === key);
+                if (p) input.checked = !!cfg[p.key];
+            }
+            applyJoystickVisibility();
         }
     } catch (e) {}
 })();
