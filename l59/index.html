@@ -379,7 +379,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 3;
+const CFG_VERSION = 4;
 const cfg = {
     barkRange: 3.5,
     barkCooldown: 2.2,
@@ -395,7 +395,11 @@ const cfg = {
     smellSize: 0.22,
     soundRange: 2.5,
     soundHearRange: 6.0,
-    gridStep: 0.125,   // wireframe grid step (smaller = denser, quadratic cost)
+    gridStep: 0.125,
+    moveSpeed: 3.2,
+    eyeHeight: 1.7,     // camera height above floor (human eye ~1.7m)
+    bobAmplitude: 0.06, // how much camera bobs while walking (meters)
+    bobFrequency: 9,    // bob cycles per second while walking
 };
 
 // Smell zones — colored vapor drifting upward
@@ -474,7 +478,7 @@ function updateSmellZones(dt) {
 // ----- Dog / Soul (camera carrier + collision); start position set by level -----
 const dog = {
     x: 0, y: 0, yaw: 0, pitch: 0,
-    radius: 0.3, speed: 3.2,
+    radius: 0.3,
 };
 
 function dogCollides(x, y) {
@@ -490,8 +494,9 @@ function dogCollides(x, y) {
 function moveDog(ix, iy, dt) {
     if (ix === 0 && iy === 0) return;
     const s = Math.sin(dog.yaw), c = Math.cos(dog.yaw);
-    const dx = (iy * s + ix * c) * dog.speed * dt;
-    const dy = (iy * c - ix * s) * dog.speed * dt;
+    const speed = cfg.moveSpeed;
+    const dx = (iy * s + ix * c) * speed * dt;
+    const dy = (iy * c - ix * s) * speed * dt;
     const nx = dog.x + dx;
     if (!dogCollides(nx, dog.y)) dog.x = nx;
     const ny = dog.y + dy;
@@ -671,6 +676,8 @@ composer.addPass(noisePass);
 
 // ----- Main loop -----
 const clock = new THREE.Clock();
+let bobPhase = 0;
+let bobSettle = 0;
 
 function animate() {
     const dt = Math.min(clock.getDelta(), 1 / 30);
@@ -764,8 +771,15 @@ function animate() {
     }
     echoMaterial.uniforms.uEchoTime.value = timeUniform;
 
-    // camera at dog head
-    const headY = 0.55;
+    // head bob when walking
+    const moving = (ix !== 0 || iy !== 0);
+    bobPhase += dt * (moving ? cfg.bobFrequency : 0);
+    const bobY = Math.sin(bobPhase * Math.PI * 2) * cfg.bobAmplitude * (moving ? 1 : 0);
+    // smooth bob to zero when stopping
+    if (!moving) bobSettle = Math.max(0, bobSettle - dt * 4);
+    else bobSettle = 1;
+
+    const headY = cfg.eyeHeight + bobY * bobSettle;
     camera.position.set(dog.x, headY, dog.y);
     const fx = Math.sin(dog.yaw) * Math.cos(dog.pitch);
     const fy = Math.sin(dog.pitch);
@@ -962,6 +976,10 @@ bootstrap();
         { key: 'soundHearRange', label: 'Sound clarity',  min: 1, max: 20, step: 0.5 },
         { key: 'gridStep',       label: 'Grid step',      min: 0.03125, max: 0.5, step: 0.03125,
           onChange: () => rebuildAllGrids(cfg.gridStep) },
+        { key: 'moveSpeed',      label: 'Move speed',     min: 1,    max: 8,    step: 0.1 },
+        { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
+        { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
+        { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
