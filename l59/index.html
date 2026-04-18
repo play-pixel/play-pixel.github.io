@@ -83,10 +83,17 @@
     <button id="panelToggle" type="button">⚙</button>
     <div id="panelBody"></div>
 </div>
-<div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#f0c36d; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
+<div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#7dd97a; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
     <div>
         <div style="font-size:3rem; margin-bottom:0.5rem;">Good boy.</div>
-        <div style="font-size:1rem; opacity:0.6;">You found your way home.</div>
+        <div style="font-size:1rem; opacity:0.6;">You found him.</div>
+    </div>
+</div>
+<div id="loseOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#ea4d45; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
+    <div>
+        <div style="font-size:3rem; margin-bottom:0.5rem;">Ouch.</div>
+        <div id="loseDetail" style="font-size:1rem; opacity:0.6;"></div>
+        <div style="font-size:0.9rem; opacity:0.4; margin-top:1rem;">F5 to retry.</div>
     </div>
 </div>
 
@@ -118,11 +125,15 @@ const echoOrigins = [];
 const echoTimes = [];
 const echoColors = [];
 const echoRanges = [];
+const echoForwards = [];   // vec2 forward direction (xz plane)
+const echoCones = [];      // cos(halfAngle); < -1 means omnidirectional
 for (let i = 0; i < MAX_ECHOES; i++) {
     echoOrigins.push(new THREE.Vector3(0, -100, 0));
     echoTimes.push(-1);
     echoColors.push(new THREE.Vector3(0.9, 0.97, 1.0));
     echoRanges.push(9.0);
+    echoForwards.push(new THREE.Vector2(0, 1));
+    echoCones.push(-2.0);
 }
 const wallUniform = [];
 for (let i = 0; i < MAX_WALLS; i++) {
@@ -139,6 +150,8 @@ const echoMaterial = new THREE.ShaderMaterial({
         uEchoTime: { value: echoTimes },
         uEchoColor: { value: echoColors },
         uEchoRange: { value: echoRanges },
+        uEchoForward: { value: echoForwards },
+        uEchoCone: { value: echoCones },
         uWalls: { value: wallUniform },
         uSpeed: { value: 9.0 },
         uFadeMul: { value: 2.0 },
@@ -158,6 +171,8 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform float uEchoTime[${MAX_ECHOES}];
         uniform vec3 uEchoColor[${MAX_ECHOES}];
         uniform float uEchoRange[${MAX_ECHOES}];
+        uniform vec2 uEchoForward[${MAX_ECHOES}];
+        uniform float uEchoCone[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
         uniform float uSpeed;
         uniform float uFadeMul;
@@ -210,6 +225,16 @@ const echoMaterial = new THREE.ShaderMaterial({
                 float totalLife     = wavefrontLife * uFadeMul;
                 float d = distance(vWorldPos, uEchoOrigin[i]);
                 if (d > range) continue;
+
+                // Directional cone check (omnidirectional if uEchoCone < -1)
+                float coneFalloff = 1.0;
+                if (uEchoCone[i] > -1.0 && d > 0.001) {
+                    vec2 dir = normalize(frag2D - origin2D);
+                    float cosA = dot(dir, uEchoForward[i]);
+                    coneFalloff = smoothstep(uEchoCone[i] - 0.2, uEchoCone[i] + 0.05, cosA);
+                    if (coneFalloff <= 0.0) continue;
+                }
+
                 float wavefront = t * uSpeed;
                 // ring: fades as wavefront approaches edge
                 float ringFade = 1.0 - smoothstep(wavefrontLife * 0.7, wavefrontLife, t);
@@ -219,7 +244,7 @@ const echoMaterial = new THREE.ShaderMaterial({
                 float afterglow = inside * (1.0 - smoothstep(0.0, totalLife, t));
                 // radial falloff toward edge
                 float falloff = 1.0 - smoothstep(range * 0.6, range, d);
-                float intensity = (ring * 2.5 + afterglow * 1.2) * falloff;
+                float intensity = (ring * 2.5 + afterglow * 1.2) * falloff * coneFalloff;
                 col += uEchoColor[i] * intensity;
             }
 
@@ -305,9 +330,28 @@ function addCeiling(size, y) {
     scene.add(mesh);
 }
 
+// Smell zone — translucent colored disc on floor
+function addSmellZone(cx, cy, radius, color) {
+    const geom = new THREE.CircleGeometry(radius, 32);
+    const mat = new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0.22,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(cx, 0.02, cy);
+    scene.add(mesh);
+}
+
 addFloorGrid(12, 0.125);
 addGrid(2.4, 12, 0.125);   // ceiling grid (lit by echoes)
 addCeiling(12, 2.4);       // solid ceiling — blocks view upward
+
+// Smell zones (decorative for now, represent regions of smell)
+addSmellZone(6, -5, 1.5, 0x2e8b42);   // owner's smell (green)
+addSmellZone(-7.5, -7, 1.6, 0xaa2020); // stove/smoke (red)
+addSmellZone(8.5, 6.5, 1.6, 0x3060a0); // water/tub (blue)
+addSmellZone(-8, 6, 1.2, 0x806020);    // dining table (warm)
 
 // ----- House layout -----
 // Coordinate system (top-down): X right, Y down.
@@ -384,12 +428,16 @@ for (let i = 0; i < MAX_ECHOES; i++) {
         origin: new THREE.Vector3(),
         color: new THREE.Vector3(0.9, 0.97, 1.0),
         range: 4.5,
+        forward: new THREE.Vector2(0, 1),
+        cone: -2.0,
         start: -999, active: false,
     });
 }
 
-const COLOR_BARK  = new THREE.Vector3(0.9, 0.97, 1.0);
-const COLOR_OWNER = new THREE.Vector3(0.45, 0.33, 0.11);
+const COLOR_BARK    = new THREE.Vector3(0.9, 0.97, 1.0);
+const COLOR_OWNER   = new THREE.Vector3(0.1, 0.55, 0.15);   // green
+const COLOR_DANGER  = new THREE.Vector3(0.65, 0.08, 0.05);  // red
+const COLOR_SOUND   = new THREE.Vector3(0.55, 0.45, 0.05);  // yellow
 
 const cfg = {
     barkRange: 3.5,
@@ -399,15 +447,22 @@ const cfg = {
     signalSpeed: 4.0,
     mouseSens: 0.0025,
     flashOnBark: 0.7,
-    fadeMul: 2.0,      // totalLife = wavefrontLife * fadeMul (higher = longer afterglow)
+    fadeMul: 2.0,
+    barkCone: 120,  // cone aperture in degrees (full angle)
 };
 
-function spawnEcho(x, y, z, color, range) {
+function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
     let slot = echoes.find(e => !e.active);
     if (!slot) slot = echoes.reduce((a, b) => a.start < b.start ? a : b);
     slot.origin.set(x, y, z);
     slot.color.copy(color);
     slot.range = range;
+    if (typeof coneHalfDeg === 'number') {
+        slot.forward.set(forwardX, forwardZ).normalize();
+        slot.cone = Math.cos(coneHalfDeg * Math.PI / 180);
+    } else {
+        slot.cone = -2.0; // omnidirectional
+    }
     slot.start = elapsed;
     slot.active = true;
 }
@@ -415,7 +470,10 @@ function spawnEcho(x, y, z, color, range) {
 function fireBark() {
     if (elapsed - lastBarkTime < cfg.barkCooldown) return;
     lastBarkTime = elapsed;
-    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, cfg.barkRange);
+    // Directional: 120° cone = 60° half-angle, forward = dog's facing
+    const fx = Math.sin(dog.yaw);
+    const fz = Math.cos(dog.yaw);
+    spawnEcho(dog.x, 0.6, dog.y, COLOR_BARK, cfg.barkRange, fx, fz, cfg.barkCone / 2);
     flashT = cfg.flashOnBark;
 }
 
@@ -424,6 +482,21 @@ const owner = {
     x: 6, y: -5,
     lastPulse: -10,
 };
+
+// ----- Dangers (red, touch = lose) -----
+const dangers = [
+    { x: -7.5, y: -7, r: 0.7, label: 'stove',   period: 2.8, lastPulse: 0 },
+    { x:  8.5, y:  6.5, r: 0.7, label: 'tub',   period: 3.2, lastPulse: 1 },
+];
+
+// ----- Ambient sound sources (yellow, decorative) -----
+const sounds = [
+    { x: -9,  y:  7,  range: 2.5, period: 3.0, lastPulse: 0,   label: 'bird window' },
+    { x:  4,  y:  7,  range: 2.0, period: 4.5, lastPulse: 1.5, label: 'clock tick' },
+    { x:  9,  y: -7,  range: 2.0, period: 5.0, lastPulse: 2.8, label: 'bird' },
+];
+
+let lost = false;
 
 // Visible owner silhouette — lying body (torso + head). Solid body for camera occlusion,
 // line edges on top lit by echoes.
@@ -447,6 +520,12 @@ const owner = {
 let won = false;
 function showWin() {
     const el = document.getElementById('winOverlay');
+    if (el) el.style.display = 'flex';
+}
+function showLose(what) {
+    const el = document.getElementById('loseOverlay');
+    const detail = document.getElementById('loseDetail');
+    if (detail) detail.textContent = `You hit the ${what}.`;
     if (el) el.style.display = 'flex';
 }
 
@@ -549,18 +628,47 @@ function animate() {
     const [ix, iy] = readMove();
     moveDog(ix, iy, dt);
 
-    // Owner auto-pulse (passive signal, navigation aid)
-    if (!won && elapsed - owner.lastPulse > cfg.ownerPeriod) {
+    // Owner auto-pulse (green, navigation aid)
+    if (!won && !lost && elapsed - owner.lastPulse > cfg.ownerPeriod) {
         spawnEcho(owner.x, 0.6, owner.y, COLOR_OWNER, cfg.ownerRange);
         owner.lastPulse = elapsed;
     }
 
+    // Dangers auto-pulse (red)
+    if (!won && !lost) {
+        for (const d of dangers) {
+            if (elapsed - d.lastPulse > d.period) {
+                spawnEcho(d.x, 0.5, d.y, COLOR_DANGER, 2.5);
+                d.lastPulse = elapsed;
+            }
+        }
+    }
+
+    // Ambient sounds (yellow)
+    if (!won && !lost) {
+        for (const s of sounds) {
+            if (elapsed - s.lastPulse > s.period) {
+                spawnEcho(s.x, 0.8, s.y, COLOR_SOUND, s.range);
+                s.lastPulse = elapsed;
+            }
+        }
+    }
+
     // Win check — dog reached owner
-    if (!won) {
+    if (!won && !lost) {
         const d = Math.hypot(dog.x - owner.x, dog.y - owner.y);
         if (d < 1.2) {
             won = true;
             showWin();
+        }
+        // Lose check — touched a danger
+        for (const dg of dangers) {
+            const dd = Math.hypot(dog.x - dg.x, dog.y - dg.y);
+            if (dd < dg.r + dog.radius) {
+                lost = true;
+                showLose(dg.label);
+                break;
+            }
         }
     }
 
@@ -573,6 +681,8 @@ function animate() {
     const origUniform = echoMaterial.uniforms.uEchoOrigin.value;
     const colorUniform = echoMaterial.uniforms.uEchoColor.value;
     const rangeUniform = echoMaterial.uniforms.uEchoRange.value;
+    const forwardUniform = echoMaterial.uniforms.uEchoForward.value;
+    const coneUniform = echoMaterial.uniforms.uEchoCone.value;
     const timeUniform = [];
     for (let i = 0; i < MAX_ECHOES; i++) {
         const e = echoes[i];
@@ -580,9 +690,12 @@ function animate() {
             origUniform[i].copy(e.origin);
             colorUniform[i].copy(e.color);
             rangeUniform[i] = e.range;
+            forwardUniform[i].copy(e.forward);
+            coneUniform[i] = e.cone;
             timeUniform.push(elapsed - e.start);
         } else {
             origUniform[i].set(0, -100, 0);
+            coneUniform[i] = -2.0;
             timeUniform.push(-1);
         }
     }
@@ -624,6 +737,7 @@ animate();
         { key: 'mouseSens',     label: 'Mouse sens',     min: 0.0005, max: 0.01, step: 0.0005 },
         { key: 'flashOnBark',   label: 'Bark flash',     min: 0,    max: 1,    step: 0.05 },
         { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
+        { key: 'barkCone',      label: 'Bark cone (deg)',min: 30,   max: 360,  step: 5 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
