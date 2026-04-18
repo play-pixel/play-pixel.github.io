@@ -312,6 +312,7 @@ function addBox(cx, cy, w, d, h = 1.5, baseY = 0) {
     const posY = baseY + h / 2;
     solid.position.set(cx, posY, cy);
     scene.add(solid);
+    walkableMeshes.push(solid);
     const lines = new THREE.LineSegments(buildBoxWireGeom(w, h, d, cfg.gridStep), echoMaterial);
     lines.position.set(cx, posY, cy);
     lines.renderOrder = 1;
@@ -340,6 +341,7 @@ function addCube(d) {
     group.rotation.set(d.rx || 0, d.ry || 0, d.rz || 0);
     scene.add(group);
     registerGridMesh(lines, (step) => buildBoxWireGeom(sx, sy, sz, step));
+    walkableMeshes.push(solid);
 }
 
 // Low-poly sphere (icosahedron detail=1), wireframe scannable by echo
@@ -484,7 +486,29 @@ function updateSmellZones(dt) {
 const dog = {
     x: 0, y: 0, yaw: 0, pitch: 0,
     radius: 0.3,
+    floorY: 0,   // current feet Y (updated each frame by slope raycast)
 };
+
+// Walkable surfaces — populated in buildLevel. Raycaster uses these for floor height.
+const walkableMeshes = [];
+const slopeRaycaster = new THREE.Raycaster();
+const slopeDirDown = new THREE.Vector3(0, -1, 0);
+const MAX_SLOPE_COS = Math.cos(40 * Math.PI / 180); // ~0.766 for 40°
+
+function updateFloorY() {
+    slopeRaycaster.set(new THREE.Vector3(dog.x, dog.floorY + 3, dog.y), slopeDirDown);
+    slopeRaycaster.far = 8;
+    const hits = slopeRaycaster.intersectObjects(walkableMeshes, true);
+    for (const h of hits) {
+        if (!h.face) continue;
+        const worldNormal = h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize();
+        if (worldNormal.y < MAX_SLOPE_COS) continue; // too steep
+        dog.floorY = h.point.y;
+        return;
+    }
+    // nothing below — stay at ground
+    dog.floorY = 0;
+}
 
 function dogCollides(x, y) {
     for (const w of walls) {
@@ -776,20 +800,24 @@ function animate() {
     }
     echoMaterial.uniforms.uEchoTime.value = timeUniform;
 
+    // slope walking — raycast down to find floor height
+    updateFloorY();
+
     // head bob when walking
     const moving = (ix !== 0 || iy !== 0);
     bobPhase += dt * (moving ? cfg.bobFrequency : 0);
     const bobY = Math.sin(bobPhase * Math.PI * 2) * cfg.bobAmplitude * (moving ? 1 : 0);
-    // smooth bob to zero when stopping
     if (!moving) bobSettle = Math.max(0, bobSettle - dt * 4);
     else bobSettle = 1;
 
-    const headY = cfg.eyeHeight + bobY * bobSettle;
+    const headY = dog.floorY + cfg.eyeHeight + bobY * bobSettle;
     camera.position.set(dog.x, headY, dog.y);
     const fx = Math.sin(dog.yaw) * Math.cos(dog.pitch);
     const fy = Math.sin(dog.pitch);
     const fz = Math.cos(dog.yaw) * Math.cos(dog.pitch);
     camera.lookAt(dog.x + fx, headY + fy, dog.y + fz);
+    // keep echo-listener at camera height for positional audio consistency
+
 
     updateSmellZones(dt);
 
@@ -902,12 +930,10 @@ const DEFAULT_LEVEL = {
 };
 
 async function buildLevel(data) {
-    const ch = data.ceilingHeight ?? cfg.ceilingHeight;
     addFloorGrid(12, cfg.gridStep);
     // extra floor slabs (for multi-story levels)
     for (const f of data.floors || []) addGrid(f.y, f.size ?? 12, cfg.gridStep);
-    addGrid(ch, 12, cfg.gridStep);
-    addCeiling(12, ch);
+    // Ceiling NOT auto-added — build it yourself with walls/cubes
 
     for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4, w.baseY ?? 0);
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
@@ -988,7 +1014,6 @@ bootstrap();
         { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
         { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
         { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
-        { key: 'ceilingHeight',  label: 'Ceiling height', min: 1.5,  max: 6,    step: 0.1 },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
