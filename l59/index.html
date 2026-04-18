@@ -167,13 +167,18 @@ const echoMaterial = new THREE.ShaderMaterial({
                 if (blocked) continue;
 
                 float range = uEchoRange[i];
-                float duration = range / SPEED;
+                float wavefrontLife = range / SPEED;      // time for ring to reach edge
+                float totalLife     = wavefrontLife * 2.0; // echo continues fading after
                 float d = distance(vWorldPos, uEchoOrigin[i]);
                 if (d > range) continue;
                 float wavefront = t * SPEED;
-                float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront));
+                // ring: fades as wavefront approaches edge
+                float ringFade = 1.0 - smoothstep(wavefrontLife * 0.7, wavefrontLife, t);
+                float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront)) * ringFade;
+                // afterglow: everything inside the wavefront, fading over totalLife
                 float inside = step(d, wavefront);
-                float afterglow = inside * (1.0 - smoothstep(0.0, duration, t));
+                float afterglow = inside * (1.0 - smoothstep(0.0, totalLife, t));
+                // radial falloff toward edge
                 float falloff = 1.0 - smoothstep(range * 0.6, range, d);
                 float intensity = (ring * 2.5 + afterglow * 1.2) * falloff;
                 col += uEchoColor[i] * intensity;
@@ -469,9 +474,9 @@ function animate() {
         }
     }
 
-    // echoes — expire based on per-echo duration (range / speed)
+    // echoes — expire after total life (2x wavefront life, matches shader)
     for (const e of echoes) {
-        if (e.active && elapsed - e.start > e.range / SIGNAL_SPEED) e.active = false;
+        if (e.active && elapsed - e.start > 2.0 * e.range / SIGNAL_SPEED) e.active = false;
     }
     const origUniform = echoMaterial.uniforms.uEchoOrigin.value;
     const colorUniform = echoMaterial.uniforms.uEchoColor.value;
