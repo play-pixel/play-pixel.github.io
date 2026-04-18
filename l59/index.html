@@ -387,13 +387,13 @@ function addCeiling(size, y) {
 // ----- Tunable config (declared early so level-building functions see it) -----
 const CFG_VERSION = 7;
 const cfg = {
-    beatRange: 3.5,
+    beatRange: 5.5,
     beatCooldown: 2.2,
     bodyRange: 2.5,
     bodyPulsePeriod: 2.0,
     signalSpeed: 4.0,
     mouseSens: 0.0025,
-    flashOnBeat: 0.7,
+    flashOnBeat: 0.5,
     fadeMul: 3.4,
     beatCone: 120,
     smellRange: 5.0,
@@ -402,10 +402,10 @@ const cfg = {
     soundRange: 2.5,
     soundHearRange: 6.0,
     gridStep: 0.125,
-    moveSpeed: 3.2,
-    eyeHeight: 1.4,
-    bobAmplitude: 0.06,
-    bobFrequency: 9,
+    moveSpeed: 1.6,
+    eyeHeight: 1.1,
+    bobAmplitude: 0.03,
+    bobFrequency: 2,
     ceilingHeight: 3.0,
 };
 
@@ -494,20 +494,25 @@ const walkableMeshes = [];
 const slopeRaycaster = new THREE.Raycaster();
 const slopeDirDown = new THREE.Vector3(0, -1, 0);
 const MAX_SLOPE_COS = Math.cos(40 * Math.PI / 180); // ~0.766 for 40°
+const MAX_STEP_UP = 0.35; // cannot climb onto surfaces higher than this above current floor
 
-function updateFloorY() {
-    slopeRaycaster.set(new THREE.Vector3(soul.x, soul.floorY + 3, soul.y), slopeDirDown);
+function sampleFloorAt(x, y, fromY) {
+    slopeRaycaster.set(new THREE.Vector3(x, fromY + 3, y), slopeDirDown);
     slopeRaycaster.far = 8;
     const hits = slopeRaycaster.intersectObjects(walkableMeshes, true);
     for (const h of hits) {
         if (!h.face) continue;
         const worldNormal = h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize();
         if (worldNormal.y < MAX_SLOPE_COS) continue; // too steep
-        soul.floorY = h.point.y;
-        return;
+        // reject surfaces too high above current floor (walls/prop tops)
+        if (h.point.y > fromY + MAX_STEP_UP) continue;
+        return h.point.y;
     }
-    // nothing below — stay at ground
-    soul.floorY = 0;
+    return 0;
+}
+
+function updateFloorY() {
+    soul.floorY = sampleFloorAt(soul.x, soul.y, soul.floorY);
 }
 
 function soulCollides(x, y) {
