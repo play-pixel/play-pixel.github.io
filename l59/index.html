@@ -17,6 +17,37 @@
     }
     #app { width: 100vw; height: 100vh; touch-action: none; }
     #app canvas { touch-action: none; display: block; }
+    #joystick {
+        position: fixed; left: 24px; bottom: 24px;
+        width: 140px; height: 140px;
+        border: 2px solid rgba(200,220,255,0.35);
+        border-radius: 50%;
+        background: rgba(0,0,0,0.28);
+        touch-action: none; z-index: 20; display: none;
+    }
+    #joystick.on { display: block; }
+    #joyKnob {
+        position: absolute; left: 50%; top: 50%;
+        width: 60px; height: 60px; margin: -30px 0 0 -30px;
+        border: 2px solid rgba(200,220,255,0.7);
+        border-radius: 50%;
+        background: rgba(40,60,100,0.55);
+        pointer-events: none;
+    }
+    #beatBtn {
+        position: fixed; right: 24px; bottom: 24px;
+        width: 90px; height: 90px;
+        border: 2px solid rgba(255,150,150,0.5);
+        border-radius: 50%;
+        background: rgba(60,20,20,0.45);
+        color: #f0c0c0;
+        font-family: system-ui, sans-serif;
+        font-size: 14px; letter-spacing: 0.1em;
+        touch-action: none; z-index: 20; display: none;
+        user-select: none;
+    }
+    #beatBtn.on { display: flex; align-items: center; justify-content: center; }
+    #beatBtn:active { background: rgba(120,40,40,0.7); }
     #hud {
         position: fixed; top: 12px; left: 12px;
         padding: 8px 12px;
@@ -32,6 +63,13 @@
         width: 4px; height: 4px; margin: -2px 0 0 -2px;
         background: #555; border-radius: 50%;
         pointer-events: none;
+    }
+    #fps {
+        position: fixed; top: 12px; right: 48px;
+        font-size: 11px; color: #888;
+        pointer-events: none;
+        font-family: system-ui, sans-serif;
+        display: none;
     }
     #panel {
         position: fixed; top: 12px; right: 12px;
@@ -65,44 +103,26 @@
     #panelBody .row label { flex: 1; white-space: nowrap; }
     #panelBody .row input[type="range"] { flex: 1; }
     #panelBody .row .val { width: 34px; text-align: right; color: #f0c36d; }
-    #joystick {
-        position: fixed;
-        left: 24px; bottom: 24px;
-        width: 140px; height: 140px;
-        border: 2px solid rgba(200,220,255,0.35);
-        border-radius: 50%;
-        background: rgba(0,0,0,0.28);
-        touch-action: none;
-        z-index: 20;
-        display: none;
+    #panelBody .group {
+        margin: 6px 0;
+        border: 1px solid #333;
+        background: rgba(20,20,28,0.5);
     }
-    #joystick.on { display: block; }
-    #joyKnob {
-        position: absolute;
-        left: 50%; top: 50%;
-        width: 60px; height: 60px; margin: -30px 0 0 -30px;
-        border: 2px solid rgba(200,220,255,0.7);
-        border-radius: 50%;
-        background: rgba(40,60,100,0.55);
-        pointer-events: none;
-    }
-    #beatBtn {
-        position: fixed;
-        right: 24px; bottom: 24px;
-        width: 90px; height: 90px;
-        border: 2px solid rgba(255,150,150,0.5);
-        border-radius: 50%;
-        background: rgba(60,20,20,0.45);
-        color: #f0c0c0;
-        font-family: system-ui, sans-serif;
-        font-size: 14px; letter-spacing: 0.1em;
-        touch-action: none;
-        z-index: 20;
-        display: none;
+    #panelBody .group > .group-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 4px 8px;
+        background: rgba(50,50,80,0.35);
+        color: #c9d9ff;
+        cursor: pointer;
         user-select: none;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        font-size: 11px;
     }
-    #beatBtn.on { display: flex; align-items: center; justify-content: center; }
-    #beatBtn:active { background: rgba(120,40,40,0.7); }
+    #panelBody .group > .group-head::after { content: '▸'; opacity: 0.7; transition: transform 0.15s; }
+    #panelBody .group.open > .group-head::after { transform: rotate(90deg); }
+    #panelBody .group > .group-body { display: none; padding: 4px 8px; }
+    #panelBody .group.open > .group-body { display: block; }
 </style>
 <script type="importmap">
 {
@@ -116,19 +136,22 @@
 <body>
 <div id="app"></div>
 <audio id="ambient" src="./audio/ambient.mp3" loop preload="auto"></audio>
-<div id="hud">
-    <div><b>CLICK</b> — capture mouse</div>
-    <div><b>WASD</b> — move</div>
-    <div><b>MOUSE</b> — look</div>
-    <div><b>SPACE</b> — beat</div>
-</div>
-<div id="reticle"></div>
 <div id="joystick"><div id="joyKnob"></div></div>
 <button id="beatBtn" type="button">BEAT</button>
+<div id="hud">
+    <div id="pcHints">
+        <div><b>CLICK</b> — capture mouse</div>
+        <div><b>WASD</b> — move</div>
+        <div><b>MOUSE</b> — look</div>
+        <div><b>SPACE</b> — beat</div>
+    </div>
+</div>
+<div id="reticle"></div>
 <div id="panel">
     <button id="panelToggle" type="button">⚙</button>
     <div id="panelBody"></div>
 </div>
+<div id="fps"></div>
 <div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#7dd97a; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
     <div>
         <div style="font-size:3rem; margin-bottom:0.5rem;">Returned.</div>
@@ -159,7 +182,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000, 1);
 app.appendChild(renderer.domElement);
 const canvas = renderer.domElement;
-canvas.style.touchAction = 'none';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -167,7 +189,7 @@ scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.05, 60);
 
 // ----- Echo shader material (wireframe lines that light up as wave passes) -----
-const MAX_ECHOES = 4;
+const MAX_ECHOES = 16;
 const MAX_WALLS = 24;
 
 const echoOrigins = [];
@@ -185,10 +207,8 @@ for (let i = 0; i < MAX_ECHOES; i++) {
     echoCones.push(-2.0);
 }
 const wallUniform = [];
-const wallYTopUniform = new Float32Array(MAX_WALLS);
 for (let i = 0; i < MAX_WALLS; i++) {
     wallUniform.push(new THREE.Vector4(1e6, 1e6, -1e6, -1e6));
-    wallYTopUniform[i] = 1e6;
 }
 
 const echoMaterial = new THREE.ShaderMaterial({
@@ -204,7 +224,6 @@ const echoMaterial = new THREE.ShaderMaterial({
         uEchoForward: { value: echoForwards },
         uEchoCone: { value: echoCones },
         uWalls: { value: wallUniform },
-        uWallYTop: { value: wallYTopUniform },
         uSpeed: { value: 9.0 },
         uFadeMul: { value: 2.0 },
     },
@@ -226,13 +245,13 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform vec2 uEchoForward[${MAX_ECHOES}];
         uniform float uEchoCone[${MAX_ECHOES}];
         uniform vec4 uWalls[${MAX_WALLS}];
-        uniform float uWallYTop[${MAX_WALLS}];
         uniform float uSpeed;
         uniform float uFadeMul;
         const float THICKNESS = 1.0;
 
         bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
             if (w.x > w.z) return false; // degenerate
+            // if origin is inside this wall, don't count it
             if (a.x >= w.x && a.x <= w.z && a.y >= w.y && a.y <= w.w) return false;
             vec2 d = b - a;
             vec2 safe = vec2(
@@ -247,6 +266,8 @@ const echoMaterial = new THREE.ShaderMaterial({
             float tEnter = max(tMin2.x, tMin2.y);
             float tExit  = min(tMax2.x, tMax2.y);
             if (tEnter > tExit) return false;
+            // Ray tangent to surface (tEnter ≈ 1) means fragment is on near face → visible.
+            // Ray passes through AABB interior (tEnter < 1) → fragment is on back/side edge → blocked.
             if (tEnter >= 0.999 || tExit <= 0.0) return false;
             return true;
         }
@@ -296,6 +317,111 @@ const echoMaterial = new THREE.ShaderMaterial({
                 float falloff = 1.0 - smoothstep(range * 0.6, range, d);
                 float intensity = (ring * 2.5 + afterglow * 1.2) * falloff * coneFalloff;
                 col += uEchoColor[i] * intensity;
+            }
+
+            float lit = max(col.r, max(col.g, col.b));
+            gl_FragColor = vec4(col, min(lit, 1.0));
+        }
+    `,
+});
+
+// Hostile spirits use this material — identical to echoMaterial but the player's beat
+// echo (tracked via uBeatSlot) is always rendered red regardless of echo color.
+const hostileEchoMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+        uEchoOrigin:  echoMaterial.uniforms.uEchoOrigin,
+        uEchoTime:    echoMaterial.uniforms.uEchoTime,
+        uEchoColor:   echoMaterial.uniforms.uEchoColor,
+        uEchoRange:   echoMaterial.uniforms.uEchoRange,
+        uEchoForward: echoMaterial.uniforms.uEchoForward,
+        uEchoCone:    echoMaterial.uniforms.uEchoCone,
+        uWalls:       echoMaterial.uniforms.uWalls,
+        uSpeed:       echoMaterial.uniforms.uSpeed,
+        uFadeMul:     echoMaterial.uniforms.uFadeMul,
+        uBeatSlot:    { value: -1 },
+    },
+    vertexShader: echoMaterial.vertexShader,
+    fragmentShader: `
+        precision highp float;
+        varying vec3 vWorldPos;
+        uniform vec3 uEchoOrigin[${MAX_ECHOES}];
+        uniform float uEchoTime[${MAX_ECHOES}];
+        uniform vec3 uEchoColor[${MAX_ECHOES}];
+        uniform float uEchoRange[${MAX_ECHOES}];
+        uniform vec2 uEchoForward[${MAX_ECHOES}];
+        uniform float uEchoCone[${MAX_ECHOES}];
+        uniform vec4 uWalls[${MAX_WALLS}];
+        uniform float uSpeed;
+        uniform float uFadeMul;
+        uniform int uBeatSlot;
+        const float THICKNESS = 1.0;
+
+        bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
+            if (w.x > w.z) return false;
+            if (a.x >= w.x && a.x <= w.z && a.y >= w.y && a.y <= w.w) return false;
+            vec2 d = b - a;
+            vec2 safe = vec2(
+                abs(d.x) < 0.0001 ? 0.0001 : d.x,
+                abs(d.y) < 0.0001 ? 0.0001 : d.y
+            );
+            vec2 inv = 1.0 / safe;
+            vec2 t1 = (w.xy - a) * inv;
+            vec2 t2 = (w.zw - a) * inv;
+            vec2 tMin2 = min(t1, t2);
+            vec2 tMax2 = max(t1, t2);
+            float tEnter = max(tMin2.x, tMin2.y);
+            float tExit  = min(tMax2.x, tMax2.y);
+            if (tEnter > tExit) return false;
+            if (tEnter >= 0.999 || tExit <= 0.0) return false;
+            return true;
+        }
+
+        void main() {
+            vec3 col = vec3(0.0);
+            vec2 frag2D = vWorldPos.xz;
+
+            for (int i = 0; i < ${MAX_ECHOES}; i++) {
+                float t = uEchoTime[i];
+                if (t < 0.0) continue;
+
+                vec2 origin2D = uEchoOrigin[i].xz;
+
+                bool blocked = false;
+                for (int j = 0; j < ${MAX_WALLS}; j++) {
+                    if (rayBlockedByAABB(origin2D, frag2D, uWalls[j])) {
+                        blocked = true;
+                        break;
+                    }
+                }
+                if (blocked) continue;
+
+                float range = uEchoRange[i];
+                float wavefrontLife = range / uSpeed;
+                float totalLife     = wavefrontLife * uFadeMul;
+                float d = distance(vWorldPos, uEchoOrigin[i]);
+                if (d > range) continue;
+
+                float coneFalloff = 1.0;
+                if (uEchoCone[i] > -1.0 && d > 0.001) {
+                    vec2 dir = normalize(frag2D - origin2D);
+                    float cosA = dot(dir, uEchoForward[i]);
+                    coneFalloff = smoothstep(uEchoCone[i] - 0.2, uEchoCone[i] + 0.05, cosA);
+                    if (coneFalloff <= 0.0) continue;
+                }
+
+                float wavefront = t * uSpeed;
+                float ringFade = 1.0 - smoothstep(wavefrontLife * 0.7, wavefrontLife, t);
+                float ring = smoothstep(THICKNESS, 0.0, abs(d - wavefront)) * ringFade;
+                float inside = step(d, wavefront);
+                float afterglow = inside * (1.0 - smoothstep(0.0, totalLife, t));
+                float falloff = 1.0 - smoothstep(range * 0.6, range, d);
+                float intensity = (ring * 2.5 + afterglow * 1.2) * falloff * coneFalloff;
+                vec3 echoCol = (i == uBeatSlot) ? vec3(0.75, 0.08, 0.05) : uEchoColor[i];
+                col += echoCol * intensity;
             }
 
             float lit = max(col.r, max(col.g, col.b));
@@ -371,10 +497,7 @@ function addBox(cx, cy, w, d, h = 1.5, baseY = 0) {
         const minX = cx - w / 2, minY = cy - d / 2, maxX = cx + w / 2, maxY = cy + d / 2;
         walls.push({ minX, minY, maxX, maxY });
         const idx = walls.length - 1;
-        if (idx < MAX_WALLS) {
-            wallUniform[idx].set(minX, minY, maxX, maxY);
-            wallYTopUniform[idx] = baseY + h;
-        }
+        if (idx < MAX_WALLS) wallUniform[idx].set(minX, minY, maxX, maxY);
     }
 }
 
@@ -436,7 +559,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 7;
+const CFG_VERSION = 8;
 const cfg = {
     beatRange: 5.5,
     beatCooldown: 2.2,
@@ -446,6 +569,8 @@ const cfg = {
     mouseSens: 0.0025,
     flashOnBeat: 0.5,
     fadeMul: 3.4,
+    autoBeatPreview: 1,
+    autoBeatPeriod: 2.0,
     beatCone: 120,
     smellRange: 5.0,
     smellCount: 80,
@@ -458,23 +583,24 @@ const cfg = {
     bobAmplitude: 0.03,
     bobFrequency: 2,
     ceilingHeight: 3.0,
-    virtualJoystick: (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) ? 1 : 0,
+    showFps: 0,
+    virtualJoystick: 0,
     touchLookSens: 0.006,
     musicVolume: 0.5,
 };
 
-// ----- Ambient music (loops, starts on first user input due to autoplay policy) -----
+// ----- Ambient music (loops, starts on first user input) -----
 const ambientEl = document.getElementById('ambient');
-ambientEl.volume = 0.5;
+ambientEl.volume = cfg.musicVolume;
 let ambientStarted = false;
 function startAmbient() {
     if (ambientStarted) return;
     ambientStarted = true;
     ambientEl.volume = cfg.musicVolume;
-    ambientEl.play().catch(e => { ambientStarted = false; console.warn('ambient play blocked', e); });
+    ambientEl.play().catch(() => { ambientStarted = false; });
 }
-window.addEventListener('pointerdown', startAmbient, { once: false });
-window.addEventListener('keydown', startAmbient, { once: false });
+window.addEventListener('pointerdown', startAmbient);
+window.addEventListener('keydown', startAmbient);
 
 // Smell zones — colored vapor drifting upward
 const smellZones = [];
@@ -612,6 +738,7 @@ const BEAT_COOLDOWN = 1.2;
 let lastBeatTime = -999;
 let flashT = 0;
 let elapsed = 0;
+let beatEchoSlot = -1;
 
 const echoes = [];
 for (let i = 0; i < MAX_ECHOES; i++) {
@@ -644,6 +771,7 @@ function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
     }
     slot.start = elapsed;
     slot.active = true;
+    return echoes.indexOf(slot);
 }
 
 function fireBeat() {
@@ -652,7 +780,7 @@ function fireBeat() {
     // Directional: 120° cone = 60° half-angle, forward = soul's facing
     const fx = Math.sin(soul.yaw);
     const fz = Math.cos(soul.yaw);
-    spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
+    beatEchoSlot = spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
     flashT = cfg.flashOnBeat;
 }
 
@@ -705,7 +833,6 @@ window.onkeyup = (e) => { keys.delete(e.code); };
 window.onblur = () => keys.clear();
 
 canvas.onmousedown = (e) => {
-    if (cfg.virtualJoystick) return; // touch path handles input on mobile
     fireBeat();
     if (!locked) canvas.requestPointerLock();
     e.preventDefault();
@@ -719,110 +846,94 @@ document.onmousemove = (e) => {
     mouseDY += e.movementY;
 };
 
-// ----- Touch / virtual joystick -----
-const joyEl = document.getElementById('joystick');
-const joyKnob = document.getElementById('joyKnob');
-const beatBtn = document.getElementById('beatBtn');
-const joy = { active: false, pid: -1, dx: 0, dy: 0, radius: 60 };
-let lookPid = -1;
-let lookLastX = 0, lookLastY = 0;
-
-function applyJoystickVisibility() {
-    const on = !!cfg.virtualJoystick;
-    joyEl.classList.toggle('on', on);
-    beatBtn.classList.toggle('on', on);
-    const hud = document.getElementById('hud');
-    if (hud) hud.style.display = on ? 'none' : '';
-}
-applyJoystickVisibility();
-
-function joyReset() {
-    joy.active = false; joy.pid = -1; joy.dx = 0; joy.dy = 0;
-    joyKnob.style.transform = '';
-}
-function joyUpdateKnob() {
-    joyKnob.style.transform = `translate(${joy.dx * joy.radius}px, ${joy.dy * joy.radius}px)`;
-}
-
-joyEl.addEventListener('pointerdown', (e) => {
-    if (!cfg.virtualJoystick) return;
-    joy.active = true; joy.pid = e.pointerId;
-    const rect = joyEl.getBoundingClientRect();
-    joy.cx = rect.left + rect.width / 2;
-    joy.cy = rect.top + rect.height / 2;
-    joy.radius = rect.width / 2 - 10;
-    const rx = (e.clientX - joy.cx) / joy.radius;
-    const ry = (e.clientY - joy.cy) / joy.radius;
-    const l = Math.hypot(rx, ry);
-    joy.dx = l > 1 ? rx / l : rx;
-    joy.dy = l > 1 ? ry / l : ry;
-    joyUpdateKnob();
-    joyEl.setPointerCapture(e.pointerId);
-    e.preventDefault();
-});
-joyEl.addEventListener('pointermove', (e) => {
-    if (!joy.active || e.pointerId !== joy.pid) return;
-    const rx = (e.clientX - joy.cx) / joy.radius;
-    const ry = (e.clientY - joy.cy) / joy.radius;
-    const l = Math.hypot(rx, ry);
-    joy.dx = l > 1 ? rx / l : rx;
-    joy.dy = l > 1 ? ry / l : ry;
-    joyUpdateKnob();
-});
-function joyEnd(e) {
-    if (e.pointerId !== joy.pid) return;
-    joyReset();
-}
-joyEl.addEventListener('pointerup', joyEnd);
-joyEl.addEventListener('pointercancel', joyEnd);
-
-beatBtn.addEventListener('pointerdown', (e) => {
-    if (!cfg.virtualJoystick) return;
-    fireBeat();
-    e.preventDefault();
-    e.stopPropagation();
-});
-
-// Camera rotation via touch/drag on canvas (only when joystick mode is on)
-canvas.addEventListener('pointerdown', (e) => {
-    if (!cfg.virtualJoystick) return;
-    if (e.pointerType === 'mouse') return; // leave mouse to pointerlock path
-    if (lookPid !== -1) return;
-    lookPid = e.pointerId;
-    lookLastX = e.clientX; lookLastY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
-    e.preventDefault();
-});
-canvas.addEventListener('pointermove', (e) => {
-    if (e.pointerId !== lookPid) return;
-    mouseDX += (e.clientX - lookLastX) * (cfg.touchLookSens / cfg.mouseSens);
-    mouseDY += (e.clientY - lookLastY) * (cfg.touchLookSens / cfg.mouseSens);
-    lookLastX = e.clientX; lookLastY = e.clientY;
-});
-function lookEnd(e) {
-    if (e.pointerId !== lookPid) return;
-    // short tap with no drag → beat
-    lookPid = -1;
-}
-canvas.addEventListener('pointerup', lookEnd);
-canvas.addEventListener('pointercancel', lookEnd);
-
 function readMove() {
+    if (cfg.virtualJoystick && joy.active) return [joy.dx, joy.dy];
     let x = 0, y = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) x += 1;
     if (keys.has('KeyD') || keys.has('ArrowRight')) x -= 1;
-    if (cfg.virtualJoystick && joy.active) {
-        // joy.dy: screen-down positive, want "up on stick" = forward (y+1)
-        // joy.dx: screen-right positive, want "right on stick" = strafe-right (x-1 in current scheme)
-        y += -joy.dy;
-        x += -joy.dx;
-    }
     const l = Math.hypot(x, y);
     if (l > 0) { x /= l; y /= l; }
     return [x, y];
 }
+
+// ----- Virtual joystick + BEAT button (touch/mouse) -----
+const joy = { active: false, pid: -1, dx: 0, dy: 0, radius: 60 };
+const joyEl = document.getElementById('joystick');
+const joyKnobEl = document.getElementById('joyKnob');
+const beatBtnEl = document.getElementById('beatBtn');
+let lookPid = -1, lookLastX = 0, lookLastY = 0;
+const pcHintsEl = document.getElementById('pcHints');
+function applyJoystickVisibility() {
+    const on = !!cfg.virtualJoystick;
+    joyEl.classList.toggle('on', on);
+    beatBtnEl.classList.toggle('on', on);
+    pcHintsEl.style.display = on ? 'none' : '';
+}
+applyJoystickVisibility();
+// Auto-enable mobile controls on real touch devices (pointer:coarse + hover:none = phone/tablet)
+if (window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
+    cfg.virtualJoystick = 1;
+    applyJoystickVisibility();
+}
+function joyUpdateKnob() {
+    joyKnobEl.style.transform = `translate(${joy.dx * joy.radius}px, ${-joy.dy * joy.radius}px)`;
+}
+function joyReset() {
+    joy.active = false; joy.pid = -1; joy.dx = 0; joy.dy = 0;
+    joyKnobEl.style.transform = '';
+}
+joyEl.addEventListener('pointerdown', e => {
+    joy.active = true; joy.pid = e.pointerId;
+    const rect = joyEl.getBoundingClientRect();
+    const rx = e.clientX - (rect.left + rect.width / 2);
+    const ry = -(e.clientY - (rect.top + rect.height / 2));
+    const l = Math.hypot(rx, ry);
+    const n = Math.min(1, l / joy.radius);
+    joy.dx = (l > 0 ? rx / l : 0) * n;
+    joy.dy = (l > 0 ? ry / l : 0) * n;
+    joyUpdateKnob();
+    joyEl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+});
+joyEl.addEventListener('pointermove', e => {
+    if (e.pointerId !== joy.pid) return;
+    const rect = joyEl.getBoundingClientRect();
+    const rx = e.clientX - (rect.left + rect.width / 2);
+    const ry = -(e.clientY - (rect.top + rect.height / 2));
+    const l = Math.hypot(rx, ry);
+    const n = Math.min(1, l / joy.radius);
+    joy.dx = (l > 0 ? rx / l : 0) * n;
+    joy.dy = (l > 0 ? ry / l : 0) * n;
+    joyUpdateKnob();
+});
+function joyEnd(e) { if (e.pointerId === joy.pid) joyReset(); }
+joyEl.addEventListener('pointerup', joyEnd);
+joyEl.addEventListener('pointercancel', joyEnd);
+
+beatBtnEl.addEventListener('pointerdown', e => {
+    fireBeat();
+    e.preventDefault(); e.stopPropagation();
+});
+
+window.addEventListener('pointerdown', e => {
+    if (!cfg.virtualJoystick) return;
+    if (e.pointerType === 'mouse') return;
+    if (lookPid !== -1) return;
+    if (e.target === joyEl || joyEl.contains(e.target)) return;
+    if (e.target === beatBtnEl) return;
+    lookPid = e.pointerId;
+    lookLastX = e.clientX; lookLastY = e.clientY;
+});
+window.addEventListener('pointermove', e => {
+    if (e.pointerId !== lookPid) return;
+    mouseDX += (e.clientX - lookLastX) * (cfg.touchLookSens / cfg.mouseSens);
+    mouseDY += (e.clientY - lookLastY) * (cfg.touchLookSens / cfg.mouseSens);
+    lookLastX = e.clientX; lookLastY = e.clientY;
+});
+window.addEventListener('pointerup', e => { if (e.pointerId === lookPid) lookPid = -1; });
+window.addEventListener('pointercancel', e => { if (e.pointerId === lookPid) lookPid = -1; });
 
 // ----- Postprocess: noise + flash overlay -----
 const composer = new EffectComposer(renderer);
@@ -874,10 +985,18 @@ composer.addPass(noisePass);
 const clock = new THREE.Clock();
 let bobPhase = 0;
 let bobSettle = 0;
+const fpsEl = document.getElementById('fps');
+let fpsFrames = 0, fpsAccum = 0, fpsDisplay = 0;
 
 function animate() {
     const dt = Math.min(clock.getDelta(), 1 / 30);
     elapsed += dt;
+    fpsAccum += dt; fpsFrames++;
+    if (fpsAccum >= 0.5) {
+        fpsDisplay = Math.round(fpsFrames / fpsAccum);
+        fpsFrames = 0; fpsAccum = 0;
+        if (cfg.showFps) fpsEl.textContent = fpsDisplay + ' fps';
+    }
 
     // look
     soul.yaw -= mouseDX * cfg.mouseSens;
@@ -993,6 +1112,8 @@ function animate() {
         }
     }
     echoMaterial.uniforms.uEchoTime.value = timeUniform;
+    if (beatEchoSlot >= 0 && !echoes[beatEchoSlot].active) beatEchoSlot = -1;
+    hostileEchoMaterial.uniforms.uBeatSlot.value = beatEchoSlot;
 
     // slope walking — raycast down to find floor height
     updateFloorY();
@@ -1093,12 +1214,13 @@ function buildSpiritMesh(sp, hostile) {
         // look up by name via state's level library kept in a weak cache
         if (spiritModelByName.has(sp.modelName)) template = spiritModelByName.get(sp.modelName);
     }
+    const wireMat = hostile ? hostileEchoMaterial : echoMaterial;
     if (template) {
         const parsed = template.clone(true);
         parsed.traverse(c => {
             if (c.isMesh) {
                 c.material = solidMat;
-                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), echoMaterial);
+                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), wireMat);
                 edges.renderOrder = 1;
                 c.add(edges);
             }
@@ -1113,10 +1235,10 @@ function buildSpiritMesh(sp, hostile) {
         const headGeom = new THREE.SphereGeometry(0.22, 10, 8);
         const head = new THREE.Mesh(headGeom, mat);
         head.position.y = 1.55;
-        const bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(coneGeom, 20), echoMaterial);
+        const bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(coneGeom, 20), wireMat);
         bodyEdges.renderOrder = 1;
         body.add(bodyEdges);
-        const headEdges = new THREE.LineSegments(new THREE.EdgesGeometry(headGeom, 20), echoMaterial);
+        const headEdges = new THREE.LineSegments(new THREE.EdgesGeometry(headGeom, 20), wireMat);
         headEdges.renderOrder = 1;
         head.add(headEdges);
         group.add(body); group.add(head);
@@ -1172,7 +1294,7 @@ const DEFAULT_LEVEL = {
 };
 
 async function buildLevel(data) {
-    addFloorGrid(12, cfg.gridStep);
+    addFloorGrid(data.floorSize ?? 40, cfg.gridStep);
     // extra floor slabs (for multi-story levels)
     for (const f of data.floors || []) addGrid(f.y, f.size ?? 12, cfg.gridStep);
     // Ceiling NOT auto-added — build it yourself with walls/cubes
@@ -1248,37 +1370,88 @@ bootstrap();
 
 // ----- Settings panel -----
 (function buildPanel() {
-    const params = [
-        { key: 'beatRange',     label: 'Beat range',     min: 1,    max: 15,   step: 0.5 },
-        { key: 'beatCooldown',  label: 'Beat cooldown',  min: 0.2,  max: 3,    step: 0.1 },
-        { key: 'bodyRange',    label: 'Body range',     min: 2,    max: 20,   step: 0.5 },
-        { key: 'bodyPulsePeriod',   label: 'Body pulse',     min: 1,    max: 10,   step: 0.5 },
-        { key: 'signalSpeed',   label: 'Signal speed',   min: 2,    max: 25,   step: 0.5 },
-        { key: 'mouseSens',     label: 'Mouse sens',     min: 0.0005, max: 0.01, step: 0.0005 },
-        { key: 'flashOnBeat',   label: 'Beat flash',     min: 0,    max: 1,    step: 0.05 },
-        { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
-        { key: 'beatCone',      label: 'Beat cone (deg)',min: 30,   max: 360,  step: 5 },
-        { key: 'smellRange',    label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
-        { key: 'smellCount',    label: 'Smell count',    min: 10,   max: 300,  step: 10, onChange: rebuildSmellZones },
-        { key: 'smellSize',     label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
-        { key: 'soundRange',     label: 'Sound range',    min: 1, max: 15, step: 0.5 },
-        { key: 'soundHearRange', label: 'Sound clarity',  min: 1, max: 20, step: 0.5 },
-        { key: 'gridStep',       label: 'Grid step',      min: 0.03125, max: 0.5, step: 0.03125,
-          onChange: () => rebuildAllGrids(cfg.gridStep) },
-        { key: 'moveSpeed',      label: 'Move speed',     min: 1,    max: 8,    step: 0.1 },
-        { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
-        { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
-        { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
-        { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
-        { key: 'musicVolume',    label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientEl.volume = cfg.musicVolume; } },
+    const groups = [
+        { title: 'Beat (SPACE)', params: [
+            { key: 'beatRange',     label: 'Beat range',     min: 1,    max: 15,   step: 0.5 },
+            { key: 'beatCooldown',  label: 'Beat cooldown',  min: 0.2,  max: 3,    step: 0.1 },
+            { key: 'beatCone',      label: 'Beat cone (deg)',min: 30,   max: 360,  step: 5 },
+            { key: 'flashOnBeat',   label: 'Beat flash',     min: 0,    max: 1,    step: 0.05 },
+        ]},
+        { title: 'Signal (echo)', params: [
+            { key: 'signalSpeed',   label: 'Signal speed',   min: 2,    max: 25,   step: 0.5 },
+            { key: 'fadeMul',       label: 'Fade length',    min: 0.5,  max: 6,    step: 0.1 },
+            { key: 'gridStep',      label: 'Grid step',      min: 0.03125, max: 0.5, step: 0.03125,
+              onChange: () => rebuildAllGrids(cfg.gridStep) },
+        ]},
+        { title: 'Body (goal)', params: [
+            { key: 'bodyRange',        label: 'Body range',  min: 2, max: 20, step: 0.5 },
+            { key: 'bodyPulsePeriod',  label: 'Body pulse',  min: 1, max: 10, step: 0.5 },
+        ]},
+        { title: 'Senses (smells & sounds)', params: [
+            { key: 'smellRange',     label: 'Smell range',    min: 1,    max: 12,   step: 0.5 },
+            { key: 'smellCount',     label: 'Smell count',    min: 10,   max: 300,  step: 10, onChange: rebuildSmellZones },
+            { key: 'smellSize',      label: 'Smell size',     min: 0.05, max: 0.8,  step: 0.02 },
+            { key: 'soundRange',     label: 'Sound range',    min: 1,    max: 15,   step: 0.5 },
+            { key: 'soundHearRange', label: 'Sound clarity',  min: 1,    max: 20,   step: 0.5 },
+        ]},
+        { title: 'Movement & camera', params: [
+            { key: 'moveSpeed',      label: 'Move speed',     min: 1,    max: 8,    step: 0.1 },
+            { key: 'eyeHeight',      label: 'Eye height',     min: 0.3,  max: 2.2,  step: 0.05 },
+            { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
+            { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
+            { key: 'mouseSens',      label: 'Mouse sens',     min: 0.0005, max: 0.01, step: 0.0005 },
+        ]},
+        { title: 'Preview (panel open)', params: [
+            { key: 'autoBeatPreview', label: 'Auto-beat preview', type: 'bool' },
+            { key: 'autoBeatPeriod',  label: 'Auto-beat period (s)', min: 0.3, max: 8, step: 0.1 },
+        ]},
+        { title: 'Input & audio', params: [
+            { key: 'showFps',         label: 'Show FPS',         type: 'bool', onChange: () => { fpsEl.style.display = cfg.showFps ? 'block' : 'none'; if (!cfg.showFps) fpsEl.textContent = ''; } },
+            { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
+            { key: 'musicVolume',     label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientEl.volume = cfg.musicVolume; } },
+        ]},
     ];
+    const params = groups.flatMap(g => g.params);
     const body = document.getElementById('panelBody');
+    // Copy-settings button
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 copy settings';
+    copyBtn.style.cssText = 'width:100%; margin-bottom:6px; padding:4px; background:#2a3a55; color:#c9d9ff; border:1px solid #445; cursor:pointer; font-size:11px;';
+    copyBtn.addEventListener('click', async () => {
+        const lines = Object.entries(cfg).map(([k, v]) => `${k}: ${v}`).join('\n');
+        try {
+            await navigator.clipboard.writeText(lines);
+            copyBtn.textContent = '✓ copied';
+            setTimeout(() => copyBtn.textContent = '📋 copy settings', 1200);
+        } catch (e) {
+            // fallback: show in prompt
+            window.prompt('Copy settings:', lines);
+        }
+    });
+    body.appendChild(copyBtn);
+    // Build accordion sections (one per group). First group open by default.
+    const groupBodies = new Map();
+    groups.forEach((g, gi) => {
+        const gEl = document.createElement('div');
+        gEl.className = 'group' + (gi === 0 ? ' open' : '');
+        const head = document.createElement('div');
+        head.className = 'group-head';
+        head.textContent = g.title;
+        head.addEventListener('click', () => gEl.classList.toggle('open'));
+        const gBody = document.createElement('div');
+        gBody.className = 'group-body';
+        gEl.appendChild(head); gEl.appendChild(gBody);
+        body.appendChild(gEl);
+        for (const p of g.params) groupBodies.set(p, gBody);
+    });
     for (const p of params) {
         const row = document.createElement('div');
         row.className = 'row';
         const label = document.createElement('label');
         label.textContent = p.label;
         const input = document.createElement('input');
+        const val = document.createElement('span');
+        val.className = 'val';
         if (p.type === 'bool') {
             input.type = 'checkbox';
             input.checked = !!cfg[p.key];
@@ -1287,35 +1460,41 @@ bootstrap();
                 if (p.onChange) p.onChange();
                 try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
             });
-            row.appendChild(label);
-            row.appendChild(input);
-            body.appendChild(row);
-            continue;
+        } else {
+            input.type = 'range';
+            input.min = p.min; input.max = p.max; input.step = p.step;
+            input.value = cfg[p.key];
+            val.textContent = cfg[p.key];
+            input.addEventListener('input', () => {
+                cfg[p.key] = parseFloat(input.value);
+                val.textContent = input.value;
+                if (p.onChange) p.onChange();
+                try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
+            });
         }
-        input.type = 'range';
-        input.min = p.min; input.max = p.max; input.step = p.step;
-        input.value = cfg[p.key];
-        const val = document.createElement('span');
-        val.className = 'val';
-        val.textContent = cfg[p.key];
-        input.addEventListener('input', () => {
-            cfg[p.key] = parseFloat(input.value);
-            val.textContent = input.value;
-            if (p.onChange) p.onChange();
-            try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
-        });
         row.appendChild(label);
         row.appendChild(input);
         row.appendChild(val);
-        body.appendChild(row);
+        (groupBodies.get(p) || body).appendChild(row);
     }
     const panel = document.getElementById('panel');
     document.getElementById('panelToggle').addEventListener('click', () => {
         panel.classList.toggle('open');
     });
-    // Auto-beat while panel is open, respecting cfg.beatCooldown
+    // Auto-beat while panel is open (so you can preview settings live).
+    // Uses its own period (cfg.autoBeatPeriod), independent of beatCooldown.
+    let lastAuto = 0;
     setInterval(() => {
-        if (panel.classList.contains('open')) fireBeat();
+        if (!cfg.autoBeatPreview) return;
+        if (!panel.classList.contains('open')) return;
+        const now = performance.now() / 1000;
+        if (now - lastAuto < cfg.autoBeatPeriod) return;
+        lastAuto = now;
+        // bypass cooldown for preview
+        const saved = lastBeatTime;
+        lastBeatTime = -999;
+        fireBeat();
+        lastBeatTime = Math.max(lastBeatTime, saved);
     }, 100);
     // Load saved (version-scoped — older saves ignored)
     try {
@@ -1331,12 +1510,6 @@ bootstrap();
                     input.nextSibling.textContent = cfg[p.key];
                 }
             }
-            for (const input of body.querySelectorAll('input[type=checkbox]')) {
-                const key = input.previousSibling.textContent;
-                const p = params.find(x => x.label === key);
-                if (p) input.checked = !!cfg[p.key];
-            }
-            applyJoystickVisibility();
         }
     } catch (e) {}
 })();
