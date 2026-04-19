@@ -59,22 +59,139 @@
     }
     #hud b { color: #c9d9ff; }
     #charges {
-        position: fixed; left: 50%; bottom: 20px;
+        position: fixed; left: 50%; bottom: 18px;
         transform: translateX(-50%);
-        display: flex; gap: 8px;
+        display: flex; gap: 3px;
         z-index: 15; pointer-events: none;
+        padding: 6px 8px;
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(240,195,109,0.2);
     }
-    #charges .dot {
-        width: 12px; height: 12px; border-radius: 50%;
-        background: #f0c36d;
-        box-shadow: 0 0 8px rgba(240,195,109,0.75);
-        transition: opacity 0.15s;
+    #charges svg {
+        display: block;
+        width: 28px; height: 34px;
     }
-    #charges .dot.spent {
+    #charges svg path {
+        fill: none;
+        stroke: #f0c36d;
+        stroke-width: 1.1;
+        stroke-linejoin: miter;
+        stroke-linecap: butt;
+        filter: drop-shadow(0 0 2px rgba(240,195,109,0.7));
+        transition: stroke 0.15s, filter 0.15s;
+    }
+    #charges svg.spent path {
+        stroke: rgba(240,195,109,0.25);
+        filter: none;
+    }
+    .overlay {
+        position: fixed; inset: 0;
+        display: none;
+        align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.9);
+        color: #c9d9ff;
+        font-family: system-ui, sans-serif;
+        z-index: 30;
+        text-align: center;
+    }
+    .overlay.on { display: flex; }
+    #menuOverlay { background: rgba(0,0,0,0.25); }
+    #menuStart {
+        position: absolute; right: 32px; bottom: 32px;
+        padding: 18px 42px;
+        font-size: 28px; letter-spacing: 0.2em;
+        background: rgba(40,20,60,0.75);
+        color: #f0c36d;
+        border: 2px solid #f0c36d;
+        cursor: pointer;
+        font-family: system-ui, sans-serif;
+        box-shadow: 0 0 16px rgba(240,195,109,0.35);
+    }
+    #menuStart:hover { background: rgba(80,40,100,0.85); }
+    #menuSkip {
+        position: absolute; right: 32px; bottom: 120px;
+        font-size: 11px; color: #666;
+        background: transparent; border: 1px solid #333;
+        padding: 4px 10px;
+        cursor: pointer;
+        letter-spacing: 0.1em;
+        font-family: system-ui, sans-serif;
+    }
+    #menuSkip:hover { color: #aaa; border-color: #666; }
+    #menuCamToggle {
+        position: absolute; left: 12px; bottom: 10px;
+        width: 20px; height: 20px;
+        opacity: 0.45;
+        cursor: pointer;
+        border: 1px solid #888;
         background: transparent;
-        border: 1px solid rgba(240,195,109,0.35);
-        box-shadow: none;
+        padding: 0;
+        color: #aaa;
+        font-size: 12px;
+        line-height: 18px;
+        text-align: center;
     }
+    #menuCamToggle:hover { opacity: 0.9; }
+    #menuCamToggle.on { opacity: 0.9; background: #555; color: #fff; }
+    #menuCam {
+        position: absolute; left: 32px; bottom: 8px;
+        display: none;
+        flex-direction: column; gap: 4px;
+        opacity: 0.8;
+        pointer-events: auto;
+        font-size: 10px;
+        color: #888;
+        letter-spacing: 0.08em;
+    }
+    #menuCam.on { display: flex; }
+    #menuCam .row { display: flex; align-items: center; gap: 6px; }
+    #menuCam label { width: 48px; }
+    #menuCam input[type=range] { width: 110px; }
+    #menuCam .val { width: 32px; color: #aaa; text-align: right; }
+    #menuTitle {
+        position: absolute; left: 50%; top: 24%;
+        transform: translateX(-50%);
+        font-size: 64px; letter-spacing: 0.3em;
+        color: #e34a3a;
+        text-shadow: 0 0 24px rgba(227,74,58,0.5);
+    }
+    #introOverlay { flex-direction: column; background: rgba(0,0,0,0.92); }
+    #introImg {
+        max-width: 80vw; max-height: 70vh;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+    #introNext {
+        position: absolute; left: 50%; bottom: 28px;
+        transform: translateX(-50%);
+        padding: 6px 18px;
+        font-size: 12px; letter-spacing: 0.2em;
+        background: transparent; color: #aaa;
+        border: 1px solid #555;
+        cursor: pointer;
+        font-family: system-ui, sans-serif;
+    }
+    #introNext:hover { color: #ddd; border-color: #999; }
+    #winOverlay, #loseOverlay { flex-direction: column; gap: 18px; }
+    .endImg {
+        max-width: 70vw; max-height: 55vh;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+    .endText { font-size: 36px; letter-spacing: 0.15em; }
+    #winOverlay .endText { color: #7dd97a; }
+    #loseOverlay .endText { color: #ea4d45; font-style: italic; }
+    .retryBtn {
+        margin-top: 12px;
+        padding: 10px 28px;
+        font-size: 16px; letter-spacing: 0.2em;
+        background: rgba(60,20,20,0.6);
+        color: #ea4d45;
+        border: 1px solid #ea4d45;
+        cursor: pointer;
+        font-family: system-ui, sans-serif;
+    }
+    .retryBtn:hover { background: rgba(120,40,40,0.8); }
     #reticle {
         position: fixed; top: 50%; left: 50%;
         width: 4px; height: 4px; margin: -2px 0 0 -2px;
@@ -92,7 +209,7 @@
         position: fixed; top: 12px; right: 12px;
         font-size: 11px;
         color: #c9d9ff;
-        z-index: 10;
+        z-index: 40;
     }
     #panelToggle {
         background: rgba(0,0,0,0.6);
@@ -169,18 +286,29 @@
     <div id="panelBody"></div>
 </div>
 <div id="fps"></div>
-<div id="winOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#7dd97a; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
-    <div>
-        <div style="font-size:3rem; margin-bottom:0.5rem;">Returned.</div>
-        <div style="font-size:1rem; opacity:0.6;">You made it back to your body.</div>
+<div id="menuOverlay" class="overlay on">
+    <div id="menuTitle">SOUL BEAT</div>
+    <button id="menuCamToggle" type="button" title="camera tuning">⌖</button>
+    <div id="menuCam">
+        <div class="row"><label>angle</label><input id="camAngle" type="range" min="0" max="360" step="1"><span class="val" id="camAngleVal"></span></div>
+        <div class="row"><label>dist</label><input id="camDist" type="range" min="0.5" max="6" step="0.05"><span class="val" id="camDistVal"></span></div>
     </div>
+    <button id="menuSkip" type="button">skip intro</button>
+    <button id="menuStart" type="button">START</button>
 </div>
-<div id="loseOverlay" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); color:#ea4d45; font-family:system-ui,sans-serif; font-size:2rem; text-align:center; pointer-events:none;">
-    <div>
-        <div style="font-size:3rem; margin-bottom:0.5rem;">Ouch.</div>
-        <div id="loseDetail" style="font-size:1rem; opacity:0.6;"></div>
-        <div style="font-size:0.9rem; opacity:0.4; margin-top:1rem;">F5 to retry.</div>
-    </div>
+<div id="introOverlay" class="overlay">
+    <img id="introImg" alt="">
+    <button id="introNext" type="button">NEXT</button>
+</div>
+<div id="winOverlay" class="overlay">
+    <img class="endImg" src="images/scena_win.jpg" alt="">
+    <div class="endText">You survived</div>
+    <button class="retryBtn" type="button" data-action="retry">Play again</button>
+</div>
+<div id="loseOverlay" class="overlay">
+    <img class="endImg" src="images/scena_death.jpg" alt="">
+    <div id="loseDetail" class="endText"></div>
+    <button class="retryBtn" type="button" data-action="retry">Retry</button>
 </div>
 
 <script type="module">
@@ -618,6 +746,18 @@ const cfg = {
     virtualJoystick: 0,
     touchLookSens: 0.006,
     musicVolume: 0.5,
+    beatVolume: 0.6,
+    menuCamAngle: 57,
+    menuCamDist: 0.9,
+    menuCamHeight: 1.3,
+    reaperEnabled: 1,
+    reaperSpeedMin: 0.15,
+    reaperSpeedMax: 1.0,
+    reaperNearDist: 2.0,
+    reaperFarDist: 10.0,
+    reaperTrailStep: 0.5,
+    reaperReach: 0.3,
+    reaperShortcut: 0.3,
 };
 
 // ----- Ambient music (Web Audio, avoids mobile media-session UI) -----
@@ -643,6 +783,27 @@ function startAmbient() {
 }
 window.addEventListener('pointerdown', startAmbient);
 window.addEventListener('keydown', startAmbient);
+
+// ----- Heartbeat SFX (synthesized "lub-dub" via Web Audio) -----
+function playHeartbeat() {
+    if (ambientCtx.state === 'suspended') ambientCtx.resume();
+    const t0 = ambientCtx.currentTime;
+    const thump = (offset, peak) => {
+        const osc = ambientCtx.createOscillator();
+        const g = ambientCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(75, t0 + offset);
+        osc.frequency.exponentialRampToValueAtTime(35, t0 + offset + 0.14);
+        g.gain.setValueAtTime(0, t0 + offset);
+        g.gain.linearRampToValueAtTime(peak * cfg.beatVolume, t0 + offset + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + offset + 0.22);
+        osc.connect(g).connect(ambientCtx.destination);
+        osc.start(t0 + offset);
+        osc.stop(t0 + offset + 0.25);
+    };
+    thump(0, 0.9);
+    thump(0.17, 0.55);
+}
 
 // Smell zones — colored vapor drifting upward
 const smellZones = [];
@@ -836,22 +997,33 @@ function fireBeat(opts) {
     const fz = Math.cos(soul.yaw);
     beatEchoSlot = spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
     flashT = cfg.flashOnBeat;
+    playHeartbeat();
     return true;
 }
 
 const chargesEl = document.getElementById('charges');
+// QRS complex: flat → P-bump → Q-dip → R-spike → S-dip → flat
+const QRS_PATH = 'M0,8 L4,8 L6,7 L7,8 L8,12 L9,2 L10,13 L11,8 L13,8 L16,8 L22,8';
+const FLAT_PATH = 'M0,8 L22,8';
+const SVG_NS = 'http://www.w3.org/2000/svg';
 function renderCharges() {
     const max = cfg.chargesMax | 0;
     if (chargesEl.childElementCount !== max) {
         chargesEl.textContent = '';
         for (let i = 0; i < max; i++) {
-            const d = document.createElement('div');
-            d.className = 'dot';
-            chargesEl.appendChild(d);
+            const svg = document.createElementNS(SVG_NS, 'svg');
+            svg.setAttribute('viewBox', '0 0 22 16');
+            svg.setAttribute('preserveAspectRatio', 'none');
+            const path = document.createElementNS(SVG_NS, 'path');
+            svg.appendChild(path);
+            chargesEl.appendChild(svg);
         }
     }
     for (let i = 0; i < max; i++) {
-        chargesEl.children[i].classList.toggle('spent', i >= charges);
+        const svg = chargesEl.children[i];
+        const spent = i >= charges;
+        svg.classList.toggle('spent', spent);
+        svg.firstChild.setAttribute('d', spent ? FLAT_PATH : QRS_PATH);
     }
 }
 
@@ -914,19 +1086,92 @@ function buildBodyMesh() {
     scene.add(group);
 }
 let won = false;
+// ----- Game state machine -----
+// 'menu' → 'intro' → 'playing' → 'won'|'lost'
+let gameState = 'menu';
+let winPoint = null; // {x, y} — camera target in menu / intro
+
+const DEATH_PHRASES = [
+    'Te habeo',
+    'Anima mea es',
+    'Redi ad tenebras',
+    'Cor tacebit',
+    'Dormi, dormi',
+    'Finis',
+];
+
+function setOverlay(id, on) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('on', !!on);
+}
+function hideAllOverlays() {
+    for (const id of ['menuOverlay', 'introOverlay', 'winOverlay', 'loseOverlay']) setOverlay(id, false);
+}
+
+function releaseMouse() {
+    if (document.pointerLockElement) document.exitPointerLock();
+}
 function showWin() {
-    const el = document.getElementById('winOverlay');
-    if (el) el.style.display = 'flex';
+    releaseMouse();
+    hideAllOverlays();
+    setOverlay('winOverlay', true);
 }
 function showLose(what) {
-    const el = document.getElementById('loseOverlay');
+    releaseMouse();
+    hideAllOverlays();
     const detail = document.getElementById('loseDetail');
-    if (detail) detail.textContent = `You hit the ${what}.`;
-    if (el) el.style.display = 'flex';
+    if (detail) detail.textContent = DEATH_PHRASES[Math.floor(Math.random() * DEATH_PHRASES.length)];
+    setOverlay('loseOverlay', true);
+}
+
+// Grim Reaper chase: records the player's path as breadcrumbs and walks it, slightly cutting corners.
+let reaperPt = null;
+let reaperPath = [];
+let reaperLastCrumb = null;
+
+// Intro sequence on enter: soul faces the Reaper, stares (STARE_DURATION),
+// then turns 180° over TURN_DURATION through the opposite semicircle.
+const STARE_DURATION = 2.5;
+const TURN_DURATION = 1.6;
+let stareT = 0, turnT = 0, turnFromYaw = 0, turnToYaw = 0;
+function enterPlaying() {
+    gameState = 'playing';
+    won = false; lost = false;
+    hideAllOverlays();
+    turnToYaw = soul.yaw;
+    turnFromYaw = soul.yaw + Math.PI;
+    soul.yaw = turnFromYaw;
+    stareT = STARE_DURATION;
+    turnT = 0;
+    // One free beat facing backwards — reveals the Reaper behind the soul.
+    fireBeat({ cost: false });
+}
+
+// ---- Intro sequence ----
+const INTRO_SLIDES = ['images/scena_start1.jpg', 'images/scena_start2.jpg', 'images/scena_start3.jpg'];
+const INTRO_SLIDE_MS = 5000;
+let introIdx = 0, introTimer = 0;
+function showIntroSlide(i) {
+    introIdx = i;
+    const img = document.getElementById('introImg');
+    if (img) img.src = INTRO_SLIDES[i];
+    clearTimeout(introTimer);
+    introTimer = setTimeout(nextIntroSlide, INTRO_SLIDE_MS);
+}
+function nextIntroSlide() {
+    if (introIdx + 1 < INTRO_SLIDES.length) showIntroSlide(introIdx + 1);
+    else { clearTimeout(introTimer); enterPlaying(); }
+}
+function enterIntro() {
+    gameState = 'intro';
+    hideAllOverlays();
+    setOverlay('introOverlay', true);
+    showIntroSlide(0);
 }
 
 // Use e.code (physical key) — layout-independent (RU/EN/etc.)
 window.onkeydown = (e) => {
+    if (gameState !== 'playing' || stareT > 0 || turnT > 0) return;
     keys.add(e.code);
     if (e.code === 'Space') {
         fireBeat();
@@ -937,6 +1182,7 @@ window.onkeyup = (e) => { keys.delete(e.code); };
 window.onblur = () => keys.clear();
 
 canvas.onmousedown = (e) => {
+    if (gameState !== 'playing' || stareT > 0 || turnT > 0) return;
     fireBeat();
     if (!locked) canvas.requestPointerLock();
     e.preventDefault();
@@ -1012,6 +1258,7 @@ joyEl.addEventListener('pointerup', joyEnd);
 joyEl.addEventListener('pointercancel', joyEnd);
 
 beatBtnEl.addEventListener('pointerdown', e => {
+    if (gameState !== 'playing' || stareT > 0 || turnT > 0) return;
     fireBeat();
     e.preventDefault(); e.stopPropagation();
 });
@@ -1097,25 +1344,78 @@ function animate() {
         if (cfg.showFps) fpsEl.textContent = fpsDisplay + ' fps';
     }
 
-    // look
-    soul.yaw -= mouseDX * cfg.mouseSens;
-    soul.pitch -= mouseDY * cfg.mouseSens;
-    soul.pitch = Math.max(-0.8, Math.min(0.4, soul.pitch));
+    // look + move — only during active gameplay (and not during intro turn)
+    let ix = 0, iy = 0;
+    if (gameState === 'playing') {
+        if (stareT > 0) {
+            // Hold still facing the Reaper so the player registers the red silhouette.
+            stareT = Math.max(0, stareT - dt);
+            if (stareT <= 0) turnT = TURN_DURATION;
+        } else if (turnT > 0) {
+            turnT = Math.max(0, turnT - dt);
+            const k = 1 - turnT / TURN_DURATION;
+            const e = k * k * (3 - 2 * k); // smoothstep
+            // Rotate through the opposite semicircle (+π instead of the implicit -π delta).
+            soul.yaw = turnFromYaw + Math.PI * e;
+        } else {
+            soul.yaw -= mouseDX * cfg.mouseSens;
+            soul.pitch -= mouseDY * cfg.mouseSens;
+            soul.pitch = Math.max(-0.8, Math.min(0.4, soul.pitch));
+            [ix, iy] = readMove();
+            moveSoul(ix, iy, dt);
+        }
+    }
     mouseDX = 0; mouseDY = 0;
 
-    // move
-    const [ix, iy] = readMove();
-    moveSoul(ix, iy, dt);
-
-    // Body auto-pulse (green, navigation aid)
-    if (body && !won && !lost && elapsed - body.lastPulse > cfg.bodyPulsePeriod) {
+    // Body auto-pulse (green, navigation aid) — runs in menu/intro/playing for atmosphere
+    if (body && gameState !== 'won' && gameState !== 'lost' && elapsed - body.lastPulse > cfg.bodyPulsePeriod) {
         spawnEcho(body.x, 0.6, body.y, COLOR_BODY, cfg.bodyRange);
         body.lastPulse = elapsed;
+    }
+    // Menu/intro: pulse the win point so the camera target is visible in the dark
+    if ((gameState === 'menu' || gameState === 'intro') && winPoint) {
+        if (!winPoint._lastPulse || elapsed - winPoint._lastPulse > 2.8) {
+            spawnEcho(winPoint.x, 0.6, winPoint.y, COLOR_BODY, 2.8);
+            winPoint._lastPulse = elapsed;
+        }
+    }
+
+    // Grim Reaper breadcrumb chase (runs only during active play, after the intro turn)
+    if (reaperPt && cfg.reaperEnabled && gameState === 'playing' && turnT <= 0 && stareT <= 0) {
+        // Drop a breadcrumb when the soul has moved far enough from the last one
+        const ldx = soul.x - reaperLastCrumb[0];
+        const ldy = soul.y - reaperLastCrumb[1];
+        if (ldx * ldx + ldy * ldy > cfg.reaperTrailStep * cfg.reaperTrailStep) {
+            reaperPath.push([soul.x, soul.y]);
+            reaperLastCrumb = [soul.x, soul.y];
+            if (reaperPath.length > 400) reaperPath.shift();
+        }
+        // Distance-adaptive speed: far → fast, near → slow
+        const distToSoul = Math.hypot(soul.x - reaperPt.x, soul.y - reaperPt.y);
+        const t = Math.max(0, Math.min(1,
+            (distToSoul - cfg.reaperNearDist) / Math.max(0.01, cfg.reaperFarDist - cfg.reaperNearDist)));
+        const speed = cfg.reaperSpeedMin + (cfg.reaperSpeedMax - cfg.reaperSpeedMin) * t;
+        // Walk toward the next breadcrumb; optionally skip one to cut corners
+        if (reaperPath.length > 0) {
+            const [tx, ty] = reaperPath[0];
+            const rdx = tx - reaperPt.x, rdy = ty - reaperPt.y;
+            const dist = Math.hypot(rdx, rdy);
+            if (dist <= cfg.reaperReach) {
+                reaperPath.shift();
+                if (reaperPath.length > 1 && Math.random() < cfg.reaperShortcut) reaperPath.shift();
+            } else {
+                const step = Math.min(speed * dt, dist);
+                reaperPt.x += (rdx / dist) * step;
+                reaperPt.y += (rdy / dist) * step;
+                reaperPt.yaw = Math.atan2(rdx, rdy);
+                if (reaperPt.mesh) reaperPt.mesh.position.set(reaperPt.x, 0, reaperPt.y);
+            }
+        }
     }
 
     // Points: patrol + pulses + sounds + contact
     const COLOR_GRAY = new THREE.Vector3(0.7, 0.7, 0.8);
-    if (!won && !lost) {
+    if (gameState === 'playing') {
         for (const pt of points) {
             if (pt.collected) continue;
             // patrol: forward → returning → idle → (repeat if loop)
@@ -1187,15 +1487,15 @@ function animate() {
             // Hostile contact: kill radius = max(point.r, smell.radius).
             const killR = Math.max(pt.r || 0.7, pt.smell?.radius || 0);
             if (pt.hostile && ddSoul < killR + soul.radius) {
-                lost = true;
+                lost = true; gameState = 'lost';
                 showLose(pt.label || 'spirit');
                 break;
             }
             // Trigger zone (explicit effect on entry)
             if (pt.trigger?.radius > 0 && ddSoul < pt.trigger.radius + soul.radius) {
                 const eff = pt.trigger.effect || 'kill';
-                if (eff === 'kill') { lost = true; showLose(pt.label || 'trap'); break; }
-                else if (eff === 'win') { won = true; showWin(); break; }
+                if (eff === 'kill') { lost = true; gameState = 'lost'; showLose(pt.label || 'trap'); break; }
+                else if (eff === 'win') { won = true; gameState = 'won'; showWin(); break; }
                 // 'heal' → reserved for future HP/charge system
             }
             if (pt.pickup && !pt.collected && ddSoul < (pt.r || 0.5) + soul.radius) {
@@ -1250,11 +1550,20 @@ function animate() {
     else bobSettle = 1;
 
     const headY = soul.floorY + cfg.eyeHeight + bobY * bobSettle;
-    camera.position.set(soul.x, headY, soul.y);
-    const fx = Math.sin(soul.yaw) * Math.cos(soul.pitch);
-    const fy = Math.sin(soul.pitch);
-    const fz = Math.cos(soul.yaw) * Math.cos(soul.pitch);
-    camera.lookAt(soul.x + fx, headY + fy, soul.y + fz);
+    if (gameState === 'playing') {
+        camera.position.set(soul.x, headY, soul.y);
+        const fx = Math.sin(soul.yaw) * Math.cos(soul.pitch);
+        const fy = Math.sin(soul.pitch);
+        const fz = Math.cos(soul.yaw) * Math.cos(soul.pitch);
+        camera.lookAt(soul.x + fx, headY + fy, soul.y + fz);
+    } else {
+        // Menu / intro / end: fixed camera looking at win point
+        const wp = winPoint || { x: 0, y: 0 };
+        const a = cfg.menuCamAngle * Math.PI / 180;
+        const d = cfg.menuCamDist;
+        camera.position.set(wp.x + Math.cos(a) * d, cfg.menuCamHeight, wp.y + Math.sin(a) * d);
+        camera.lookAt(wp.x, 0.4, wp.y);
+    }
     // keep echo-listener at camera height for positional audio consistency
 
 
@@ -1479,9 +1788,51 @@ async function bootstrap() {
         console.log('[level] fetch failed, using default', e.message);
     }
     await buildLevel(data);
+    // Locate win-trigger point for menu/intro camera target.
+    const wp = points.find(p => p.trigger?.effect === 'win');
+    if (wp) winPoint = { x: wp.x, y: wp.y };
+    else if (body) winPoint = { x: body.x, y: body.y };
+    // Find the Grim Reaper (by model name) for breadcrumb-chase behaviour.
+    reaperPt = points.find(p => p.modelName && /GrimReaper/i.test(p.modelName)) || null;
+    if (reaperPt) {
+        reaperPt.yaw = reaperPt.yaw || 0;
+        reaperPath = [[soul.x, soul.y]];
+        reaperLastCrumb = [soul.x, soul.y];
+    }
     animate();
 }
 bootstrap();
+
+// ----- Menu / intro / retry wiring -----
+// Menu camera sliders — subtle live tuning; values persisted via saveCfg().
+(function wireMenuCam() {
+    const a = document.getElementById('camAngle');
+    const d = document.getElementById('camDist');
+    const av = document.getElementById('camAngleVal');
+    const dv = document.getElementById('camDistVal');
+    a.value = cfg.menuCamAngle; av.textContent = cfg.menuCamAngle;
+    d.value = cfg.menuCamDist;  dv.textContent = (+cfg.menuCamDist).toFixed(2);
+    a.addEventListener('input', () => { cfg.menuCamAngle = +a.value; av.textContent = a.value; saveCfg(); });
+    d.addEventListener('input', () => { cfg.menuCamDist  = +d.value; dv.textContent = (+d.value).toFixed(2); saveCfg(); });
+    const tog = document.getElementById('menuCamToggle');
+    const box = document.getElementById('menuCam');
+    tog.addEventListener('click', () => { const on = !box.classList.contains('on'); box.classList.toggle('on', on); tog.classList.toggle('on', on); });
+})();
+
+document.getElementById('menuStart').addEventListener('click', () => {
+    startAmbient();
+    enterIntro();
+});
+document.getElementById('menuSkip').addEventListener('click', () => {
+    startAmbient();
+    enterPlaying();
+});
+document.getElementById('introNext').addEventListener('click', () => {
+    nextIntroSlide();
+});
+for (const b of document.querySelectorAll('.retryBtn')) {
+    b.addEventListener('click', () => { location.reload(); });
+}
 
 // Reload when the editor (in another tab) saves a new level.
 if (typeof BroadcastChannel !== 'undefined') {
@@ -1533,10 +1884,21 @@ if (typeof BroadcastChannel !== 'undefined') {
             { key: 'autoBeatPreview', label: 'Auto-beat preview', type: 'bool' },
             { key: 'autoBeatPeriod',  label: 'Auto-beat period (s)', min: 0.3, max: 8, step: 0.1 },
         ]},
+        { title: 'Grim Reaper', params: [
+            { key: 'reaperEnabled',  label: 'Chase enabled',        type: 'bool' },
+            { key: 'reaperSpeedMin', label: 'Speed near (m/s)',     min: 0.05, max: 2, step: 0.05 },
+            { key: 'reaperSpeedMax', label: 'Speed far (m/s)',      min: 0.1,  max: 3, step: 0.05 },
+            { key: 'reaperNearDist', label: 'Near dist (m)',        min: 0.5,  max: 8, step: 0.1 },
+            { key: 'reaperFarDist',  label: 'Far dist (m)',         min: 2,    max: 25, step: 0.5 },
+            { key: 'reaperTrailStep',label: 'Trail step (m)',       min: 0.1,  max: 2, step: 0.05 },
+            { key: 'reaperReach',    label: 'Breadcrumb reach (m)', min: 0.1,  max: 1, step: 0.05 },
+            { key: 'reaperShortcut', label: 'Shortcut chance',      min: 0,    max: 1, step: 0.05 },
+        ]},
         { title: 'Input & audio', params: [
             { key: 'showFps',         label: 'Show FPS',         type: 'bool', onChange: () => { fpsEl.style.display = cfg.showFps ? 'block' : 'none'; if (!cfg.showFps) fpsEl.textContent = ''; } },
             { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
             { key: 'musicVolume',     label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientGain.gain.value = cfg.musicVolume; } },
+            { key: 'beatVolume',      label: 'Beat volume',    min: 0, max: 3, step: 0.05 },
         ]},
     ];
     const params = groups.flatMap(g => g.params);
@@ -1649,6 +2011,11 @@ if (typeof BroadcastChannel !== 'undefined') {
     } catch (e) {}
     charges = cfg.chargesStart;
     renderCharges();
+    // Sync menu-camera sliders after cfg was loaded from storage
+    const ca = document.getElementById('camAngle');
+    const cd = document.getElementById('camDist');
+    if (ca) { ca.value = cfg.menuCamAngle; document.getElementById('camAngleVal').textContent = cfg.menuCamAngle; }
+    if (cd) { cd.value = cfg.menuCamDist;  document.getElementById('camDistVal').textContent  = (+cfg.menuCamDist).toFixed(2); }
 })();
 </script>
 </body>
