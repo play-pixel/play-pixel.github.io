@@ -58,6 +58,23 @@
         letter-spacing: 0.05em;
     }
     #hud b { color: #c9d9ff; }
+    #charges {
+        position: fixed; left: 50%; bottom: 20px;
+        transform: translateX(-50%);
+        display: flex; gap: 8px;
+        z-index: 15; pointer-events: none;
+    }
+    #charges .dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        background: #f0c36d;
+        box-shadow: 0 0 8px rgba(240,195,109,0.75);
+        transition: opacity 0.15s;
+    }
+    #charges .dot.spent {
+        background: transparent;
+        border: 1px solid rgba(240,195,109,0.35);
+        box-shadow: none;
+    }
     #reticle {
         position: fixed; top: 50%; left: 50%;
         width: 4px; height: 4px; margin: -2px 0 0 -2px;
@@ -146,6 +163,7 @@
     </div>
 </div>
 <div id="reticle"></div>
+<div id="charges"></div>
 <div id="panel">
     <button id="panelToggle" type="button">⚙</button>
     <div id="panelBody"></div>
@@ -559,9 +577,23 @@ function addCeiling(size, y) {
 
 // ----- Tunable config (declared early so level-building functions see it) -----
 const CFG_VERSION = 8;
+// Keys that are in cfg but must NEVER be persisted (always derived per session).
+const CFG_SESSION_KEYS = new Set(['virtualJoystick']);
+function saveCfg() {
+    try {
+        const out = {};
+        for (const k of Object.keys(cfg)) {
+            if (!CFG_SESSION_KEYS.has(k)) out[k] = cfg[k];
+        }
+        localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(out));
+    } catch (e) {}
+}
 const cfg = {
     beatRange: 5.5,
     beatCooldown: 2.2,
+    chargesStart: 6,
+    chargesMax: 10,
+    chargesPerPickup: 2,
     bodyRange: 2.5,
     bodyPulsePeriod: 2.0,
     signalSpeed: 4.0,
@@ -763,6 +795,14 @@ for (let i = 0; i < MAX_ECHOES; i++) {
 }
 
 const COLOR_BEAT    = new THREE.Vector3(0.9, 0.97, 1.0);
+function hexToVec3(hex) {
+    const h = (hex || '#ffffff').replace('#', '');
+    return new THREE.Vector3(
+        parseInt(h.slice(0, 2), 16) / 255,
+        parseInt(h.slice(2, 4), 16) / 255,
+        parseInt(h.slice(4, 6), 16) / 255,
+    );
+}
 const COLOR_BODY   = new THREE.Vector3(0.1, 0.55, 0.15);   // green
 const COLOR_DANGER  = new THREE.Vector3(0.65, 0.08, 0.05);  // red
 const COLOR_SOUND   = new THREE.Vector3(0.55, 0.45, 0.05);  // yellow
@@ -784,18 +824,39 @@ function spawnEcho(x, y, z, color, range, forwardX, forwardZ, coneHalfDeg) {
     return echoes.indexOf(slot);
 }
 
-function fireBeat() {
-    if (elapsed - lastBeatTime < cfg.beatCooldown) return;
+let charges = 6; // initialized from cfg.chargesStart after cfg loads
+function fireBeat(opts) {
+    const cost = !opts || opts.cost !== false;
+    if (elapsed - lastBeatTime < cfg.beatCooldown) return false;
+    if (cost && charges <= 0) return false;
+    if (cost) { charges--; renderCharges(); }
     lastBeatTime = elapsed;
     // Directional: 120° cone = 60° half-angle, forward = soul's facing
     const fx = Math.sin(soul.yaw);
     const fz = Math.cos(soul.yaw);
     beatEchoSlot = spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
     flashT = cfg.flashOnBeat;
+    return true;
+}
+
+const chargesEl = document.getElementById('charges');
+function renderCharges() {
+    const max = cfg.chargesMax | 0;
+    if (chargesEl.childElementCount !== max) {
+        chargesEl.textContent = '';
+        for (let i = 0; i < max; i++) {
+            const d = document.createElement('div');
+            d.className = 'dot';
+            chargesEl.appendChild(d);
+        }
+    }
+    for (let i = 0; i < max; i++) {
+        chargesEl.children[i].classList.toggle('spent', i >= charges);
+    }
 }
 
 // ----- Body (goal) — position set by level -----
-const body = { x: 0, y: 0, lastPulse: -10 };
+let body = null; // { x, y, lastPulse } when level defines one; null otherwise
 const points = []; // unified entities: spirits / pickups / sounds / smells / arbitrary
 let lost = false;
 
@@ -817,13 +878,19 @@ function migrateSpiritRT(s) {
 function migratePickupRT(s) { return { ...blankPointRT(s.x, s.y), label: s.label || '', r: s.r ?? 0.5, modelName: s.modelName || '', pickup: true }; }
 function migrateSoundRT(s)  { return { ...blankPointRT(s.x, s.y), label: s.label || '', r: s.r ?? 0.4, modelName: s.modelName || '', sound: { period: s.period ?? 3 } }; }
 function migrateSmellRT(s)  { return { ...blankPointRT(s.cx, s.cy), label: s.label || '', r: s.r ?? 0.5, modelName: s.modelName || '', smell: { radius: s.radius ?? 1.5, color: s.color || '#4aaaff' } }; }
+function migrateTriggerRT(p) {
+    if (p.killRadius && !p.trigger) {
+        p.trigger = { radius: p.killRadius, effect: 'kill' };
+    }
+    return p;
+}
 function collectPointsFromLevel(data) {
     const out = [];
-    for (const x of data.spirits || []) out.push(migrateSpiritRT(x));
-    for (const x of data.pickups || []) out.push(migratePickupRT(x));
-    for (const x of data.sounds  || []) out.push(migrateSoundRT(x));
-    for (const x of data.smells  || []) out.push(migrateSmellRT(x));
-    for (const x of data.points  || []) out.push({ ...blankPointRT(x.x, x.y), ...x });
+    for (const x of data.spirits || []) out.push(migrateTriggerRT(migrateSpiritRT(x)));
+    for (const x of data.pickups || []) out.push(migrateTriggerRT(migratePickupRT(x)));
+    for (const x of data.sounds  || []) out.push(migrateTriggerRT(migrateSoundRT(x)));
+    for (const x of data.smells  || []) out.push(migrateTriggerRT(migrateSmellRT(x)));
+    for (const x of data.points  || []) out.push(migrateTriggerRT({ ...blankPointRT(x.x, x.y), ...x }));
     return out;
 }
 
@@ -1041,7 +1108,7 @@ function animate() {
     moveSoul(ix, iy, dt);
 
     // Body auto-pulse (green, navigation aid)
-    if (!won && !lost && elapsed - body.lastPulse > cfg.bodyPulsePeriod) {
+    if (body && !won && !lost && elapsed - body.lastPulse > cfg.bodyPulsePeriod) {
         spawnEcho(body.x, 0.6, body.y, COLOR_BODY, cfg.bodyRange);
         body.lastPulse = elapsed;
     }
@@ -1051,34 +1118,59 @@ function animate() {
     if (!won && !lost) {
         for (const pt of points) {
             if (pt.collected) continue;
-            // patrol
+            // patrol: forward → returning → idle → (repeat if loop)
             const wps = pt.patrol?.waypoints;
-            if (wps && wps.length > 0) {
-                const wp = wps[pt.wpIdx % wps.length];
-                const wx = Array.isArray(wp) ? wp[0] : wp.x;
-                const wy = Array.isArray(wp) ? wp[1] : wp.y;
-                const ddx = wx - pt.x, ddy = wy - pt.y;
-                const dist = Math.hypot(ddx, ddy);
-                if (dist < 0.15) {
-                    pt.wpIdx = (pt.wpIdx + 1) % wps.length;
+            if (wps && wps.length > 0 && !pt.patrolDone) {
+                if (pt.patrolPhase === 'idle') {
+                    pt.patrolIdle -= dt;
+                    if (pt.patrolIdle <= 0) {
+                        pt.patrolPhase = 'forward';
+                        pt.wpIdx = 0;
+                    }
                 } else {
-                    const step = Math.min(pt.patrol.speed * dt, dist);
-                    pt.x += (ddx / dist) * step;
-                    pt.y += (ddy / dist) * step;
-                    const targetYaw = Math.atan2(ddx, ddy);
-                    let dy = targetYaw - pt.yaw;
-                    while (dy > Math.PI) dy -= 2 * Math.PI;
-                    while (dy < -Math.PI) dy += 2 * Math.PI;
-                    const turnStep = pt.patrol.turnRate * dt;
-                    pt.yaw += Math.max(-turnStep, Math.min(turnStep, dy));
+                    let tx, ty;
+                    if (pt.patrolPhase === 'forward') {
+                        const wp = wps[pt.wpIdx];
+                        tx = Array.isArray(wp) ? wp[0] : wp.x;
+                        ty = Array.isArray(wp) ? wp[1] : wp.y;
+                    } else {
+                        tx = pt.homeX; ty = pt.homeY;
+                    }
+                    const ddx = tx - pt.x, ddy = ty - pt.y;
+                    const dist = Math.hypot(ddx, ddy);
+                    if (dist < 0.15) {
+                        if (pt.patrolPhase === 'forward') {
+                            pt.wpIdx++;
+                            if (pt.wpIdx >= wps.length) pt.patrolPhase = 'returning';
+                        } else {
+                            // reached home — cycle complete
+                            if (pt.patrol.loop === false) {
+                                pt.patrolDone = true;
+                            } else {
+                                pt.patrolPhase = 'idle';
+                                pt.patrolIdle = Math.max(0, pt.patrol.loopDelay ?? 0);
+                            }
+                        }
+                    } else {
+                        const step = Math.min(pt.patrol.speed * dt, dist);
+                        pt.x += (ddx / dist) * step;
+                        pt.y += (ddy / dist) * step;
+                        const targetYaw = Math.atan2(ddx, ddy);
+                        let dy = targetYaw - pt.yaw;
+                        while (dy > Math.PI) dy -= 2 * Math.PI;
+                        while (dy < -Math.PI) dy += 2 * Math.PI;
+                        const turnStep = pt.patrol.turnRate * dt;
+                        pt.yaw += Math.max(-turnStep, Math.min(turnStep, dy));
+                    }
+                    if (pt.mesh) pt.mesh.position.set(pt.x, 0, pt.y);
                 }
-                if (pt.mesh) pt.mesh.position.set(pt.x, 0, pt.y);
             }
             if (pt.mesh) pt.mesh.rotation.y = pt.yaw;
-            // self-pulse (spirit-style)
+            // self-pulse (spirit-style). Custom color if pt.pulse.color set, else red (hostile) / gray.
             if (pt.pulse && elapsed - pt.lastPulseSelf > pt.pulse.period) {
                 pt.lastPulseSelf = elapsed;
-                spawnEcho(pt.x, 0.8, pt.y, pt.hostile ? COLOR_DANGER : COLOR_GRAY, 2.5);
+                const col = pt.pulse.color ? hexToVec3(pt.pulse.color) : (pt.hostile ? COLOR_DANGER : COLOR_GRAY);
+                spawnEcho(pt.x, 0.8, pt.y, col, 2.5);
             }
             // ambient sound (yellow, clarity fades with distance)
             if (pt.sound && elapsed - pt.lastPulseSound > pt.sound.period) {
@@ -1092,26 +1184,29 @@ function animate() {
             }
             // contact checks
             const ddSoul = Math.hypot(soul.x - pt.x, soul.y - pt.y);
-            if (pt.hostile && ddSoul < (pt.r || 0.7) + soul.radius) {
+            // Hostile contact: kill radius = max(point.r, smell.radius).
+            const killR = Math.max(pt.r || 0.7, pt.smell?.radius || 0);
+            if (pt.hostile && ddSoul < killR + soul.radius) {
                 lost = true;
                 showLose(pt.label || 'spirit');
                 break;
             }
+            // Trigger zone (explicit effect on entry)
+            if (pt.trigger?.radius > 0 && ddSoul < pt.trigger.radius + soul.radius) {
+                const eff = pt.trigger.effect || 'kill';
+                if (eff === 'kill') { lost = true; showLose(pt.label || 'trap'); break; }
+                else if (eff === 'win') { won = true; showWin(); break; }
+                // 'heal' → reserved for future HP/charge system
+            }
             if (pt.pickup && !pt.collected && ddSoul < (pt.r || 0.5) + soul.radius) {
                 pt.collected = true;
                 if (pt.mesh) pt.mesh.visible = false;
+                charges = Math.min(cfg.chargesMax, charges + cfg.chargesPerPickup);
+                renderCharges();
             }
         }
     }
 
-    // Win check — soul reached body
-    if (!won && !lost) {
-        const d = Math.hypot(soul.x - body.x, soul.y - body.y);
-        if (d < 1.2) {
-            won = true;
-            showWin();
-        }
-    }
 
     // echoes — expire after total life (fadeMul * wavefront life, matches shader)
     for (const e of echoes) {
@@ -1323,7 +1418,9 @@ async function buildLevel(data) {
     addFloorGrid(data.floorSize ?? 40, cfg.gridStep);
     // extra floor slabs (for multi-story levels)
     for (const f of data.floors || []) addGrid(f.y, f.size ?? 12, cfg.gridStep);
-    // Ceiling NOT auto-added — build it yourself with walls/cubes
+    // Auto-ceiling: wireframe grid at per-level ceilingHeight (falls back to cfg default).
+    const ceilH = data.ceilingHeight ?? cfg.ceilingHeight;
+    if (ceilH > 0) addGrid(ceilH, data.floorSize ?? 40, cfg.gridStep);
 
     for (const w of data.walls || []) addBox(w.cx, w.cy, w.w, w.d, w.h ?? 2.4, w.baseY ?? 0);
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
@@ -1332,8 +1429,8 @@ async function buildLevel(data) {
     await buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
 
-    if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; }
-    if (data.body) { body.x = data.body.x; body.y = data.body.y; }
+    if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; soul.yaw = data.soulStart.yaw || 0; }
+    body = data.body ? { x: data.body.x, y: data.body.y, lastPulse: -10 } : null;
 
     // clear old points
     for (const p of points) if (p.mesh) scene.remove(p.mesh);
@@ -1345,6 +1442,11 @@ async function buildLevel(data) {
             ...p,
             yaw: 0,
             wpIdx: 0,
+            patrolIdle: 0,
+            patrolDone: false,
+            patrolPhase: 'forward',   // 'forward' | 'returning' | 'idle'
+            homeX: p.x,
+            homeY: p.y,
             lastPulseSelf: (i * 0.5),
             lastPulseSound: (i * 0.3),
             collected: false,
@@ -1359,7 +1461,7 @@ async function buildLevel(data) {
         i++;
     }
 
-    buildBodyMesh();
+    if (body) buildBodyMesh();
 }
 
 // Bootstrap: try to load level.json next to this page, else DEFAULT_LEVEL
@@ -1381,6 +1483,14 @@ async function bootstrap() {
 }
 bootstrap();
 
+// Reload when the editor (in another tab) saves a new level.
+if (typeof BroadcastChannel !== 'undefined') {
+    try {
+        const ch = new BroadcastChannel('ld59-level-save');
+        ch.addEventListener('message', () => { location.reload(); });
+    } catch (e) {}
+}
+
 // ----- Settings panel -----
 (function buildPanel() {
     const groups = [
@@ -1389,6 +1499,11 @@ bootstrap();
             { key: 'beatCooldown',  label: 'Beat cooldown',  min: 0.2,  max: 3,    step: 0.1 },
             { key: 'beatCone',      label: 'Beat cone (deg)',min: 30,   max: 360,  step: 5 },
             { key: 'flashOnBeat',   label: 'Beat flash',     min: 0,    max: 1,    step: 0.05 },
+            { key: 'chargesStart',  label: 'Charges start',  min: 0,    max: 10,   step: 1,
+              onChange: () => { charges = cfg.chargesStart; renderCharges(); } },
+            { key: 'chargesMax',    label: 'Charges max',    min: 1,    max: 20,   step: 1,
+              onChange: () => { charges = Math.min(charges, cfg.chargesMax); renderCharges(); } },
+            { key: 'chargesPerPickup', label: 'Charges / pickup', min: 1, max: 5, step: 1 },
         ]},
         { title: 'Signal (echo)', params: [
             { key: 'signalSpeed',   label: 'Signal speed',   min: 2,    max: 25,   step: 0.5 },
@@ -1471,7 +1586,7 @@ bootstrap();
             input.addEventListener('change', () => {
                 cfg[p.key] = input.checked ? 1 : 0;
                 if (p.onChange) p.onChange();
-                try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
+                saveCfg();
             });
         } else {
             input.type = 'range';
@@ -1482,7 +1597,7 @@ bootstrap();
                 cfg[p.key] = parseFloat(input.value);
                 val.textContent = input.value;
                 if (p.onChange) p.onChange();
-                try { localStorage.setItem('ld59_cfg_v' + CFG_VERSION, JSON.stringify(cfg)); } catch (e) {}
+                saveCfg();
             });
         }
         row.appendChild(label);
@@ -1503,10 +1618,10 @@ bootstrap();
         const now = performance.now() / 1000;
         if (now - lastAuto < cfg.autoBeatPeriod) return;
         lastAuto = now;
-        // bypass cooldown for preview
+        // bypass cooldown for preview; free (no charge cost)
         const saved = lastBeatTime;
         lastBeatTime = -999;
-        fireBeat();
+        fireBeat({ cost: false });
         lastBeatTime = Math.max(lastBeatTime, saved);
     }, 100);
     // Load saved (version-scoped — older saves ignored)
@@ -1524,14 +1639,16 @@ bootstrap();
                 }
             }
         }
-        // Auto-enable mobile controls on real touch devices if user hasn't explicitly set it
-        const isTouch = (navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window
-            || window.matchMedia('(pointer: coarse)').matches;
-        if (!saved && isTouch) {
-            cfg.virtualJoystick = 1;
-        }
+        // virtualJoystick is SESSION-ONLY (never persisted): always derived from
+        // real device capabilities. Toggling the panel checkbox is a temporary test.
+        const isMobile = window.matchMedia('(pointer: coarse) and (hover: none)').matches;
+        cfg.virtualJoystick = isMobile ? 1 : 0;
+        const vjInput = [...body.querySelectorAll('input[type=checkbox]')].find(i => i.parentElement?.textContent?.includes('Virtual joystick'));
+        if (vjInput) vjInput.checked = !!cfg.virtualJoystick;
         applyJoystickVisibility();
     } catch (e) {}
+    charges = cfg.chargesStart;
+    renderCharges();
 })();
 </script>
 </body>
