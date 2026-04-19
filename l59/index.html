@@ -135,7 +135,6 @@
 </head>
 <body>
 <div id="app"></div>
-<audio id="ambient" src="./audio/ambient.mp3" loop preload="auto"></audio>
 <div id="joystick"><div id="joyKnob"></div></div>
 <button id="beatBtn" type="button">BEAT</button>
 <div id="hud">
@@ -589,15 +588,26 @@ const cfg = {
     musicVolume: 0.5,
 };
 
-// ----- Ambient music (loops, starts on first user input) -----
-const ambientEl = document.getElementById('ambient');
-ambientEl.volume = cfg.musicVolume;
-let ambientStarted = false;
+// ----- Ambient music (Web Audio, avoids mobile media-session UI) -----
+const ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
+const ambientGain = ambientCtx.createGain();
+ambientGain.gain.value = cfg.musicVolume;
+ambientGain.connect(ambientCtx.destination);
+let ambientBuffer = null, ambientStarted = false;
+fetch('./audio/ambient.mp3')
+    .then(r => r.arrayBuffer())
+    .then(b => ambientCtx.decodeAudioData(b))
+    .then(buf => { ambientBuffer = buf; });
 function startAmbient() {
     if (ambientStarted) return;
+    if (ambientCtx.state === 'suspended') ambientCtx.resume();
+    if (!ambientBuffer) return;
     ambientStarted = true;
-    ambientEl.volume = cfg.musicVolume;
-    ambientEl.play().catch(() => { ambientStarted = false; });
+    const src = ambientCtx.createBufferSource();
+    src.buffer = ambientBuffer;
+    src.loop = true;
+    src.connect(ambientGain);
+    src.start();
 }
 window.addEventListener('pointerdown', startAmbient);
 window.addEventListener('keydown', startAmbient);
@@ -1411,7 +1421,7 @@ bootstrap();
         { title: 'Input & audio', params: [
             { key: 'showFps',         label: 'Show FPS',         type: 'bool', onChange: () => { fpsEl.style.display = cfg.showFps ? 'block' : 'none'; if (!cfg.showFps) fpsEl.textContent = ''; } },
             { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
-            { key: 'musicVolume',     label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientEl.volume = cfg.musicVolume; } },
+            { key: 'musicVolume',     label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientGain.gain.value = cfg.musicVolume; } },
         ]},
     ];
     const params = groups.flatMap(g => g.params);
