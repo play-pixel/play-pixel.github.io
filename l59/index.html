@@ -1515,7 +1515,9 @@ bootstrap();
             }
         }
         // Auto-enable mobile controls on real touch devices if user hasn't explicitly set it
-        if (!saved && window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
+        const isTouch = (navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window
+            || window.matchMedia('(pointer: coarse)').matches;
+        if (!saved && isTouch) {
             cfg.virtualJoystick = 1;
         }
         applyJoystickVisibility();
