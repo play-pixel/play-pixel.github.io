@@ -1,7 +1,7 @@
 {
   "soulStart": {
-    "x": -22,
-    "y": 16
+    "x": -25.75,
+    "y": 11.75
   },
   "body": {
     "x": 22,
@@ -359,7 +359,7 @@
       "sy": 0.9,
       "sz": 2,
       "x": -20,
-      "y": 13.879893903566417
+      "y": 15.168430169659986
     },
     {
       "yWorld": 0.45,
@@ -704,196 +704,176 @@
     }
   ],
   "spheres": [],
-  "spirits": [
+  "points": [
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 4.5,
       "x": -20,
       "y": 12,
-      "label": "morgue-keeper"
+      "label": "morgue-keeper",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "minion.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 4.5
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 2.8,
       "x": -10,
       "y": 0,
-      "label": "hall-ghost"
+      "label": "hall-ghost",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 2.8
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 2.2,
       "x": 10,
       "y": 0,
-      "label": "orderly"
+      "label": "orderly",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 2.2
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 4,
       "x": -22,
       "y": -5,
-      "label": "janitor"
+      "label": "janitor",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 4
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 3.5,
       "x": 0,
       "y": -15,
-      "label": "receptionist"
+      "label": "receptionist",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 3.5
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 2,
       "x": 22,
       "y": 5,
-      "label": "surgeon-shade"
+      "label": "surgeon-shade",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 2
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 3,
       "x": 8,
       "y": -14,
-      "label": "matron"
+      "label": "matron",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 3
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "hostile": true,
-      "modelName": "ghost.obj",
-      "waypoints": [],
-      "speed": 1,
-      "turnRate": 2,
-      "period": 5,
       "x": 22,
       "y": -13,
-      "label": "patient-echo"
-    }
-  ],
-  "pickups": [
+      "label": "patient-echo",
+      "r": 0.7,
+      "scale": 1,
+      "modelName": "ghost.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": {
+        "period": 5
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null
+    },
     {
       "x": -27,
-      "y": 18
+      "y": 18,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "pulse": null,
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "x": -25,
-      "y": 5
+      "x": -23.5,
+      "y": 10.5,
+      "label": "",
+      "r": 0.5,
+      "scale": 2.4,
+      "modelName": "GrimReaper_2.obj",
+      "hostile": true,
+      "pickup": false,
+      "pulse": null,
+      "sound": null,
+      "smell": null,
+      "patrol": null
     },
     {
-      "x": -22,
-      "y": -17
-    },
-    {
-      "x": 8,
-      "y": -17
-    },
-    {
-      "x": -10,
-      "y": -17
-    },
-    {
-      "x": 22,
-      "y": 6
-    }
-  ],
-  "sounds": [
-    {
-      "period": 1.8,
-      "x": 22,
-      "y": 6
-    },
-    {
-      "period": 3.5,
-      "x": -10,
-      "y": -17
-    },
-    {
-      "period": 5,
-      "x": -20,
-      "y": 5
-    },
-    {
-      "period": 6,
-      "x": -22,
-      "y": 14
-    },
-    {
-      "period": 2.4,
-      "x": 25,
-      "y": -15
-    },
-    {
-      "period": 1.2,
-      "x": 22,
-      "y": 15
-    }
-  ],
-  "smells": [
-    {
-      "color": "#2e8b42",
-      "cx": 22,
-      "cy": 15,
-      "radius": 2.5
-    },
-    {
-      "color": "#3060a0",
-      "cx": -22,
-      "cy": 14,
-      "radius": 2.2
-    },
-    {
-      "color": "#9a7030",
-      "cx": -22,
-      "cy": -5,
-      "radius": 2
-    },
-    {
-      "color": "#606090",
-      "cx": 22,
-      "cy": 6,
-      "radius": 1.8
-    },
-    {
-      "color": "#aa2020",
-      "cx": 22,
-      "cy": -5,
-      "radius": 1.8
-    },
-    {
-      "color": "#604080",
-      "cx": -10,
-      "cy": -14,
-      "radius": 2
-    },
-    {
-      "color": "#a0a060",
-      "cx": 8,
-      "cy": -14,
-      "radius": 1.6
+      "x": -21.896900460676246,
+      "y": 11.5,
+      "label": "",
+      "r": 0.5,
+      "scale": 2.1,
+      "modelName": "operation.obj",
+      "hostile": false,
+      "pickup": false,
+      "pulse": null,
+      "sound": null,
+      "smell": null,
+      "patrol": null
     }
   ],
   "models": [],
@@ -1005,6 +985,18 @@
     "lib_54": {
       "name": "wall_window.obj",
       "path": "models/wall_window.obj"
+    },
+    "lib_55": {
+      "name": "GrimReaper_2.obj",
+      "path": "models/GrimReaper_2.obj"
+    },
+    "lib_56": {
+      "name": "minion.obj",
+      "path": "models/minion.obj"
+    },
+    "lib_57": {
+      "name": "operation.obj",
+      "path": "models/operation.obj"
     }
   }
 }

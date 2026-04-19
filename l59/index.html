@@ -786,9 +786,36 @@ function fireBeat() {
 
 // ----- Body (goal) — position set by level -----
 const body = { x: 0, y: 0, lastPulse: -10 };
-const dangers = [];
-const sounds = [];
+const points = []; // unified entities: spirits / pickups / sounds / smells / arbitrary
 let lost = false;
+
+// ---- Legacy-to-point migration (same shape as editor) ----
+function blankPointRT(x, y) {
+    return { x, y, label: '', r: 0.5, modelName: '',
+        hostile: false, pickup: false,
+        pulse: null, sound: null, smell: null, patrol: null };
+}
+function migrateSpiritRT(s) {
+    const wps = (s.waypoints || []).map(w => Array.isArray(w) ? [w[0], w[1]] : [w.x, w.y]);
+    return {
+        x: s.x, y: s.y, label: s.label || '', r: s.r ?? 0.7, modelName: s.modelName || '',
+        hostile: s.hostile !== false, pickup: false,
+        pulse: { period: s.period ?? 2.8 }, sound: null, smell: null,
+        patrol: wps.length ? { waypoints: wps, speed: s.speed ?? 1, turnRate: s.turnRate ?? 2 } : null,
+    };
+}
+function migratePickupRT(s) { return { ...blankPointRT(s.x, s.y), label: s.label || '', r: s.r ?? 0.5, modelName: s.modelName || '', pickup: true }; }
+function migrateSoundRT(s)  { return { ...blankPointRT(s.x, s.y), label: s.label || '', r: s.r ?? 0.4, modelName: s.modelName || '', sound: { period: s.period ?? 3 } }; }
+function migrateSmellRT(s)  { return { ...blankPointRT(s.cx, s.cy), label: s.label || '', r: s.r ?? 0.5, modelName: s.modelName || '', smell: { radius: s.radius ?? 1.5, color: s.color || '#4aaaff' } }; }
+function collectPointsFromLevel(data) {
+    const out = [];
+    for (const x of data.spirits || []) out.push(migrateSpiritRT(x));
+    for (const x of data.pickups || []) out.push(migratePickupRT(x));
+    for (const x of data.sounds  || []) out.push(migrateSoundRT(x));
+    for (const x of data.smells  || []) out.push(migrateSmellRT(x));
+    for (const x of data.points  || []) out.push({ ...blankPointRT(x.x, x.y), ...x });
+    return out;
+}
 
 // Visible body silhouette — lying (torso + head). Solid body for camera occlusion,
 // line edges on top lit by echoes. Called from buildLevel once body position is known.
@@ -1014,53 +1041,60 @@ function animate() {
         body.lastPulse = elapsed;
     }
 
-    // Dangers auto-pulse (red) + patrol AI
+    // Points: patrol + pulses + sounds + contact
+    const COLOR_GRAY = new THREE.Vector3(0.7, 0.7, 0.8);
     if (!won && !lost) {
-        for (const d of dangers) {
-            // patrol: move toward current waypoint
-            if (d.waypoints && d.waypoints.length > 0) {
-                const wp = d.waypoints[d.wpIdx % d.waypoints.length];
-                const ddx = wp.x - d.x, ddy = wp.y - d.y;
+        for (const pt of points) {
+            if (pt.collected) continue;
+            // patrol
+            const wps = pt.patrol?.waypoints;
+            if (wps && wps.length > 0) {
+                const wp = wps[pt.wpIdx % wps.length];
+                const wx = Array.isArray(wp) ? wp[0] : wp.x;
+                const wy = Array.isArray(wp) ? wp[1] : wp.y;
+                const ddx = wx - pt.x, ddy = wy - pt.y;
                 const dist = Math.hypot(ddx, ddy);
                 if (dist < 0.15) {
-                    d.wpIdx = (d.wpIdx + 1) % d.waypoints.length;
+                    pt.wpIdx = (pt.wpIdx + 1) % wps.length;
                 } else {
-                    const step = Math.min(d.speed * dt, dist);
-                    const nx = d.x + (ddx / dist) * step;
-                    const ny = d.y + (ddy / dist) * step;
-                    d.x = nx; d.y = ny;
-                    // slerp yaw toward movement direction
+                    const step = Math.min(pt.patrol.speed * dt, dist);
+                    pt.x += (ddx / dist) * step;
+                    pt.y += (ddy / dist) * step;
                     const targetYaw = Math.atan2(ddx, ddy);
-                    let dy = targetYaw - d.yaw;
+                    let dy = targetYaw - pt.yaw;
                     while (dy > Math.PI) dy -= 2 * Math.PI;
                     while (dy < -Math.PI) dy += 2 * Math.PI;
-                    const turnStep = d.turnRate * dt;
-                    d.yaw += Math.max(-turnStep, Math.min(turnStep, dy));
+                    const turnStep = pt.patrol.turnRate * dt;
+                    pt.yaw += Math.max(-turnStep, Math.min(turnStep, dy));
+                }
+                if (pt.mesh) pt.mesh.position.set(pt.x, 0, pt.y);
+            }
+            if (pt.mesh) pt.mesh.rotation.y = pt.yaw;
+            // self-pulse (spirit-style)
+            if (pt.pulse && elapsed - pt.lastPulseSelf > pt.pulse.period) {
+                pt.lastPulseSelf = elapsed;
+                spawnEcho(pt.x, 0.8, pt.y, pt.hostile ? COLOR_DANGER : COLOR_GRAY, 2.5);
+            }
+            // ambient sound (yellow, clarity fades with distance)
+            if (pt.sound && elapsed - pt.lastPulseSound > pt.sound.period) {
+                pt.lastPulseSound = elapsed;
+                const dToSoul = Math.hypot(pt.x - soul.x, pt.y - soul.y);
+                const clarity = Math.max(0, 1 - dToSoul / cfg.soundHearRange);
+                if (clarity >= 0.03) {
+                    const dimmed = COLOR_SOUND.clone().multiplyScalar(clarity);
+                    spawnEcho(pt.x, 0.8, pt.y, dimmed, cfg.soundRange);
                 }
             }
-            if (d.mesh) {
-                d.mesh.position.set(d.x, 0, d.y);
-                d.mesh.rotation.y = d.yaw;
+            // contact checks
+            const ddSoul = Math.hypot(soul.x - pt.x, soul.y - pt.y);
+            if (pt.hostile && ddSoul < (pt.r || 0.7) + soul.radius) {
+                lost = true;
+                showLose(pt.label || 'spirit');
+                break;
             }
-            if (elapsed - d.lastPulse > d.period) {
-                const col = d.hostile ? COLOR_DANGER : COLOR_BODY.clone().multiplyScalar(0.3).add(new THREE.Color(0.6, 0.6, 0.6));
-                spawnEcho(d.x, 0.8, d.y, d.hostile ? COLOR_DANGER : new THREE.Color(0.7, 0.7, 0.8), 2.5);
-                d.lastPulse = elapsed;
-            }
-        }
-    }
-
-    // Ambient sounds (yellow) — clarity dims with soul distance to source
-    if (!won && !lost) {
-        for (const s of sounds) {
-            if (elapsed - s.lastPulse > s.period) {
-                s.lastPulse = elapsed;
-                const dToSoul = Math.hypot(s.x - soul.x, s.y - soul.y);
-                // Hard cutoff past cfg.soundHearRange; linear fade from source
-                const clarity = Math.max(0, 1 - dToSoul / cfg.soundHearRange);
-                if (clarity < 0.03) continue;
-                const dimmed = COLOR_SOUND.clone().multiplyScalar(clarity);
-                spawnEcho(s.x, 0.8, s.y, dimmed, cfg.soundRange);
+            if (pt.pickup && !pt.collected && ddSoul < (pt.r || 0.5) + soul.radius) {
+                pt.collected = true;
+                if (pt.mesh) pt.mesh.visible = false;
             }
         }
     }
@@ -1071,16 +1105,6 @@ function animate() {
         if (d < 1.2) {
             won = true;
             showWin();
-        }
-        // Lose check — touched a hostile spirit
-        for (const dg of dangers) {
-            if (!dg.hostile) continue;
-            const dd = Math.hypot(soul.x - dg.x, soul.y - dg.y);
-            if (dd < dg.r + soul.radius) {
-                lost = true;
-                showLose(dg.label);
-                break;
-            }
         }
     }
 
@@ -1203,18 +1227,11 @@ function addModel(m) {
     } catch (e) { console.warn('model instance failed', e); }
 }
 
-// ----- Spirit mesh builder -----
-function buildSpiritMesh(sp, hostile) {
+// ----- Point mesh builder (spirit / pickup / sound / smell-source / arbitrary) -----
+function buildPointRuntimeMesh(pt) {
     const group = new THREE.Group();
-    let template = null;
-    if (sp.modelName) {
-        for (const entry of parsedLibrary.values()) {
-            // parsedLibrary stores by id, so can't lookup by name directly — fallback below
-        }
-        // look up by name via state's level library kept in a weak cache
-        if (spiritModelByName.has(sp.modelName)) template = spiritModelByName.get(sp.modelName);
-    }
-    const wireMat = hostile ? hostileEchoMaterial : echoMaterial;
+    const wireMat = pt.hostile ? hostileEchoMaterial : echoMaterial;
+    const template = pt.modelName && spiritModelByName.has(pt.modelName) ? spiritModelByName.get(pt.modelName) : null;
     if (template) {
         const parsed = template.clone(true);
         parsed.traverse(c => {
@@ -1226,8 +1243,8 @@ function buildSpiritMesh(sp, hostile) {
             }
         });
         group.add(parsed);
-    } else {
-        // default wireframe silhouette — tall cone + head
+    } else if (pt.hostile || pt.pulse) {
+        // spirit-style silhouette (cone + head)
         const mat = solidMat;
         const coneGeom = new THREE.ConeGeometry(0.35, 1.4, 10);
         const body = new THREE.Mesh(coneGeom, mat);
@@ -1235,14 +1252,18 @@ function buildSpiritMesh(sp, hostile) {
         const headGeom = new THREE.SphereGeometry(0.22, 10, 8);
         const head = new THREE.Mesh(headGeom, mat);
         head.position.y = 1.55;
-        const bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(coneGeom, 20), wireMat);
-        bodyEdges.renderOrder = 1;
-        body.add(bodyEdges);
-        const headEdges = new THREE.LineSegments(new THREE.EdgesGeometry(headGeom, 20), wireMat);
-        headEdges.renderOrder = 1;
-        head.add(headEdges);
+        body.add(new THREE.LineSegments(new THREE.EdgesGeometry(coneGeom, 20), wireMat));
+        head.add(new THREE.LineSegments(new THREE.EdgesGeometry(headGeom, 20), wireMat));
         group.add(body); group.add(head);
+    } else if (pt.pickup) {
+        // small lit octahedron marker
+        const g = new THREE.OctahedronGeometry(0.22);
+        const m = new THREE.Mesh(g, solidMat);
+        m.position.y = 0.6;
+        m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g), echoMaterial));
+        group.add(m);
     }
+    // else: invisible (pure sound source / pure smell source)
     return group;
 }
 // named-model cache populated at level load
@@ -1303,47 +1324,34 @@ async function buildLevel(data) {
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
     for (const c of data.cubes || []) addCube(c);
     for (const sp of data.spheres || []) addSphere(sp);
-    for (const s of data.smells || []) addSmellZone(s.cx, s.cy, s.radius, s.color);
     await buildLibraryCache(data.modelLibrary || {});
     for (const m of data.models || []) addModel(m);
 
     if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; }
     if (data.body) { body.x = data.body.x; body.y = data.body.y; }
 
-    // clear old spirit meshes
-    for (const d of dangers) if (d.mesh) scene.remove(d.mesh);
-    dangers.length = 0;
+    // clear old points
+    for (const p of points) if (p.mesh) scene.remove(p.mesh);
+    points.length = 0;
+    const loaded = collectPointsFromLevel(data);
     let i = 0;
-    for (const sp of data.spirits || []) {
-        const hostile = sp.hostile !== false;
-        const d = {
-            x: sp.x, y: sp.y,
+    for (const p of loaded) {
+        const pt = {
+            ...p,
             yaw: 0,
-            r: sp.r ?? 0.7,
-            label: sp.label || 'spirit',
-            period: sp.period ?? 2.8,
-            lastPulse: i++ * 0.5,
-            hostile,
-            speed: sp.speed ?? 1.0,
-            turnRate: sp.turnRate ?? 2.0,
-            waypoints: (sp.waypoints || []).map(w => Array.isArray(w) ? { x: w[0], y: w[1] } : { x: w.x, y: w.y }),
             wpIdx: 0,
-            mesh: buildSpiritMesh(sp, hostile),
+            lastPulseSelf: (i * 0.5),
+            lastPulseSound: (i * 0.3),
+            collected: false,
+            mesh: buildPointRuntimeMesh(p),
         };
-        d.mesh.position.set(d.x, 0, d.y);
-        scene.add(d.mesh);
-        dangers.push(d);
-    }
-
-    sounds.length = 0;
-    i = 0;
-    for (const s of data.sounds || []) {
-        sounds.push({
-            x: s.x, y: s.y,
-            period: s.period ?? 3.0,
-            lastPulse: i++ * 0.3,
-            label: s.label || '',
-        });
+        pt.mesh.position.set(pt.x, 0, pt.y);
+        const s = pt.scale ?? 1;
+        pt.mesh.scale.set(s, s, s);
+        scene.add(pt.mesh);
+        points.push(pt);
+        if (pt.smell) addSmellZone(pt.x, pt.y, pt.smell.radius, pt.smell.color);
+        i++;
     }
 
     buildBodyMesh();
