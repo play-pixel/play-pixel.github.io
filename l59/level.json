@@ -1,61 +1,1010 @@
 {
-  "soulStart": { "x": -1, "y": 8 },
-  "body": { "x": 7, "y": -6 },
+  "soulStart": {
+    "x": -22,
+    "y": 16
+  },
+  "body": {
+    "x": 22,
+    "y": 15
+  },
   "walls": [
-    { "cx": 0,   "cy": -10, "w": 24,  "d": 0.3, "h": 3, "baseY": 0 },
-    { "cx": 0,   "cy": 10,  "w": 24,  "d": 0.3, "h": 3, "baseY": 0 },
-    { "cx": -12, "cy": 0,   "w": 0.3, "d": 20,  "h": 3, "baseY": 0 },
-    { "cx": 12,  "cy": 0,   "w": 0.3, "d": 20,  "h": 3, "baseY": 0 },
-
-    { "cx": -4,  "cy": -8.4, "w": 0.3, "d": 3.2, "h": 3, "baseY": 0 },
-    { "cx": -4,  "cy": -0.25,"w": 0.3, "d": 10.5,"h": 3, "baseY": 0 },
-    { "cx": -4,  "cy": 8.4,  "w": 0.3, "d": 3.2, "h": 3, "baseY": 0 },
-
-    { "cx": 4,   "cy": -8.4, "w": 0.3, "d": 3.2, "h": 3, "baseY": 0 },
-    { "cx": 4,   "cy": -0.25,"w": 0.3, "d": 10.5,"h": 3, "baseY": 0 },
-    { "cx": 4,   "cy": 8.4,  "w": 0.3, "d": 3.2, "h": 3, "baseY": 0 }
+    {
+      "baseY": 0,
+      "cx": 0,
+      "cy": 20,
+      "w": 60,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 0,
+      "cy": -20,
+      "w": 60,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -30,
+      "cy": 0,
+      "w": 0.3,
+      "d": 40,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 30,
+      "cy": 0,
+      "w": 0.3,
+      "d": 40,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -25,
+      "cy": 1.5,
+      "w": 10,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -10,
+      "cy": 1.5,
+      "w": 17,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 9.75,
+      "cy": 1.5,
+      "w": 16.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 24.75,
+      "cy": 1.5,
+      "w": 10.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -25,
+      "cy": -1.5,
+      "w": 10,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -10,
+      "cy": -1.5,
+      "w": 17,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 4.75,
+      "cy": -1.5,
+      "w": 6.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 16,
+      "cy": -1.5,
+      "w": 13,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 27,
+      "cy": -1.5,
+      "w": 6,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -1.5,
+      "cy": -15.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -1.5,
+      "cy": -5.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -1.5,
+      "cy": 3.25,
+      "w": 0.3,
+      "d": 3.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -1.5,
+      "cy": 10.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -1.5,
+      "cy": 18.25,
+      "w": 0.3,
+      "d": 3.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 1.5,
+      "cy": -15.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 1.5,
+      "cy": -5.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 1.5,
+      "cy": 3.25,
+      "w": 0.3,
+      "d": 3.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 1.5,
+      "cy": 10.75,
+      "w": 0.3,
+      "d": 8.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 1.5,
+      "cy": 18.25,
+      "w": 0.3,
+      "d": 3.5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -20,
+      "cy": 8,
+      "w": 20,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -5,
+      "cy": 8,
+      "w": 7,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 9.75,
+      "cy": 10,
+      "w": 16.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 24.75,
+      "cy": 10,
+      "w": 10.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -15,
+      "cy": -7.5,
+      "w": 0.3,
+      "d": 12,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -15,
+      "cy": -17.5,
+      "w": 0.3,
+      "d": 5,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -26,
+      "cy": -10,
+      "w": 8,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": -17.75,
+      "cy": -10,
+      "w": 5.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 15,
+      "cy": -2.5,
+      "w": 0.3,
+      "d": 2,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 15,
+      "cy": -12.5,
+      "w": 0.3,
+      "d": 15,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 5.75,
+      "cy": -10,
+      "w": 8.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 13.25,
+      "cy": -10,
+      "w": 3.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 18.75,
+      "cy": -10,
+      "w": 7.5,
+      "d": 0.3,
+      "h": 3
+    },
+    {
+      "baseY": 0,
+      "cx": 27,
+      "cy": -10,
+      "w": 6,
+      "d": 0.3,
+      "h": 3
+    }
   ],
   "cubes": [
-    { "x": 8,  "y": 6.25, "yWorld": 1.5,  "rx": 0.524, "ry": 0, "rz": 0, "sx": 2.5, "sy": 0.3, "sz": 6 },
-    { "x": 8,  "y": 2.8,  "yWorld": 2.85, "rx": 0,     "ry": 0, "rz": 0, "sx": 3,   "sy": 0.3, "sz": 2 },
-
-    { "x": 7,   "y": -6,   "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 2.2, "sy": 0.9, "sz": 1.1 },
-    { "x": 10.5,"y": -8,   "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.8, "sy": 0.9, "sz": 0.6 },
-    { "x": 10.5,"y": -4.5, "yWorld": 1.2,  "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.5, "sz": 0.4 },
-    { "x": 5,   "y": -8,   "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.7, "sy": 0.9, "sz": 0.5 },
-
-    { "x": -8,  "y": -7,   "yWorld": 0.3,  "rx": 0, "ry": 0, "rz": 0, "sx": 2.2, "sy": 0.6, "sz": 1.1 },
-    { "x": -5.5,"y": -7,   "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.9, "sz": 0.5 },
-    { "x": -8,  "y": -4,   "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.5, "sy": 0.9, "sz": 0.5 },
-
-    { "x": -10, "y": 8.7,  "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.9, "sz": 0.6 },
-    { "x": -8.5,"y": 8.7,  "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.9, "sz": 0.6 },
-    { "x": -7,  "y": 8.7,  "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.9, "sz": 0.6 },
-    { "x": -5.5,"y": 8.7,  "yWorld": 0.45, "rx": 0, "ry": 0, "rz": 0, "sx": 0.6, "sy": 0.9, "sz": 0.6 }
+    {
+      "yWorld": 1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 2,
+      "sz": 1,
+      "x": -28,
+      "y": 19
+    },
+    {
+      "yWorld": 1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 2,
+      "sz": 1,
+      "x": -26,
+      "y": 19
+    },
+    {
+      "yWorld": 1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 2,
+      "sz": 1,
+      "x": -24,
+      "y": 19
+    },
+    {
+      "yWorld": 1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 2,
+      "sz": 1,
+      "x": -22,
+      "y": 19
+    },
+    {
+      "yWorld": 0.45,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.8,
+      "sy": 0.9,
+      "sz": 2,
+      "x": -20,
+      "y": 13.879893903566417
+    },
+    {
+      "yWorld": 0.45,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.8,
+      "sy": 0.9,
+      "sz": 2,
+      "x": -14,
+      "y": 11
+    },
+    {
+      "yWorld": 0.45,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.8,
+      "sy": 0.9,
+      "sz": 2,
+      "x": -7,
+      "y": 15
+    },
+    {
+      "yWorld": 1.1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 2.2,
+      "sz": 5,
+      "x": -26,
+      "y": 5
+    },
+    {
+      "yWorld": 1.1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 2.2,
+      "sz": 5,
+      "x": -20,
+      "y": 5
+    },
+    {
+      "yWorld": 1.1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 2.2,
+      "sz": 5,
+      "x": -14,
+      "y": 5
+    },
+    {
+      "yWorld": 1.1,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 2.2,
+      "sz": 5,
+      "x": -6,
+      "y": 5
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 0.8,
+      "sz": 1.2,
+      "x": -26,
+      "y": -6
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 0.8,
+      "sz": 1.2,
+      "x": -22,
+      "y": -4
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 0.8,
+      "sz": 1.2,
+      "x": -18,
+      "y": -6
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1.2,
+      "sy": 0.8,
+      "sz": 1.2,
+      "x": -22,
+      "y": -7
+    },
+    {
+      "yWorld": 0.3,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 5,
+      "sy": 0.5,
+      "sz": 0.8,
+      "x": -22,
+      "y": -17
+    },
+    {
+      "yWorld": 0.3,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 5,
+      "sy": 0.5,
+      "sz": 0.8,
+      "x": -22,
+      "y": -14
+    },
+    {
+      "yWorld": 0.3,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 3,
+      "sy": 0.6,
+      "sz": 0.7,
+      "x": -10,
+      "y": -6
+    },
+    {
+      "yWorld": 0.3,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 3,
+      "sy": 0.6,
+      "sz": 0.7,
+      "x": -10,
+      "y": -10
+    },
+    {
+      "yWorld": 0.3,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 3,
+      "sy": 0.6,
+      "sz": 0.7,
+      "x": -10,
+      "y": -14
+    },
+    {
+      "yWorld": 1.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 3,
+      "sz": 0.4,
+      "x": -10,
+      "y": -17
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 4,
+      "y": -4
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 8,
+      "y": -4
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 12,
+      "y": -4
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 4,
+      "y": -8
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 12,
+      "y": -8
+    },
+    {
+      "yWorld": 0.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 5,
+      "sy": 1,
+      "sz": 1,
+      "x": 8,
+      "y": -17
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.8,
+      "sy": 0.8,
+      "sz": 0.8,
+      "x": 4,
+      "y": -14
+    },
+    {
+      "yWorld": 0.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 1,
+      "sz": 2.2,
+      "x": 22,
+      "y": 15
+    },
+    {
+      "yWorld": 0.8,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.6,
+      "sy": 1.6,
+      "sz": 0.6,
+      "x": 26,
+      "y": 13
+    },
+    {
+      "yWorld": 0.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.4,
+      "sy": 1,
+      "sz": 0.4,
+      "x": 22,
+      "y": 18
+    },
+    {
+      "yWorld": 0.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 1,
+      "sz": 2.2,
+      "x": 22,
+      "y": 6
+    },
+    {
+      "yWorld": 0.5,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 1,
+      "sz": 2.2,
+      "x": 22,
+      "y": -5
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 0.6,
+      "sy": 0.8,
+      "sz": 0.6,
+      "x": 26,
+      "y": -3
+    },
+    {
+      "yWorld": 0.8,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 2,
+      "sy": 1.6,
+      "sz": 1.5,
+      "x": 25,
+      "y": -15
+    },
+    {
+      "yWorld": 0.4,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 1,
+      "sy": 0.8,
+      "sz": 2,
+      "x": 20,
+      "y": -17
+    }
   ],
+  "spheres": [],
   "spirits": [
-    { "x": 0,  "y": 0,   "label": "hall ghost", "period": 2.8 },
-    { "x": 0,  "y": -6,  "label": "gurney",     "period": 3.5 },
-    { "x": 0,  "y": 6,   "label": "waiting",    "period": 4.0 }
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 4.5,
+      "x": -20,
+      "y": 12,
+      "label": "morgue-keeper"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 2.8,
+      "x": -10,
+      "y": 0,
+      "label": "hall-ghost"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 2.2,
+      "x": 10,
+      "y": 0,
+      "label": "orderly"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 4,
+      "x": -22,
+      "y": -5,
+      "label": "janitor"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 3.5,
+      "x": 0,
+      "y": -15,
+      "label": "receptionist"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 2,
+      "x": 22,
+      "y": 5,
+      "label": "surgeon-shade"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 3,
+      "x": 8,
+      "y": -14,
+      "label": "matron"
+    },
+    {
+      "hostile": true,
+      "modelName": "ghost.obj",
+      "waypoints": [],
+      "speed": 1,
+      "turnRate": 2,
+      "period": 5,
+      "x": 22,
+      "y": -13,
+      "label": "patient-echo"
+    }
   ],
   "pickups": [
-    { "x": -7, "y": -5 },
-    { "x": 8,  "y": 2.8 },
-    { "x": -8, "y": 5 }
+    {
+      "x": -27,
+      "y": 18
+    },
+    {
+      "x": -25,
+      "y": 5
+    },
+    {
+      "x": -22,
+      "y": -17
+    },
+    {
+      "x": 8,
+      "y": -17
+    },
+    {
+      "x": -10,
+      "y": -17
+    },
+    {
+      "x": 22,
+      "y": 6
+    }
   ],
   "sounds": [
-    { "x": 10.5, "y": -4.5, "period": 1.6 },
-    { "x": -8,   "y": -6,   "period": 4.0 },
-    { "x": 0,    "y": 9,    "period": 5.5 },
-    { "x": 8,    "y": 2.8,  "period": 6.0 }
+    {
+      "period": 1.8,
+      "x": 22,
+      "y": 6
+    },
+    {
+      "period": 3.5,
+      "x": -10,
+      "y": -17
+    },
+    {
+      "period": 5,
+      "x": -20,
+      "y": 5
+    },
+    {
+      "period": 6,
+      "x": -22,
+      "y": 14
+    },
+    {
+      "period": 2.4,
+      "x": 25,
+      "y": -15
+    },
+    {
+      "period": 1.2,
+      "x": 22,
+      "y": 15
+    }
   ],
   "smells": [
-    { "cx": 7,   "cy": -6,  "radius": 2.2, "color": "#2e8b42" },
-    { "cx": -7,  "cy": -6,  "radius": 1.8, "color": "#9a7030" },
-    { "cx": 0,   "cy": 0,   "radius": 2.5, "color": "#aa2020" },
-    { "cx": -8,  "cy": 7,   "radius": 1.5, "color": "#3060a0" },
-    { "cx": 8,   "cy": 2.8, "radius": 1.8, "color": "#606090" }
+    {
+      "color": "#2e8b42",
+      "cx": 22,
+      "cy": 15,
+      "radius": 2.5
+    },
+    {
+      "color": "#3060a0",
+      "cx": -22,
+      "cy": 14,
+      "radius": 2.2
+    },
+    {
+      "color": "#9a7030",
+      "cx": -22,
+      "cy": -5,
+      "radius": 2
+    },
+    {
+      "color": "#606090",
+      "cx": 22,
+      "cy": 6,
+      "radius": 1.8
+    },
+    {
+      "color": "#aa2020",
+      "cx": 22,
+      "cy": -5,
+      "radius": 1.8
+    },
+    {
+      "color": "#604080",
+      "cx": -10,
+      "cy": -14,
+      "radius": 2
+    },
+    {
+      "color": "#a0a060",
+      "cx": 8,
+      "cy": -14,
+      "radius": 1.6
+    }
   ],
   "models": [],
-  "modelLibrary": {}
+  "modelLibrary": {
+    "lib_28": {
+      "name": "bed_1.obj",
+      "path": "models/bed_1.obj"
+    },
+    "lib_29": {
+      "name": "bed_2.obj",
+      "path": "models/bed_2.obj"
+    },
+    "lib_30": {
+      "name": "bed_4.obj",
+      "path": "models/bed_4.obj"
+    },
+    "lib_31": {
+      "name": "cupboard_bottom.obj",
+      "path": "models/cupboard_bottom.obj"
+    },
+    "lib_32": {
+      "name": "cupboard_top.obj",
+      "path": "models/cupboard_top.obj"
+    },
+    "lib_33": {
+      "name": "Female_Alternative.obj",
+      "path": "models/Female_Alternative.obj"
+    },
+    "lib_34": {
+      "name": "Female_Casual.obj",
+      "path": "models/Female_Casual.obj"
+    },
+    "lib_35": {
+      "name": "Female_Dress.obj",
+      "path": "models/Female_Dress.obj"
+    },
+    "lib_36": {
+      "name": "Female_TankTop.obj",
+      "path": "models/Female_TankTop.obj"
+    },
+    "lib_37": {
+      "name": "floor_1.obj",
+      "path": "models/floor_1.obj"
+    },
+    "lib_38": {
+      "name": "ghost.obj",
+      "path": "models/ghost.obj"
+    },
+    "lib_39": {
+      "name": "grimreaper.obj",
+      "path": "models/grimreaper.obj"
+    },
+    "lib_40": {
+      "name": "machine_1.obj",
+      "path": "models/machine_1.obj"
+    },
+    "lib_41": {
+      "name": "machine_2.obj",
+      "path": "models/machine_2.obj"
+    },
+    "lib_42": {
+      "name": "Male_Casual.obj",
+      "path": "models/Male_Casual.obj"
+    },
+    "lib_43": {
+      "name": "Male_LongSleeve.obj",
+      "path": "models/Male_LongSleeve.obj"
+    },
+    "lib_44": {
+      "name": "Male_Shirt.obj",
+      "path": "models/Male_Shirt.obj"
+    },
+    "lib_45": {
+      "name": "Male_Suit.obj",
+      "path": "models/Male_Suit.obj"
+    },
+    "lib_46": {
+      "name": "overhead_light.obj",
+      "path": "models/overhead_light.obj"
+    },
+    "lib_47": {
+      "name": "tray_1.obj",
+      "path": "models/tray_1.obj"
+    },
+    "lib_48": {
+      "name": "wall_1.obj",
+      "path": "models/wall_1.obj"
+    },
+    "lib_49": {
+      "name": "wall_2.obj",
+      "path": "models/wall_2.obj"
+    },
+    "lib_50": {
+      "name": "wall_base.obj",
+      "path": "models/wall_base.obj"
+    },
+    "lib_51": {
+      "name": "wall_collumn_base.obj",
+      "path": "models/wall_collumn_base.obj"
+    },
+    "lib_52": {
+      "name": "wall_column.obj",
+      "path": "models/wall_column.obj"
+    },
+    "lib_53": {
+      "name": "wall_door.obj",
+      "path": "models/wall_door.obj"
+    },
+    "lib_54": {
+      "name": "wall_window.obj",
+      "path": "models/wall_window.obj"
+    }
+  }
 }
