@@ -185,10 +185,10 @@ for (let i = 0; i < MAX_ECHOES; i++) {
     echoCones.push(-2.0);
 }
 const wallUniform = [];
-const wallYTopUniform = [];
+const wallYTopUniform = new Float32Array(MAX_WALLS);
 for (let i = 0; i < MAX_WALLS; i++) {
     wallUniform.push(new THREE.Vector4(1e6, 1e6, -1e6, -1e6));
-    wallYTopUniform.push(1e6); // very tall by default so top never allows bypass
+    wallYTopUniform[i] = 1e6;
 }
 
 const echoMaterial = new THREE.ShaderMaterial({
@@ -231,9 +231,8 @@ const echoMaterial = new THREE.ShaderMaterial({
         uniform float uFadeMul;
         const float THICKNESS = 1.0;
 
-        bool rayBlockedByAABB(vec2 a, vec2 b, float ay, float by, vec4 w, float wTop) {
+        bool rayBlockedByAABB(vec2 a, vec2 b, vec4 w) {
             if (w.x > w.z) return false; // degenerate
-            // if origin is inside this wall XZ, don't count it
             if (a.x >= w.x && a.x <= w.z && a.y >= w.y && a.y <= w.w) return false;
             vec2 d = b - a;
             vec2 safe = vec2(
@@ -249,10 +248,6 @@ const echoMaterial = new THREE.ShaderMaterial({
             float tExit  = min(tMax2.x, tMax2.y);
             if (tEnter > tExit) return false;
             if (tEnter >= 0.999 || tExit <= 0.0) return false;
-            // 3D pass-over: if ray's Y at both wall-crossing points stays above wall top, not blocked.
-            float yEnter = ay + tEnter * (by - ay);
-            float yExit  = ay + tExit  * (by - ay);
-            if (min(yEnter, yExit) > wTop + 0.02) return false;
             return true;
         }
 
@@ -268,7 +263,7 @@ const echoMaterial = new THREE.ShaderMaterial({
 
                 bool blocked = false;
                 for (int j = 0; j < ${MAX_WALLS}; j++) {
-                    if (rayBlockedByAABB(origin2D, frag2D, uEchoOrigin[i].y, vWorldPos.y, uWalls[j], uWallYTop[j])) {
+                    if (rayBlockedByAABB(origin2D, frag2D, uWalls[j])) {
                         blocked = true;
                         break;
                     }
