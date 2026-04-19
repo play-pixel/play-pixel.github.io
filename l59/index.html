@@ -899,11 +899,6 @@ function applyJoystickVisibility() {
     pcHintsEl.style.display = on ? 'none' : '';
 }
 applyJoystickVisibility();
-// Auto-enable mobile controls on real touch devices (pointer:coarse + hover:none = phone/tablet)
-if (window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
-    cfg.virtualJoystick = 1;
-    applyJoystickVisibility();
-}
 function joyUpdateKnob() {
     joyKnobEl.style.transform = `translate(${joy.dx * joy.radius}px, ${-joy.dy * joy.radius}px)`;
 }
@@ -1519,6 +1514,11 @@ bootstrap();
                 }
             }
         }
+        // Auto-enable mobile controls on real touch devices if user hasn't explicitly set it
+        if (!saved && window.matchMedia('(pointer: coarse) and (hover: none)').matches) {
+            cfg.virtualJoystick = 1;
+        }
+        applyJoystickVisibility();
     } catch (e) {}
 })();
 </script>
