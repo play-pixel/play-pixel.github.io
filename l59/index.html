@@ -115,6 +115,7 @@
 </head>
 <body>
 <div id="app"></div>
+<audio id="ambient" src="./audio/ambient.mp3" loop preload="auto"></audio>
 <div id="hud">
     <div><b>CLICK</b> — capture mouse</div>
     <div><b>WASD</b> — move</div>
@@ -464,7 +465,21 @@ const cfg = {
     ceilingHeight: 3.0,
     virtualJoystick: (('ontouchstart' in window) || (navigator.maxTouchPoints > 0)) ? 1 : 0,
     touchLookSens: 0.006,
+    musicVolume: 0.5,
 };
+
+// ----- Ambient music (loops, starts on first user input due to autoplay policy) -----
+const ambientEl = document.getElementById('ambient');
+ambientEl.volume = 0.5;
+let ambientStarted = false;
+function startAmbient() {
+    if (ambientStarted) return;
+    ambientStarted = true;
+    ambientEl.volume = cfg.musicVolume;
+    ambientEl.play().catch(e => { ambientStarted = false; console.warn('ambient play blocked', e); });
+}
+window.addEventListener('pointerdown', startAmbient, { once: false });
+window.addEventListener('keydown', startAmbient, { once: false });
 
 // Smell zones — colored vapor drifting upward
 const smellZones = [];
@@ -1260,6 +1275,7 @@ bootstrap();
         { key: 'bobAmplitude',   label: 'Head bob',       min: 0,    max: 0.2,  step: 0.01 },
         { key: 'bobFrequency',   label: 'Bob frequency',  min: 2,    max: 16,   step: 0.5 },
         { key: 'virtualJoystick', label: 'Virtual joystick', type: 'bool', onChange: applyJoystickVisibility },
+        { key: 'musicVolume',    label: 'Music volume',   min: 0, max: 1, step: 0.05, onChange: () => { ambientEl.volume = cfg.musicVolume; } },
     ];
     const body = document.getElementById('panelBody');
     for (const p of params) {
