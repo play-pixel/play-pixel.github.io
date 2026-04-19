@@ -874,7 +874,7 @@ document.onmousemove = (e) => {
 };
 
 function readMove() {
-    if (cfg.virtualJoystick && joy.active) return [joy.dx, joy.dy];
+    if (cfg.virtualJoystick && joy.active) return [-joy.dx, joy.dy];
     let x = 0, y = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) y += 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) y -= 1;
