@@ -222,6 +222,20 @@
         max-width: 80vw;
     }
     #playIntroText.on { opacity: 1; }
+    #fsBtn {
+        position: fixed; right: 14px; bottom: 14px;
+        z-index: 50;
+        width: 44px; height: 44px;
+        background: rgba(0,0,0,0.55);
+        border: 1px solid rgba(240,195,109,0.4);
+        color: #f0c36d;
+        font-size: 22px; line-height: 40px;
+        cursor: pointer;
+        padding: 0;
+        font-family: system-ui, sans-serif;
+    }
+    #fsBtn:hover { background: rgba(40,20,60,0.8); border-color: #f0c36d; }
+    #fsBtn.active { background: rgba(40,20,60,0.85); }
     #preloadOverlay {
         position: fixed; inset: 0;
         display: flex; align-items: center; justify-content: center;
@@ -341,6 +355,7 @@
 </div>
 <div id="reticle"></div>
 <div id="playIntroText"></div>
+<button id="fsBtn" type="button" title="Fullscreen">⛶</button>
 <div id="charges"></div>
 <div id="panel">
     <button id="panelToggle" type="button">⚙</button>
@@ -1312,6 +1327,7 @@ function fireBeat(opts) {
     beatEchoSlot = spawnEcho(soul.x, 0.6, soul.y, COLOR_BEAT, cfg.beatRange, fx, fz, cfg.beatCone / 2);
     flashT = cfg.flashOnBeat;
     playHeartbeat();
+    if (cost) showPostBeatLine();
     return true;
 }
 
@@ -1458,27 +1474,43 @@ function clearPlayIntroText() {
     const el = document.getElementById('playIntroText');
     if (el) { el.classList.remove('on'); }
 }
+let _postBeatShown = false;
 function runPlayIntroText() {
     clearPlayIntroText();
+    _postBeatShown = false;
     const el = document.getElementById('playIntroText');
     if (!el) return;
+    // Order: context first, then the action prompt sticks until the player presses.
+    // "Run." is shown only AFTER the first beat — by then movement is unlocked
+    // and the prompt isn't misleading.
     const lines = [
-        { text: 'Run.',                     at: 0.05, hold: 1.1 },
-        { text: 'Find the operating room.', at: 1.30, hold: 1.6 },
-        { text: 'Beat to see.',             at: 3.05, hold: 1.4 },
+        { text: 'Find the operating room.', at: 0.05, hold: 1.6 },
+        { text: 'Beat to see.',             at: 1.85, hold: 1.4 },
     ];
-    if (!cfg.virtualJoystick) {
-        lines.push({ text: 'Click LMB / SPACE', at: 4.55, hold: 1.6 });
-    }
+    lines.push(cfg.virtualJoystick
+        ? { text: 'Tap BEAT',          at: 3.35, sticky: true }
+        : { text: 'Click LMB / SPACE', at: 3.35, sticky: true });
     for (const line of lines) {
         _introTimers.push(setTimeout(() => {
             el.textContent = line.text;
             el.classList.add('on');
         }, line.at * 1000));
-        _introTimers.push(setTimeout(() => {
-            el.classList.remove('on');
-        }, (line.at + line.hold) * 1000));
+        if (!line.sticky) {
+            _introTimers.push(setTimeout(() => {
+                el.classList.remove('on');
+            }, (line.at + line.hold) * 1000));
+        }
     }
+}
+function showPostBeatLine() {
+    if (_postBeatShown) return;
+    _postBeatShown = true;
+    clearPlayIntroText();
+    const el = document.getElementById('playIntroText');
+    if (!el) return;
+    el.textContent = 'Run.';
+    el.classList.add('on');
+    _introTimers.push(setTimeout(() => el.classList.remove('on'), 1500));
 }
 
 function enterPlaying() {
@@ -1944,10 +1976,26 @@ window.addEventListener('resize', () => {
 // ----- OBJ model loader (imported from editor) -----
 // Each instance references a library entry by libraryId; we parse library once.
 const parsedLibrary = new Map(); // libraryId → Group template
+async function fetchWithRetry(path, asArrayBuffer = false, attempts = 3) {
+    let lastErr = null;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            const r = await fetch('./' + path, { cache: 'no-cache' });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return asArrayBuffer ? await r.arrayBuffer() : await r.text();
+        } catch (e) {
+            lastErr = e;
+            if (i < attempts - 1) await new Promise(res => setTimeout(res, 250 * (i + 1)));
+        }
+    }
+    throw lastErr || new Error('fetch failed');
+}
+
 async function buildLibraryCache(modelLibrary = {}, onProgress) {
     const entries = Object.entries(modelLibrary);
     const total = entries.length;
     let done = 0;
+    const failures = [];
     // Fetch + parse in parallel — massive speedup over sequential awaits when N is large.
     await Promise.all(entries.map(async ([id, entry]) => {
         const path = entry.path || '';
@@ -1955,17 +2003,12 @@ async function buildLibraryCache(modelLibrary = {}, onProgress) {
         try {
             let parsed = null;
             if (isGLB) {
-                const r = await fetch('./' + path, { cache: 'no-cache' });
-                if (!r.ok) { console.warn('GLB fetch failed', path, r.status); return; }
-                parsed = await parseGLB(await r.arrayBuffer());
+                const buf = await fetchWithRetry(path, true);
+                parsed = await parseGLB(buf);
             } else {
                 let text = entry.obj;
-                if (!text && path) {
-                    const r = await fetch('./' + path, { cache: 'no-cache' });
-                    if (!r.ok) { console.warn('OBJ fetch failed', path, r.status); return; }
-                    text = await r.text();
-                }
-                if (!text) return;
+                if (!text && path) text = await fetchWithRetry(path, false);
+                if (!text) throw new Error('empty body');
                 parsed = objLoader.parse(text);
             }
             if (parsed) {
@@ -1973,12 +2016,14 @@ async function buildLibraryCache(modelLibrary = {}, onProgress) {
                 if (entry.name) spiritModelByName.set(entry.name, parsed);
             }
         } catch (e) {
-            console.warn('lib load failed', entry.name, e);
+            console.error('lib load failed:', entry.name || path, e.message || e);
+            failures.push(entry.name || path);
         } finally {
             done++;
             onProgress?.(done, total);
         }
     }));
+    return { failures };
 }
 function addModel(m) {
     // Back-compat: accept inline `obj` text, or reference library via libraryId
@@ -2122,7 +2167,8 @@ async function buildLevel(data, onLibProgress) {
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
     for (const c of data.cubes || []) addCube(c);
     for (const sp of data.spheres || []) addSphere(sp);
-    await buildLibraryCache(usedLibraryOnly(data), onLibProgress);
+    const libResult = await buildLibraryCache(usedLibraryOnly(data), onLibProgress);
+    buildLevel._lastFailures = libResult?.failures || [];
     for (const m of data.models || []) addModel(m);
 
     if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; soul.yaw = data.soulStart.yaw || 0; }
@@ -2196,6 +2242,14 @@ async function bootstrap() {
         const frac = 0.10 + 0.75 * (total ? done / total : 1);
         setProgress(frac, `models ${done}/${total}`);
     });
+    // If any library entry failed all retries, show a visible warning so we don't ship
+    // with a silent silhouette fallback for a missing model.
+    const fails = buildLevel._lastFailures || [];
+    if (fails.length) {
+        setProgress(0.88, `failed: ${fails.length} model(s) — see console`);
+        if (detailEl) detailEl.style.color = '#ea4d45';
+        console.error('[preload] models that did not load:', fails);
+    }
     setProgress(0.9, 'waiting for audio…');
     // Wait up to 6s for the ambient buffer to arrive so the player doesn't click into silence.
     const t0 = performance.now();
@@ -2246,8 +2300,30 @@ bootstrap();
     tog.addEventListener('click', () => { const on = !box.classList.contains('on'); box.classList.toggle('on', on); tog.classList.toggle('on', on); });
 })();
 
+function tryEnterFullscreen() {
+    const el = document.documentElement;
+    if (document.fullscreenElement) return;
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}
+function toggleFullscreen() {
+    if (document.fullscreenElement) {
+        document.exitFullscreen?.();
+    } else {
+        tryEnterFullscreen();
+    }
+}
+document.getElementById('fsBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFullscreen();
+});
+document.addEventListener('fullscreenchange', () => {
+    document.getElementById('fsBtn').classList.toggle('active', !!document.fullscreenElement);
+});
+
 document.getElementById('menuStart').addEventListener('click', () => {
     startAmbient();
+    tryEnterFullscreen();
     enterIntro();
 });
 document.getElementById('menuSkip').addEventListener('click', () => {
