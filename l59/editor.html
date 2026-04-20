@@ -301,6 +301,7 @@
             <div class="menu-entry" data-act="export">Download JSON (fallback)</div>
             <div class="menu-separator"></div>
             <div class="menu-entry" data-act="importObj">Import OBJ…</div>
+            <div class="menu-entry" data-act="mergeJson">Merge JSON…</div>
             <div class="menu-entry" data-act="sample">Load sample</div>
         </div>
     </div>
@@ -1821,6 +1822,7 @@ function runAction(act) {
     else if (act === 'export') exportJSON();
     else if (act === 'sample') loadLevel(SAMPLE_LEVEL);
     else if (act === 'importObj') document.getElementById('objInput').click();
+    else if (act === 'mergeJson') openMergeDialog();
     else if (act === 'undo') undo();
     else if (act === 'redo') redo();
     else if (act === 'delete') { if (state.selected) removeEntity(state.selected.kind, state.selected.id); }
@@ -1929,6 +1931,190 @@ function exportLibrary(lib) {
     }
     return out;
 }
+// ========== Merge another level.json into current scene ==========
+function wallKey(w) { return `${w.cx}|${w.cy}|${w.w}|${w.d}|${w.h ?? 2.4}|${w.baseY ?? 0}`; }
+function pointKey(p) { return `${p.x}|${p.y}|${p.modelName || ''}|${p.label || ''}`; }
+function modelInstKey(m) { return `${m.x}|${m.y}|${m.yWorld ?? 0}|${m.libraryId || ''}`; }
+function cubeKey(c) { return `${c.cx}|${c.cy}|${c.y ?? 0}|${c.sx}|${c.sy}|${c.sz}`; }
+function sphereKey(s) { return `${s.cx}|${s.cy}|${s.y ?? 0}|${s.r}`; }
+
+function openMergeDialog() {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.json';
+    inp.style.display = 'none';
+    inp.addEventListener('change', async () => {
+        const f = inp.files?.[0];
+        if (!f) return;
+        let data;
+        try { data = JSON.parse(await f.text()); }
+        catch (e) { alert('Invalid JSON: ' + e.message); return; }
+        showMergeDialog(data, f.name);
+    });
+    document.body.appendChild(inp);
+    inp.click();
+    setTimeout(() => inp.remove(), 5000);
+}
+
+// Dry-run: compute per-kind new/dup counts against current state without mutating anything.
+function analyzeMerge(incoming) {
+    const e = state.entities;
+    const walls = new Set(e.walls.map(wallKey));
+    const cubes = new Set(e.cubes.map(cubeKey));
+    const spheres = new Set(e.spheres.map(sphereKey));
+    const points = new Set(e.points.map(pointKey));
+    const models = new Set(e.models.map(modelInstKey));
+    const libNames = new Set(Object.values(e.modelLibrary || {}).map(x => x.name));
+    const count = (seen, arr, keyFn) => {
+        let nw = 0, du = 0;
+        const local = new Set(seen);
+        for (const x of arr) {
+            const k = keyFn(x);
+            if (local.has(k)) du++; else { local.add(k); nw++; }
+        }
+        return { new: nw, dup: du, total: arr.length };
+    };
+    const allPoints = [
+        ...(incoming.points  || []).map(x => migrateLegacyPoint({ ...blankPoint(x.x, x.y), ...x })),
+        ...(incoming.spirits || []).map(migrateSpirit),
+        ...(incoming.pickups || []).map(migratePickup),
+        ...(incoming.sounds  || []).map(migrateSound),
+        ...(incoming.smells  || []).map(migrateSmell),
+    ];
+    let libNew = 0, libDup = 0;
+    const seenName = new Set(libNames);
+    for (const entry of Object.values(incoming.modelLibrary || {})) {
+        if (seenName.has(entry.name)) libDup++; else { seenName.add(entry.name); libNew++; }
+    }
+    return {
+        walls:   count(walls,   incoming.walls   || [], wallKey),
+        points:  count(points,  allPoints,              pointKey),
+        cubes:   count(cubes,   incoming.cubes   || [], cubeKey),
+        spheres: count(spheres, incoming.spheres || [], sphereKey),
+        models:  count(models,  incoming.models  || [], modelInstKey),
+        library: { new: libNew, dup: libDup, total: libNew + libDup },
+    };
+}
+
+function showMergeDialog(incoming, srcName) {
+    const stats = analyzeMerge(incoming);
+    const row = (kind, label) => {
+        const s = stats[kind];
+        const disabled = s.total === 0 ? ' disabled' : '';
+        const checked = s.new > 0 ? ' checked' : '';
+        const color = s.new > 0 ? '#8eda8e' : '#777';
+        const summary = `<span style="color:${color}">+${s.new}</span>` +
+                        (s.dup ? ` <span style="color:#a77;">${s.dup} dup</span>` : '') +
+                        ` <span style="color:#666">of ${s.total}</span>`;
+        return `<label style="opacity:${s.total ? 1 : 0.5};"><input type="checkbox" data-kind="${kind}"${checked}${disabled}> ${label} &nbsp; ${summary}</label>`;
+    };
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:20000; display:flex; align-items:center; justify-content:center; font-family:system-ui,sans-serif;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1e1e28; border:1px solid #444; padding:16px 20px; min-width:360px; color:#ddd; display:flex; flex-direction:column; gap:10px;';
+    box.innerHTML = `<div style="font-size:14px; font-weight:600; color:#c9d9ff;">Merge from ${srcName}</div>
+        <div style="font-size:11px; color:#888; margin-bottom:4px;">Preview: items that would actually be added (duplicates already matched against current scene).</div>
+        ${row('walls',   'Walls')}
+        ${row('points',  'Points')}
+        ${row('cubes',   'Cubes')}
+        ${row('spheres', 'Spheres')}
+        ${row('models',  'Model instances')}
+        ${row('library', 'Model library')}
+        <div style="display:flex; gap:8px; margin-top:10px; justify-content:flex-end;">
+            <button data-btn="cancel" style="padding:6px 14px; background:#333; color:#ddd; border:1px solid #555; cursor:pointer;">Cancel</button>
+            <button data-btn="apply"  style="padding:6px 14px; background:#2a4a7a; color:#fff; border:1px solid #446; cursor:pointer;">Merge</button>
+        </div>`;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    box.querySelector('[data-btn=cancel]').addEventListener('click', () => overlay.remove());
+    box.querySelector('[data-btn=apply]').addEventListener('click', () => {
+        const opts = {};
+        box.querySelectorAll('input[type=checkbox]').forEach(cb => { opts[cb.dataset.kind] = cb.checked; });
+        overlay.remove();
+        const result = mergeIncoming(incoming, opts);
+        showSaveToast(`merged: +${result.added} new, ${result.dup} dups skipped`);
+    });
+}
+
+function mergeIncoming(incoming, opts) {
+    snapshot();
+    const e = state.entities;
+    let added = 0, dup = 0;
+
+    if (opts.library) {
+        const lib = incoming.modelLibrary || {};
+        const existingByName = new Set(Object.values(e.modelLibrary || {}).map(x => x.name));
+        for (const [srcId, entry] of Object.entries(lib)) {
+            if (existingByName.has(entry.name)) { dup++; continue; }
+            let newId = srcId;
+            while (e.modelLibrary[newId]) newId = 'lib_' + (libCounter++);
+            e.modelLibrary[newId] = { ...entry };
+            existingByName.add(entry.name);
+            added++;
+        }
+    }
+
+    if (opts.walls) {
+        const seen = new Set(e.walls.map(wallKey));
+        for (const w of incoming.walls || []) {
+            if (seen.has(wallKey(w))) { dup++; continue; }
+            addEntityNoSnapshot('wall', { ...w });
+            seen.add(wallKey(w));
+            added++;
+        }
+    }
+
+    if (opts.cubes) {
+        const seen = new Set(e.cubes.map(cubeKey));
+        for (const c of incoming.cubes || []) {
+            if (seen.has(cubeKey(c))) { dup++; continue; }
+            addEntityNoSnapshot('cube', { ...c });
+            seen.add(cubeKey(c));
+            added++;
+        }
+    }
+
+    if (opts.spheres) {
+        const seen = new Set(e.spheres.map(sphereKey));
+        for (const s of incoming.spheres || []) {
+            if (seen.has(sphereKey(s))) { dup++; continue; }
+            addEntityNoSnapshot('sphere', { ...s });
+            seen.add(sphereKey(s));
+            added++;
+        }
+    }
+
+    if (opts.points) {
+        const seen = new Set(e.points.map(pointKey));
+        const addPt = (p) => {
+            if (seen.has(pointKey(p))) { dup++; return; }
+            addEntityNoSnapshot('point', p);
+            seen.add(pointKey(p));
+            added++;
+        };
+        for (const x of incoming.points  || []) addPt(migrateLegacyPoint({ ...blankPoint(x.x, x.y), ...x }));
+        for (const x of incoming.spirits || []) addPt(migrateSpirit(x));
+        for (const x of incoming.pickups || []) addPt(migratePickup(x));
+        for (const x of incoming.sounds  || []) addPt(migrateSound(x));
+        for (const x of incoming.smells  || []) addPt(migrateSmell(x));
+    }
+
+    if (opts.models) {
+        const seen = new Set(e.models.map(modelInstKey));
+        for (const m of incoming.models || []) {
+            if (seen.has(modelInstKey(m))) { dup++; continue; }
+            addEntityNoSnapshot('model', { ...m });
+            seen.add(modelInstKey(m));
+            added++;
+        }
+    }
+
+    updateHierarchy();
+    updateAssets();
+    render();
+    return { added, dup };
+}
+
 function exportJSON() {
     const json = JSON.stringify(getLevelJson(), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
