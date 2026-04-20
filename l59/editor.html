@@ -545,6 +545,7 @@ const nextId = () => idCounter++;
 function blankPoint(x, y) {
     return {
         x, y, label: '', r: 0.5, scale: 1, modelName: '',
+        rx: 0, ry: 0, rz: 0,
         hostile: false, pickup: false,
         trigger: null,   // null | { radius, effect: 'kill'|'heal'|'win' }
         pulse: null, sound: null, smell: null, patrol: null, audio: null,
@@ -599,7 +600,7 @@ function restoreFromJSON(json) {
     state.meshes.clear();
     clearAllWaypointOverlays();
     gizmo.detach();
-    state.entities = { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: {}, ceilingHeight: data.ceilingHeight ?? 3 };
+    state.entities = { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: data.modelLibrary || {}, ceilingHeight: data.ceilingHeight ?? 3 };
     refreshWorldControls();
     state.selected = null;
     if (data.soulStart) addEntityNoSnapshot('soulStart', data.soulStart);
@@ -609,7 +610,6 @@ function restoreFromJSON(json) {
     for (const x of data.spheres || []) addEntityNoSnapshot('sphere', x);
     loadPointsFromData(data);
     for (const x of data.models || []) addEntityNoSnapshot('model', x);
-    state.entities.modelLibrary = data.modelLibrary || {};
     updateAssets();
     if (selectedIdBefore && state.meshes.has(selectedIdBefore)) selectById(selectedIdBefore);
     else { updateInspector(); updateHierarchy(); }
@@ -790,6 +790,7 @@ function syncMeshFromData(kind, data, obj) {
         if (kind === 'soulStart') obj.rotation.y = data.yaw || 0;
     } else if (kind === 'point') {
         obj.position.set(data.x, 0, data.y);
+        obj.rotation.set(data.rx || 0, data.ry || 0, data.rz || 0);
         const s = data.scale ?? 1;
         obj.scale.set(s, s, s);
         // update badge color (reflects hostile/pickup/sound/smell)
@@ -867,6 +868,9 @@ function syncDataFromMesh(kind, data, obj) {
         if (kind === 'soulStart') data.yaw = obj.rotation.y;
         if (kind === 'point') {
             data.scale = Math.max(0.05, (obj.scale.x + obj.scale.y + obj.scale.z) / 3);
+            data.rx = obj.rotation.x;
+            data.ry = obj.rotation.y;
+            data.rz = obj.rotation.z;
             updateWaypointLineOnly(data);
         }
     } else if (kind === 'model') {

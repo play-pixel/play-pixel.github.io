@@ -1303,6 +1303,7 @@ let lost = false;
 function blankPointRT(x, y) {
     return { x, y, label: '', r: 0.5, modelName: '',
         hostile: false, pickup: false,
+        rx: 0, ry: 0, rz: 0,
         pulse: null, sound: null, smell: null, patrol: null, audio: null };
 }
 function migrateSpiritRT(s) {
@@ -2067,6 +2068,9 @@ async function buildLevel(data, onLibProgress) {
             mesh: buildPointRuntimeMesh(p),
         };
         pt.mesh.position.set(pt.x, 0, pt.y);
+        // Author-set static rotation from the editor; patrol yaw later overrides .rotation.y for patrolling points.
+        pt.mesh.rotation.set(pt.rx || 0, pt.ry || 0, pt.rz || 0);
+        pt.yaw = pt.ry || 0;
         const s = pt.scale ?? 1;
         pt.mesh.scale.set(s, s, s);
         scene.add(pt.mesh);
