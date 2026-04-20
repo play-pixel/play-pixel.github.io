@@ -807,6 +807,12 @@ const cfg = {
     reaperTrailStep: 0.5,
     reaperReach: 0.3,
     reaperShortcut: 0.3,
+    trailEnabled: 1,
+    trailSegment: 0.2,
+    trailTTL: 8.0,
+    trailMaxPoints: 240,
+    trailWidth: 0.08,
+    trailBrightness: 0.5,
 };
 
 // ----- Audio listener for 3D positional audio on points -----
@@ -1013,6 +1019,138 @@ const soul = {
     radius: 0.3,
     floorY: 0,   // current feet Y (updated each frame by slope raycast)
 };
+
+// ----- Footstep trail — a flat ribbon mesh on the floor, glowing red, fades per segment.
+// Each trail point spawns 2 vertices (left/right of the walking direction). Triangle strip.
+const TRAIL_CAP = 1200;
+const trailPositions = new Float32Array(TRAIL_CAP * 3); // centerline points we record
+const trailBirth = new Float32Array(TRAIL_CAP);
+const trailRibbonPos = new Float32Array(TRAIL_CAP * 2 * 3); // 2 vertices per point
+const trailRibbonCol = new Float32Array(TRAIL_CAP * 2 * 3);
+const trailRibbonIdx = new Uint32Array(TRAIL_CAP * 6);     // 2 triangles per segment
+const trailGeom = new THREE.BufferGeometry();
+trailGeom.setAttribute('position', new THREE.BufferAttribute(trailRibbonPos, 3));
+trailGeom.setAttribute('color',    new THREE.BufferAttribute(trailRibbonCol, 3));
+trailGeom.setIndex(new THREE.BufferAttribute(trailRibbonIdx, 1));
+trailGeom.setDrawRange(0, 0);
+const trailMat = new THREE.MeshBasicMaterial({
+    vertexColors: true, transparent: true,
+    depthWrite: false, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+});
+const trailLine = new THREE.Mesh(trailGeom, trailMat);
+trailLine.frustumCulled = false;
+trailLine.renderOrder = 2;
+trailLine.visible = false;
+scene.add(trailLine);
+let trailCount = 0;
+let trailLastX = null, trailLastZ = null;
+
+function resetTrail() {
+    trailCount = 0;
+    trailLastX = null; trailLastZ = null;
+    trailLine.visible = false;
+}
+
+function pushTrailPoint(x, z, now) {
+    const max = Math.min(TRAIL_CAP, cfg.trailMaxPoints | 0);
+    if (trailCount >= max) {
+        trailPositions.copyWithin(0, 3, trailCount * 3);
+        trailBirth.copyWithin(0, 1, trailCount);
+        trailCount--;
+    }
+    const i = trailCount;
+    trailPositions[i * 3 + 0] = x;
+    trailPositions[i * 3 + 1] = 0.03;
+    trailPositions[i * 3 + 2] = z;
+    trailBirth[i] = now;
+    trailCount++;
+}
+
+function rebuildTrailRibbon() {
+    if (trailCount < 2) { trailLine.visible = false; return; }
+    const halfW = Math.max(0.005, cfg.trailWidth * 0.5);
+    const ttl = Math.max(0.1, cfg.trailTTL);
+    const posAttr = trailGeom.attributes.position;
+    const colAttr = trailGeom.attributes.color;
+    const idx = trailRibbonIdx;
+    // Compute left/right vertices for each centerline point using the average tangent
+    // with its neighbours so the ribbon stays smooth at turns.
+    for (let i = 0; i < trailCount; i++) {
+        const prev = i > 0 ? i - 1 : i;
+        const next = i < trailCount - 1 ? i + 1 : i;
+        const tx = trailPositions[next * 3 + 0] - trailPositions[prev * 3 + 0];
+        const tz = trailPositions[next * 3 + 2] - trailPositions[prev * 3 + 2];
+        let len = Math.hypot(tx, tz) || 1;
+        // Perpendicular in XZ: (-tz, tx) / len.
+        const nx = -tz / len;
+        const nz =  tx / len;
+        const cx = trailPositions[i * 3 + 0];
+        const cy = trailPositions[i * 3 + 1];
+        const cz = trailPositions[i * 3 + 2];
+        const vL = i * 2, vR = i * 2 + 1;
+        trailRibbonPos[vL * 3 + 0] = cx + nx * halfW;
+        trailRibbonPos[vL * 3 + 1] = cy;
+        trailRibbonPos[vL * 3 + 2] = cz + nz * halfW;
+        trailRibbonPos[vR * 3 + 0] = cx - nx * halfW;
+        trailRibbonPos[vR * 3 + 1] = cy;
+        trailRibbonPos[vR * 3 + 2] = cz - nz * halfW;
+        // Color by age.
+        const fade = Math.max(0, 1 - (elapsed - trailBirth[i]) / ttl);
+        const k = fade * cfg.trailBrightness;
+        const r = k * 0.95, g = k * 0.06, b = k * 0.03;
+        trailRibbonCol[vL * 3 + 0] = r; trailRibbonCol[vL * 3 + 1] = g; trailRibbonCol[vL * 3 + 2] = b;
+        trailRibbonCol[vR * 3 + 0] = r; trailRibbonCol[vR * 3 + 1] = g; trailRibbonCol[vR * 3 + 2] = b;
+    }
+    // Triangle indices: per segment between point i and i+1.
+    // Quad vertices: A=iL, B=iR, C=(i+1)L, D=(i+1)R.  Triangles: A,B,C and C,B,D.
+    for (let i = 0; i < trailCount - 1; i++) {
+        const A = i * 2, B = i * 2 + 1, C = (i + 1) * 2, D = (i + 1) * 2 + 1;
+        const j = i * 6;
+        idx[j + 0] = A; idx[j + 1] = B; idx[j + 2] = C;
+        idx[j + 3] = C; idx[j + 4] = B; idx[j + 5] = D;
+    }
+    posAttr.updateRange = { offset: 0, count: trailCount * 2 * 3 };
+    colAttr.updateRange = { offset: 0, count: trailCount * 2 * 3 };
+    posAttr.needsUpdate = true;
+    colAttr.needsUpdate = true;
+    trailGeom.index.needsUpdate = true;
+    trailGeom.setDrawRange(0, (trailCount - 1) * 6);
+    trailLine.visible = true;
+}
+
+function updateTrail(dt) {
+    if (!cfg.trailEnabled) {
+        if (trailCount) resetTrail();
+        return;
+    }
+    if (gameState === 'playing' && turnT <= 0 && stareT <= 0) {
+        const seg = cfg.trailSegment;
+        if (trailLastX === null) {
+            pushTrailPoint(soul.x, soul.y, elapsed);
+            trailLastX = soul.x; trailLastZ = soul.y;
+        } else {
+            const dx = soul.x - trailLastX, dz = soul.y - trailLastZ;
+            if (dx * dx + dz * dz >= seg * seg) {
+                pushTrailPoint(soul.x, soul.y, elapsed);
+                trailLastX = soul.x; trailLastZ = soul.y;
+            }
+        }
+    }
+    // Drop fully-faded oldest points from the head of the buffer.
+    const ttl = Math.max(0.1, cfg.trailTTL);
+    let drop = 0;
+    for (let i = 0; i < trailCount; i++) {
+        if ((elapsed - trailBirth[i]) >= ttl && drop === i) drop = i + 1;
+        else break;
+    }
+    if (drop > 0) {
+        trailPositions.copyWithin(0, drop * 3, trailCount * 3);
+        trailBirth.copyWithin(0, drop, trailCount);
+        trailCount -= drop;
+    }
+    rebuildTrailRibbon();
+}
 
 // Walkable surfaces — populated in buildLevel. Raycaster uses these for floor height.
 const walkableMeshes = [];
@@ -1269,6 +1407,7 @@ function enterPlaying() {
     gameState = 'playing';
     won = false; lost = false;
     hideAllOverlays();
+    resetTrail();
     turnToYaw = soul.yaw;
     turnFromYaw = soul.yaw + Math.PI;
     soul.yaw = turnFromYaw;
@@ -1700,6 +1839,7 @@ function animate() {
 
     updateSmellZones(dt);
     updatePointAudio(dt);
+    updateTrail(dt);
 
     flashT = Math.max(0, flashT - dt * 0.8);
     noisePass.uniforms.uTime.value = elapsed;
@@ -2092,6 +2232,14 @@ if (typeof BroadcastChannel !== 'undefined') {
             { key: 'reaperTrailStep',label: 'Trail step (m)',       min: 0.1,  max: 2, step: 0.05 },
             { key: 'reaperReach',    label: 'Breadcrumb reach (m)', min: 0.1,  max: 1, step: 0.05 },
             { key: 'reaperShortcut', label: 'Shortcut chance',      min: 0,    max: 1, step: 0.05 },
+        ]},
+        { title: 'Trail (soul footprints)', params: [
+            { key: 'trailEnabled', label: 'Enabled',          type: 'bool' },
+            { key: 'trailSegment', label: 'Segment (m)',      min: 0.05, max: 1,   step: 0.05 },
+            { key: 'trailTTL',     label: 'Fade time (s)',    min: 1,    max: 30,  step: 0.5 },
+            { key: 'trailMaxPoints', label: 'Max points',     min: 40,   max: 800, step: 20 },
+            { key: 'trailWidth',   label: 'Width (m)',        min: 0.02, max: 0.5, step: 0.01 },
+            { key: 'trailBrightness', label: 'Brightness',    min: 0,    max: 1.5, step: 0.05 },
         ]},
         { title: 'Input & audio', params: [
             { key: 'showFps',         label: 'Show FPS',         type: 'bool', onChange: () => { fpsEl.style.display = cfg.showFps ? 'block' : 'none'; if (!cfg.showFps) fpsEl.textContent = ''; } },
