@@ -201,6 +201,34 @@
         font-family: system-ui, sans-serif;
     }
     .retryBtn:hover { background: rgba(120,40,40,0.8); }
+    #preloadOverlay {
+        position: fixed; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        flex-direction: column; gap: 16px;
+        background: #000;
+        color: #c9d9ff;
+        font-family: system-ui, sans-serif;
+        z-index: 100;
+        transition: opacity 0.35s;
+    }
+    #preloadOverlay.done { opacity: 0; pointer-events: none; }
+    #preloadLabel {
+        font-size: 14px; letter-spacing: 0.3em;
+        color: #f0c36d; text-transform: uppercase;
+    }
+    #preloadBar {
+        width: 260px; height: 2px;
+        background: rgba(240,195,109,0.15);
+        overflow: hidden;
+    }
+    #preloadFill {
+        height: 100%; width: 0%;
+        background: #f0c36d;
+        transition: width 0.2s;
+    }
+    #preloadDetail {
+        font-size: 11px; color: #555; letter-spacing: 0.1em;
+    }
     #reticle {
         position: fixed; top: 50%; left: 50%;
         width: 4px; height: 4px; margin: -2px 0 0 -2px;
@@ -295,6 +323,11 @@
     <div id="panelBody"></div>
 </div>
 <div id="fps"></div>
+<div id="preloadOverlay">
+    <div id="preloadLabel">Loading</div>
+    <div id="preloadBar"><div id="preloadFill"></div></div>
+    <div id="preloadDetail">preparing scene…</div>
+</div>
 <div id="menuOverlay" class="overlay on">
     <div id="menuTitle">SOUL BEAT</div>
     <button id="menuCamToggle" type="button" title="camera tuning">⌖</button>
@@ -1671,31 +1704,41 @@ window.addEventListener('resize', () => {
 // ----- OBJ model loader (imported from editor) -----
 // Each instance references a library entry by libraryId; we parse library once.
 const parsedLibrary = new Map(); // libraryId → Group template
-async function buildLibraryCache(modelLibrary = {}) {
-    for (const [id, entry] of Object.entries(modelLibrary)) {
+async function buildLibraryCache(modelLibrary = {}, onProgress) {
+    const entries = Object.entries(modelLibrary);
+    const total = entries.length;
+    let done = 0;
+    // Fetch + parse in parallel — massive speedup over sequential awaits when N is large.
+    await Promise.all(entries.map(async ([id, entry]) => {
         const path = entry.path || '';
         const isGLB = /\.(glb|gltf)$/i.test(path);
-        let parsed = null;
         try {
+            let parsed = null;
             if (isGLB) {
                 const r = await fetch('./' + path, { cache: 'no-cache' });
-                if (!r.ok) { console.warn('GLB fetch failed', path, r.status); continue; }
+                if (!r.ok) { console.warn('GLB fetch failed', path, r.status); return; }
                 parsed = await parseGLB(await r.arrayBuffer());
             } else {
                 let text = entry.obj;
                 if (!text && path) {
                     const r = await fetch('./' + path, { cache: 'no-cache' });
-                    if (r.ok) text = await r.text();
-                    else { console.warn('OBJ fetch failed', path, r.status); continue; }
+                    if (!r.ok) { console.warn('OBJ fetch failed', path, r.status); return; }
+                    text = await r.text();
                 }
-                if (!text) continue;
+                if (!text) return;
                 parsed = objLoader.parse(text);
             }
-        } catch (e) { console.warn('lib load failed', entry.name, e); continue; }
-        if (!parsed) continue;
-        parsedLibrary.set(id, parsed);
-        if (entry.name) spiritModelByName.set(entry.name, parsed);
-    }
+            if (parsed) {
+                parsedLibrary.set(id, parsed);
+                if (entry.name) spiritModelByName.set(entry.name, parsed);
+            }
+        } catch (e) {
+            console.warn('lib load failed', entry.name, e);
+        } finally {
+            done++;
+            onProgress?.(done, total);
+        }
+    }));
 }
 function addModel(m) {
     // Back-compat: accept inline `obj` text, or reference library via libraryId
@@ -1814,7 +1857,20 @@ const DEFAULT_LEVEL = {
     models: [],
 };
 
-async function buildLevel(data) {
+// Keep only library entries that are actually referenced — a level.json full of
+// unused entries (e.g. post-Rescan) would otherwise fetch hundreds of unused GLBs.
+function usedLibraryOnly(data) {
+    const lib = data.modelLibrary || {};
+    const usedNames = new Set((data.points || []).map(p => p.modelName).filter(Boolean));
+    const usedIds = new Set((data.models || []).map(m => m.libraryId).filter(Boolean));
+    const out = {};
+    for (const [id, entry] of Object.entries(lib)) {
+        if (usedIds.has(id) || usedNames.has(entry.name)) out[id] = entry;
+    }
+    return out;
+}
+
+async function buildLevel(data, onLibProgress) {
     addFloorGrid(data.floorSize ?? 40, cfg.gridStep);
     // extra floor slabs (for multi-story levels)
     for (const f of data.floors || []) addGrid(f.y, f.size ?? 12, cfg.gridStep);
@@ -1826,7 +1882,7 @@ async function buildLevel(data) {
     for (const f of data.furniture || []) addBox(f.cx, f.cy, f.w, f.d, f.h ?? 1); // legacy
     for (const c of data.cubes || []) addCube(c);
     for (const sp of data.spheres || []) addSphere(sp);
-    await buildLibraryCache(data.modelLibrary || {});
+    await buildLibraryCache(usedLibraryOnly(data), onLibProgress);
     for (const m of data.models || []) addModel(m);
 
     if (data.soulStart) { soul.x = data.soulStart.x; soul.y = data.soulStart.y; soul.yaw = data.soulStart.yaw || 0; }
@@ -1870,6 +1926,15 @@ async function buildLevel(data) {
 
 // Bootstrap: try to load level.json next to this page, else DEFAULT_LEVEL
 async function bootstrap() {
+    const preloadEl = document.getElementById('preloadOverlay');
+    const fillEl = document.getElementById('preloadFill');
+    const detailEl = document.getElementById('preloadDetail');
+    const setProgress = (frac, detail) => {
+        if (fillEl) fillEl.style.width = Math.min(100, Math.max(0, frac * 100)).toFixed(1) + '%';
+        if (detail && detailEl) detailEl.textContent = detail;
+    };
+    setProgress(0.02, 'loading level…');
+
     let data = DEFAULT_LEVEL;
     try {
         const res = await fetch('./level.json', { cache: 'no-cache' });
@@ -1882,7 +1947,19 @@ async function bootstrap() {
     } catch (e) {
         console.log('[level] fetch failed, using default', e.message);
     }
-    await buildLevel(data);
+    setProgress(0.1, 'decoding models…');
+    await buildLevel(data, (done, total) => {
+        // Library fetch occupies 10%..85% of the bar.
+        const frac = 0.10 + 0.75 * (total ? done / total : 1);
+        setProgress(frac, `models ${done}/${total}`);
+    });
+    setProgress(0.9, 'waiting for audio…');
+    // Wait up to 6s for the ambient buffer to arrive so the player doesn't click into silence.
+    const t0 = performance.now();
+    while (!ambientBuffer && performance.now() - t0 < 6000) {
+        await new Promise(r => setTimeout(r, 100));
+    }
+    setProgress(1, 'ready');
     // Locate win-trigger point for menu/intro camera target.
     const wp = points.find(p => p.trigger?.effect === 'win');
     if (wp) winPoint = { x: wp.x, y: wp.y };
@@ -1901,6 +1978,12 @@ async function bootstrap() {
         reaperLastCrumb = [soul.x, soul.y];
     }
     animate();
+    // Hide the preload overlay now that scene renders and audio is ready.
+    const preload = document.getElementById('preloadOverlay');
+    if (preload) {
+        preload.classList.add('done');
+        setTimeout(() => preload.remove(), 400);
+    }
 }
 bootstrap();
 
