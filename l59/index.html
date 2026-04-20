@@ -149,11 +149,20 @@
     #menuCam input[type=range] { width: 110px; }
     #menuCam .val { width: 32px; color: #aaa; text-align: right; }
     #menuTitle {
-        position: absolute; left: 50%; top: 24%;
+        position: absolute; left: 50%; top: 22%;
         transform: translateX(-50%);
-        font-size: 64px; letter-spacing: 0.3em;
-        color: #e34a3a;
-        text-shadow: 0 0 24px rgba(227,74,58,0.5);
+        font-family: "Impact", "Arial Black", system-ui, sans-serif;
+        font-size: 96px;
+        font-weight: 900;
+        letter-spacing: 0.25em;
+        color: #ff5a45;
+        text-shadow:
+            0 0 4px  #ff3a28,
+            0 0 12px rgba(255,90,68,0.9),
+            0 0 28px rgba(227,74,58,0.8),
+            0 0 56px rgba(180,30,20,0.6),
+            0 4px 0 rgba(0,0,0,0.8);
+        -webkit-text-stroke: 1px #7a1a14;
     }
     #introOverlay { flex-direction: column; background: rgba(0,0,0,0.92); }
     #introImg {
