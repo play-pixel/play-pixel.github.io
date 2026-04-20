@@ -16,7 +16,7 @@
     #app {
         display: grid;
         grid-template-rows: 28px 36px 1fr 22px;
-        grid-template-columns: 220px 260px 1fr;
+        grid-template-columns: 340px 260px 1fr;
         grid-template-areas:
             "menu menu menu"
             "toolbar toolbar toolbar"
@@ -1040,7 +1040,8 @@ function renderAssetRow(id, entry, host) {
         name.className = 'asset-name';
         name.title = entry.path || entry.name;
         const loaded = hasLibraryTemplate(entry);
-        name.innerHTML = `${loaded ? '' : '<span style="color:#c44;">⚠ </span>'}${entry.name} ×${instances}`;
+        const displayName = (entry.name || '').replace(/^[A-Za-z]+_/, '');
+        name.innerHTML = `${loaded ? '' : '<span style="color:#c44;">⚠ </span>'}${displayName} ×${instances}`;
         const dlBtn = document.createElement('button');
         dlBtn.className = 'asset-btn';
         dlBtn.textContent = '⬇';
