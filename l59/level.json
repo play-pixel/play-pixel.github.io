@@ -71,12 +71,12 @@
       "h": 2.4
     },
     {
-      "baseY": 0,
+      "baseY": 1.7661908046441563,
       "cx": 1,
-      "cy": 8.5,
+      "cy": 7.562519143932762,
       "w": 0.25,
-      "d": 1,
-      "h": 2.4
+      "d": 2.8749617121344766,
+      "h": 0.6338091953558435
     },
     {
       "baseY": 0,
@@ -789,6 +789,22 @@
       "w": 0.639383327853706,
       "d": 8.284282559390258,
       "h": 0.8150519072399437
+    },
+    {
+      "baseY": 1.8934791562132616,
+      "cx": -0.9750129165759389,
+      "cy": 5.75,
+      "w": 2,
+      "d": 0.25,
+      "h": 0.5065208437867383
+    },
+    {
+      "baseY": 1.930753301103586,
+      "cx": 5.947672848071862,
+      "cy": 5.725,
+      "w": 2.831288687732748,
+      "d": 0.30000000000000093,
+      "h": 0.4692466988964141
     }
   ],
   "cubes": [],
@@ -803,13 +819,16 @@
       "modelName": "Enemy_Minion.obj",
       "hostile": true,
       "pickup": false,
-      "trigger": null,
+      "trigger": {
+        "radius": 1.5,
+        "effect": "kill"
+      },
       "pulse": {
         "period": 2.8
       },
       "sound": null,
       "smell": {
-        "radius": 2,
+        "radius": 0.9,
         "color": "#ff0000"
       },
       "patrol": {
@@ -1016,7 +1035,10 @@
         "radius": 1.5,
         "effect": "heal"
       },
-      "pulse": null,
+      "pulse": {
+        "period": 2.8,
+        "color": "#d4ff00"
+      },
       "sound": null,
       "smell": null,
       "patrol": null
@@ -1161,6 +1183,802 @@
     "lib_30": {
       "name": "Wall_Window.obj",
       "path": "models/Wall_Window.obj"
+    },
+    "lib_31": {
+      "name": "Appliance_Bathroom_Sink.glb",
+      "path": "models/Appliance_Bathroom_Sink.glb"
+    },
+    "lib_32": {
+      "name": "Appliance_Bathroom_Sink_2.glb",
+      "path": "models/Appliance_Bathroom_Sink_2.glb"
+    },
+    "lib_33": {
+      "name": "Appliance_Bathroom_Sink_Square.glb",
+      "path": "models/Appliance_Bathroom_Sink_Square.glb"
+    },
+    "lib_34": {
+      "name": "Appliance_Bathtub.glb",
+      "path": "models/Appliance_Bathtub.glb"
+    },
+    "lib_35": {
+      "name": "Appliance_Bathtub_2.glb",
+      "path": "models/Appliance_Bathtub_2.glb"
+    },
+    "lib_36": {
+      "name": "Appliance_Dryer.glb",
+      "path": "models/Appliance_Dryer.glb"
+    },
+    "lib_37": {
+      "name": "Appliance_Kitchen_Blender.glb",
+      "path": "models/Appliance_Kitchen_Blender.glb"
+    },
+    "lib_38": {
+      "name": "Appliance_Kitchen_Coffee_Machine.glb",
+      "path": "models/Appliance_Kitchen_Coffee_Machine.glb"
+    },
+    "lib_39": {
+      "name": "Appliance_Kitchen_Fridge.glb",
+      "path": "models/Appliance_Kitchen_Fridge.glb"
+    },
+    "lib_40": {
+      "name": "Appliance_Kitchen_Fridge_2.glb",
+      "path": "models/Appliance_Kitchen_Fridge_2.glb"
+    },
+    "lib_41": {
+      "name": "Appliance_Kitchen_Fridge_Built_In.glb",
+      "path": "models/Appliance_Kitchen_Fridge_Built_In.glb"
+    },
+    "lib_42": {
+      "name": "Appliance_Kitchen_Fridge_Large.glb",
+      "path": "models/Appliance_Kitchen_Fridge_Large.glb"
+    },
+    "lib_43": {
+      "name": "Appliance_Kitchen_Fridge_Small.glb",
+      "path": "models/Appliance_Kitchen_Fridge_Small.glb"
+    },
+    "lib_44": {
+      "name": "Appliance_Kitchen_Hood_Large.glb",
+      "path": "models/Appliance_Kitchen_Hood_Large.glb"
+    },
+    "lib_45": {
+      "name": "Appliance_Kitchen_Microwave.glb",
+      "path": "models/Appliance_Kitchen_Microwave.glb"
+    },
+    "lib_46": {
+      "name": "Appliance_Kitchen_Sink.glb",
+      "path": "models/Appliance_Kitchen_Sink.glb"
+    },
+    "lib_47": {
+      "name": "Appliance_Kitchen_Sink_2.glb",
+      "path": "models/Appliance_Kitchen_Sink_2.glb"
+    },
+    "lib_48": {
+      "name": "Appliance_Kitchen_Stove.glb",
+      "path": "models/Appliance_Kitchen_Stove.glb"
+    },
+    "lib_49": {
+      "name": "Appliance_Kitchen_Stove_Electric.glb",
+      "path": "models/Appliance_Kitchen_Stove_Electric.glb"
+    },
+    "lib_50": {
+      "name": "Appliance_Kitchen_Stove_Hood.glb",
+      "path": "models/Appliance_Kitchen_Stove_Hood.glb"
+    },
+    "lib_51": {
+      "name": "Appliance_Oven.glb",
+      "path": "models/Appliance_Oven.glb"
+    },
+    "lib_52": {
+      "name": "Appliance_Shower_Round.glb",
+      "path": "models/Appliance_Shower_Round.glb"
+    },
+    "lib_53": {
+      "name": "Appliance_Toaster.glb",
+      "path": "models/Appliance_Toaster.glb"
+    },
+    "lib_54": {
+      "name": "Appliance_Toilet.glb",
+      "path": "models/Appliance_Toilet.glb"
+    },
+    "lib_55": {
+      "name": "Appliance_Toilet_2.glb",
+      "path": "models/Appliance_Toilet_2.glb"
+    },
+    "lib_56": {
+      "name": "Appliance_Toilet_Square.glb",
+      "path": "models/Appliance_Toilet_Square.glb"
+    },
+    "lib_57": {
+      "name": "Appliance_Washer.glb",
+      "path": "models/Appliance_Washer.glb"
+    },
+    "lib_58": {
+      "name": "Appliance_Washing_Machine.glb",
+      "path": "models/Appliance_Washing_Machine.glb"
+    },
+    "lib_59": {
+      "name": "Decor_Bathroom_Toilet_Paper.glb",
+      "path": "models/Decor_Bathroom_Toilet_Paper.glb"
+    },
+    "lib_60": {
+      "name": "Decor_Bear.glb",
+      "path": "models/Decor_Bear.glb"
+    },
+    "lib_61": {
+      "name": "Decor_Books.glb",
+      "path": "models/Decor_Books.glb"
+    },
+    "lib_62": {
+      "name": "Decor_Cactus.glb",
+      "path": "models/Decor_Cactus.glb"
+    },
+    "lib_63": {
+      "name": "Decor_Cardboard_Box_Closed.glb",
+      "path": "models/Decor_Cardboard_Box_Closed.glb"
+    },
+    "lib_64": {
+      "name": "Decor_Cardboard_Box_Open.glb",
+      "path": "models/Decor_Cardboard_Box_Open.glb"
+    },
+    "lib_65": {
+      "name": "Decor_Coat_Rack.glb",
+      "path": "models/Decor_Coat_Rack.glb"
+    },
+    "lib_66": {
+      "name": "Decor_Coat_Rack_Standing.glb",
+      "path": "models/Decor_Coat_Rack_Standing.glb"
+    },
+    "lib_67": {
+      "name": "Decor_Curtains_Double.glb",
+      "path": "models/Decor_Curtains_Double.glb"
+    },
+    "lib_68": {
+      "name": "Decor_Dead_Houseplant.glb",
+      "path": "models/Decor_Dead_Houseplant.glb"
+    },
+    "lib_69": {
+      "name": "Decor_Houseplant.glb",
+      "path": "models/Decor_Houseplant.glb"
+    },
+    "lib_70": {
+      "name": "Decor_Houseplant_2.glb",
+      "path": "models/Decor_Houseplant_2.glb"
+    },
+    "lib_71": {
+      "name": "Decor_Houseplant_3.glb",
+      "path": "models/Decor_Houseplant_3.glb"
+    },
+    "lib_72": {
+      "name": "Decor_Houseplant_4.glb",
+      "path": "models/Decor_Houseplant_4.glb"
+    },
+    "lib_73": {
+      "name": "Decor_Houseplant_5.glb",
+      "path": "models/Decor_Houseplant_5.glb"
+    },
+    "lib_74": {
+      "name": "Decor_Houseplant_6.glb",
+      "path": "models/Decor_Houseplant_6.glb"
+    },
+    "lib_75": {
+      "name": "Decor_Plant_Small.glb",
+      "path": "models/Decor_Plant_Small.glb"
+    },
+    "lib_76": {
+      "name": "Decor_Potted_Plant.glb",
+      "path": "models/Decor_Potted_Plant.glb"
+    },
+    "lib_77": {
+      "name": "Decor_Round_Rug.glb",
+      "path": "models/Decor_Round_Rug.glb"
+    },
+    "lib_78": {
+      "name": "Decor_Rug.glb",
+      "path": "models/Decor_Rug.glb"
+    },
+    "lib_79": {
+      "name": "Decor_Rug_Doormat.glb",
+      "path": "models/Decor_Rug_Doormat.glb"
+    },
+    "lib_80": {
+      "name": "Decor_Rug_Rectangle.glb",
+      "path": "models/Decor_Rug_Rectangle.glb"
+    },
+    "lib_81": {
+      "name": "Decor_Rug_Round.glb",
+      "path": "models/Decor_Rug_Round.glb"
+    },
+    "lib_82": {
+      "name": "Decor_Rug_Rounded.glb",
+      "path": "models/Decor_Rug_Rounded.glb"
+    },
+    "lib_83": {
+      "name": "Decor_Rug_Square.glb",
+      "path": "models/Decor_Rug_Square.glb"
+    },
+    "lib_84": {
+      "name": "Decor_Square_Plate.glb",
+      "path": "models/Decor_Square_Plate.glb"
+    },
+    "lib_85": {
+      "name": "Decor_Toilet_Paper_stack.glb",
+      "path": "models/Decor_Toilet_Paper_stack.glb"
+    },
+    "lib_86": {
+      "name": "Decor_Trashcan.glb",
+      "path": "models/Decor_Trashcan.glb"
+    },
+    "lib_87": {
+      "name": "Decor_Trashcan_2.glb",
+      "path": "models/Decor_Trashcan_2.glb"
+    },
+    "lib_88": {
+      "name": "Decor_Trashcan_3.glb",
+      "path": "models/Decor_Trashcan_3.glb"
+    },
+    "lib_89": {
+      "name": "Decor_Trashcan_Large.glb",
+      "path": "models/Decor_Trashcan_Large.glb"
+    },
+    "lib_90": {
+      "name": "Decor_Trashcan_Small.glb",
+      "path": "models/Decor_Trashcan_Small.glb"
+    },
+    "lib_91": {
+      "name": "Decor_Trashcan_Small_2.glb",
+      "path": "models/Decor_Trashcan_Small_2.glb"
+    },
+    "lib_92": {
+      "name": "Furniture_Bar_Stool.glb",
+      "path": "models/Furniture_Bar_Stool.glb"
+    },
+    "lib_93": {
+      "name": "Furniture_Bathroom_Cabinet.glb",
+      "path": "models/Furniture_Bathroom_Cabinet.glb"
+    },
+    "lib_94": {
+      "name": "Furniture_Bathroom_Cabinet_Drawe.glb",
+      "path": "models/Furniture_Bathroom_Cabinet_Drawe.glb"
+    },
+    "lib_95": {
+      "name": "Furniture_Bed_Bunk.glb",
+      "path": "models/Furniture_Bed_Bunk.glb"
+    },
+    "lib_96": {
+      "name": "Furniture_Bed_Double.glb",
+      "path": "models/Furniture_Bed_Double.glb"
+    },
+    "lib_97": {
+      "name": "Furniture_Bed_King.glb",
+      "path": "models/Furniture_Bed_King.glb"
+    },
+    "lib_98": {
+      "name": "Furniture_Bed_Single.glb",
+      "path": "models/Furniture_Bed_Single.glb"
+    },
+    "lib_99": {
+      "name": "Furniture_Bed_Single_2.glb",
+      "path": "models/Furniture_Bed_Single_2.glb"
+    },
+    "lib_100": {
+      "name": "Furniture_Bench.glb",
+      "path": "models/Furniture_Bench.glb"
+    },
+    "lib_101": {
+      "name": "Furniture_Bench_Cushion.glb",
+      "path": "models/Furniture_Bench_Cushion.glb"
+    },
+    "lib_102": {
+      "name": "Furniture_Bench_Cushion_Low.glb",
+      "path": "models/Furniture_Bench_Cushion_Low.glb"
+    },
+    "lib_103": {
+      "name": "Furniture_Bookcase_Closed.glb",
+      "path": "models/Furniture_Bookcase_Closed.glb"
+    },
+    "lib_104": {
+      "name": "Furniture_Bookcase_Closed_Doors.glb",
+      "path": "models/Furniture_Bookcase_Closed_Doors.glb"
+    },
+    "lib_105": {
+      "name": "Furniture_Bookcase_Closed_Wide.glb",
+      "path": "models/Furniture_Bookcase_Closed_Wide.glb"
+    },
+    "lib_106": {
+      "name": "Furniture_Bookcase_Open.glb",
+      "path": "models/Furniture_Bookcase_Open.glb"
+    },
+    "lib_107": {
+      "name": "Furniture_Bookcase_Open_Low.glb",
+      "path": "models/Furniture_Bookcase_Open_Low.glb"
+    },
+    "lib_108": {
+      "name": "Furniture_Bunk_Bed.glb",
+      "path": "models/Furniture_Bunk_Bed.glb"
+    },
+    "lib_109": {
+      "name": "Furniture_Cabinet_Bed.glb",
+      "path": "models/Furniture_Cabinet_Bed.glb"
+    },
+    "lib_110": {
+      "name": "Furniture_Cabinet_Bed_Drawer.glb",
+      "path": "models/Furniture_Cabinet_Bed_Drawer.glb"
+    },
+    "lib_111": {
+      "name": "Furniture_Cabinet_Bed_Drawer_Tabl.glb",
+      "path": "models/Furniture_Cabinet_Bed_Drawer_Tabl.glb"
+    },
+    "lib_112": {
+      "name": "Furniture_Chair.glb",
+      "path": "models/Furniture_Chair.glb"
+    },
+    "lib_113": {
+      "name": "Furniture_Chair_2.glb",
+      "path": "models/Furniture_Chair_2.glb"
+    },
+    "lib_114": {
+      "name": "Furniture_Chair_3.glb",
+      "path": "models/Furniture_Chair_3.glb"
+    },
+    "lib_115": {
+      "name": "Furniture_Chair_Cushion.glb",
+      "path": "models/Furniture_Chair_Cushion.glb"
+    },
+    "lib_116": {
+      "name": "Furniture_Chair_Desk.glb",
+      "path": "models/Furniture_Chair_Desk.glb"
+    },
+    "lib_117": {
+      "name": "Furniture_Chair_Modern_Cushion.glb",
+      "path": "models/Furniture_Chair_Modern_Cushion.glb"
+    },
+    "lib_118": {
+      "name": "Furniture_Chair_Modern_Frame_Cush.glb",
+      "path": "models/Furniture_Chair_Modern_Frame_Cush.glb"
+    },
+    "lib_119": {
+      "name": "Furniture_Chair_Rounded.glb",
+      "path": "models/Furniture_Chair_Rounded.glb"
+    },
+    "lib_120": {
+      "name": "Furniture_Couch_Large.glb",
+      "path": "models/Furniture_Couch_Large.glb"
+    },
+    "lib_121": {
+      "name": "Furniture_Couch_Medium.glb",
+      "path": "models/Furniture_Couch_Medium.glb"
+    },
+    "lib_122": {
+      "name": "Furniture_Couch_Medium_2.glb",
+      "path": "models/Furniture_Couch_Medium_2.glb"
+    },
+    "lib_123": {
+      "name": "Furniture_Couch_Small.glb",
+      "path": "models/Furniture_Couch_Small.glb"
+    },
+    "lib_124": {
+      "name": "Furniture_Couch_Small_2.glb",
+      "path": "models/Furniture_Couch_Small_2.glb"
+    },
+    "lib_125": {
+      "name": "Furniture_Desk.glb",
+      "path": "models/Furniture_Desk.glb"
+    },
+    "lib_126": {
+      "name": "Furniture_Desk_Corner.glb",
+      "path": "models/Furniture_Desk_Corner.glb"
+    },
+    "lib_127": {
+      "name": "Furniture_Drawer.glb",
+      "path": "models/Furniture_Drawer.glb"
+    },
+    "lib_128": {
+      "name": "Furniture_Drawer_2.glb",
+      "path": "models/Furniture_Drawer_2.glb"
+    },
+    "lib_129": {
+      "name": "Furniture_Drawer_3.glb",
+      "path": "models/Furniture_Drawer_3.glb"
+    },
+    "lib_130": {
+      "name": "Furniture_Drawer_4.glb",
+      "path": "models/Furniture_Drawer_4.glb"
+    },
+    "lib_131": {
+      "name": "Furniture_Drawer_5.glb",
+      "path": "models/Furniture_Drawer_5.glb"
+    },
+    "lib_132": {
+      "name": "Furniture_Kitchen_Bar.glb",
+      "path": "models/Furniture_Kitchen_Bar.glb"
+    },
+    "lib_133": {
+      "name": "Furniture_Kitchen_Cabinet.glb",
+      "path": "models/Furniture_Kitchen_Cabinet.glb"
+    },
+    "lib_134": {
+      "name": "Furniture_Kitchen_Cabinet_2.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_2.glb"
+    },
+    "lib_135": {
+      "name": "Furniture_Kitchen_Cabinet_Corner.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Corner.glb"
+    },
+    "lib_136": {
+      "name": "Furniture_Kitchen_Cabinet_Corner_2.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Corner_2.glb"
+    },
+    "lib_137": {
+      "name": "Furniture_Kitchen_Cabinet_Drawer.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Drawer.glb"
+    },
+    "lib_138": {
+      "name": "Furniture_Kitchen_Cabinet_Upper.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Upper.glb"
+    },
+    "lib_139": {
+      "name": "Furniture_Kitchen_Cabinet_Upperc.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Upperc.glb"
+    },
+    "lib_140": {
+      "name": "Furniture_Kitchen_Cabinet_Upperl.glb",
+      "path": "models/Furniture_Kitchen_Cabinet_Upperl.glb"
+    },
+    "lib_141": {
+      "name": "Furniture_L_Couch.glb",
+      "path": "models/Furniture_L_Couch.glb"
+    },
+    "lib_142": {
+      "name": "Furniture_Lounge_Chair.glb",
+      "path": "models/Furniture_Lounge_Chair.glb"
+    },
+    "lib_143": {
+      "name": "Furniture_Lounge_Chair_2.glb",
+      "path": "models/Furniture_Lounge_Chair_2.glb"
+    },
+    "lib_144": {
+      "name": "Furniture_Lounge_Design_Chair.glb",
+      "path": "models/Furniture_Lounge_Design_Chair.glb"
+    },
+    "lib_145": {
+      "name": "Furniture_Lounge_Design_Sofa.glb",
+      "path": "models/Furniture_Lounge_Design_Sofa.glb"
+    },
+    "lib_146": {
+      "name": "Furniture_Lounge_Design_Sofa_Corn.glb",
+      "path": "models/Furniture_Lounge_Design_Sofa_Corn.glb"
+    },
+    "lib_147": {
+      "name": "Furniture_Lounge_Sofa.glb",
+      "path": "models/Furniture_Lounge_Sofa.glb"
+    },
+    "lib_148": {
+      "name": "Furniture_Lounge_Sofa_Corner.glb",
+      "path": "models/Furniture_Lounge_Sofa_Corner.glb"
+    },
+    "lib_149": {
+      "name": "Furniture_Lounge_Sofa_Long.glb",
+      "path": "models/Furniture_Lounge_Sofa_Long.glb"
+    },
+    "lib_150": {
+      "name": "Furniture_Lounge_Sofa_Ottoman.glb",
+      "path": "models/Furniture_Lounge_Sofa_Ottoman.glb"
+    },
+    "lib_151": {
+      "name": "Furniture_Night_Stand.glb",
+      "path": "models/Furniture_Night_Stand.glb"
+    },
+    "lib_152": {
+      "name": "Furniture_Night_Stand_2.glb",
+      "path": "models/Furniture_Night_Stand_2.glb"
+    },
+    "lib_153": {
+      "name": "Furniture_Night_Stand_3.glb",
+      "path": "models/Furniture_Night_Stand_3.glb"
+    },
+    "lib_154": {
+      "name": "Furniture_Round_Table.glb",
+      "path": "models/Furniture_Round_Table.glb"
+    },
+    "lib_155": {
+      "name": "Furniture_Shelf_Large.glb",
+      "path": "models/Furniture_Shelf_Large.glb"
+    },
+    "lib_156": {
+      "name": "Furniture_Shelf_Small.glb",
+      "path": "models/Furniture_Shelf_Small.glb"
+    },
+    "lib_157": {
+      "name": "Furniture_Shelf_Small_2.glb",
+      "path": "models/Furniture_Shelf_Small_2.glb"
+    },
+    "lib_158": {
+      "name": "Furniture_Side_Table.glb",
+      "path": "models/Furniture_Side_Table.glb"
+    },
+    "lib_159": {
+      "name": "Furniture_Side_Table_Drawers.glb",
+      "path": "models/Furniture_Side_Table_Drawers.glb"
+    },
+    "lib_160": {
+      "name": "Furniture_Stool.glb",
+      "path": "models/Furniture_Stool.glb"
+    },
+    "lib_161": {
+      "name": "Furniture_Stool_Bar_Square.glb",
+      "path": "models/Furniture_Stool_Bar_Square.glb"
+    },
+    "lib_162": {
+      "name": "Furniture_Table.glb",
+      "path": "models/Furniture_Table.glb"
+    },
+    "lib_163": {
+      "name": "Furniture_Table_Coffee.glb",
+      "path": "models/Furniture_Table_Coffee.glb"
+    },
+    "lib_164": {
+      "name": "Furniture_Table_Coffee_Glass.glb",
+      "path": "models/Furniture_Table_Coffee_Glass.glb"
+    },
+    "lib_165": {
+      "name": "Furniture_Table_Coffee_Square.glb",
+      "path": "models/Furniture_Table_Coffee_Square.glb"
+    },
+    "lib_166": {
+      "name": "Furniture_Table_Cross.glb",
+      "path": "models/Furniture_Table_Cross.glb"
+    },
+    "lib_167": {
+      "name": "Furniture_Table_Cross_Cloth.glb",
+      "path": "models/Furniture_Table_Cross_Cloth.glb"
+    },
+    "lib_168": {
+      "name": "Furniture_Table_Round_Large.glb",
+      "path": "models/Furniture_Table_Round_Large.glb"
+    },
+    "lib_169": {
+      "name": "Furniture_Table_Round_Small.glb",
+      "path": "models/Furniture_Table_Round_Small.glb"
+    },
+    "lib_170": {
+      "name": "Furniture_Table_Round_Small_2.glb",
+      "path": "models/Furniture_Table_Round_Small_2.glb"
+    },
+    "lib_171": {
+      "name": "Furniture_Towel_Rack.glb",
+      "path": "models/Furniture_Towel_Rack.glb"
+    },
+    "lib_172": {
+      "name": "Light_Ceiling_Fan.glb",
+      "path": "models/Light_Ceiling_Fan.glb"
+    },
+    "lib_173": {
+      "name": "Light_Ceiling_Light.glb",
+      "path": "models/Light_Ceiling_Light.glb"
+    },
+    "lib_174": {
+      "name": "Light_Lamp.glb",
+      "path": "models/Light_Lamp.glb"
+    },
+    "lib_175": {
+      "name": "Light_Lamp_Round_Floor.glb",
+      "path": "models/Light_Lamp_Round_Floor.glb"
+    },
+    "lib_176": {
+      "name": "Light_Lamp_Round_Table.glb",
+      "path": "models/Light_Lamp_Round_Table.glb"
+    },
+    "lib_177": {
+      "name": "Light_Lamp_Square_Ceiling.glb",
+      "path": "models/Light_Lamp_Square_Ceiling.glb"
+    },
+    "lib_178": {
+      "name": "Light_Lamp_Square_Floor.glb",
+      "path": "models/Light_Lamp_Square_Floor.glb"
+    },
+    "lib_179": {
+      "name": "Light_Lamp_Square_Table.glb",
+      "path": "models/Light_Lamp_Square_Table.glb"
+    },
+    "lib_180": {
+      "name": "Light_Lamp_Wall.glb",
+      "path": "models/Light_Lamp_Wall.glb"
+    },
+    "lib_181": {
+      "name": "Light_Light_Ceiling.glb",
+      "path": "models/Light_Light_Ceiling.glb"
+    },
+    "lib_182": {
+      "name": "Light_Light_Ceiling_2.glb",
+      "path": "models/Light_Light_Ceiling_2.glb"
+    },
+    "lib_183": {
+      "name": "Light_Light_Ceiling_3.glb",
+      "path": "models/Light_Light_Ceiling_3.glb"
+    },
+    "lib_184": {
+      "name": "Light_Light_Ceiling_Single.glb",
+      "path": "models/Light_Light_Ceiling_Single.glb"
+    },
+    "lib_185": {
+      "name": "Light_Light_Chandelier.glb",
+      "path": "models/Light_Light_Chandelier.glb"
+    },
+    "lib_186": {
+      "name": "Light_Light_Cube.glb",
+      "path": "models/Light_Light_Cube.glb"
+    },
+    "lib_187": {
+      "name": "Light_Light_Cube_2.glb",
+      "path": "models/Light_Light_Cube_2.glb"
+    },
+    "lib_188": {
+      "name": "Light_Light_Desk.glb",
+      "path": "models/Light_Light_Desk.glb"
+    },
+    "lib_189": {
+      "name": "Light_Light_Floor.glb",
+      "path": "models/Light_Light_Floor.glb"
+    },
+    "lib_190": {
+      "name": "Light_Light_Floor_2.glb",
+      "path": "models/Light_Light_Floor_2.glb"
+    },
+    "lib_191": {
+      "name": "Light_Light_Icosahedron.glb",
+      "path": "models/Light_Light_Icosahedron.glb"
+    },
+    "lib_192": {
+      "name": "Light_Light_Stand.glb",
+      "path": "models/Light_Light_Stand.glb"
+    },
+    "lib_193": {
+      "name": "Light_Table_Lamp.glb",
+      "path": "models/Light_Table_Lamp.glb"
+    },
+    "lib_194": {
+      "name": "Tech_Cabinet_Television.glb",
+      "path": "models/Tech_Cabinet_Television.glb"
+    },
+    "lib_195": {
+      "name": "Tech_Cabinet_Television_Doo.glb",
+      "path": "models/Tech_Cabinet_Television_Doo.glb"
+    },
+    "lib_196": {
+      "name": "Tech_Computer_Keyboard.glb",
+      "path": "models/Tech_Computer_Keyboard.glb"
+    },
+    "lib_197": {
+      "name": "Tech_Computer_Screen.glb",
+      "path": "models/Tech_Computer_Screen.glb"
+    },
+    "lib_198": {
+      "name": "Tech_Laptop.glb",
+      "path": "models/Tech_Laptop.glb"
+    },
+    "lib_199": {
+      "name": "Tech_Radio.glb",
+      "path": "models/Tech_Radio.glb"
+    },
+    "lib_200": {
+      "name": "Tech_Speaker.glb",
+      "path": "models/Tech_Speaker.glb"
+    },
+    "lib_201": {
+      "name": "Tech_Speaker_Small.glb",
+      "path": "models/Tech_Speaker_Small.glb"
+    },
+    "lib_202": {
+      "name": "Tech_Television.glb",
+      "path": "models/Tech_Television.glb"
+    },
+    "lib_203": {
+      "name": "Tech_Television_Vintage.glb",
+      "path": "models/Tech_Television_Vintage.glb"
+    },
+    "lib_204": {
+      "name": "Wall_Bathroom_Mirror.glb",
+      "path": "models/Wall_Bathroom_Mirror.glb"
+    },
+    "lib_205": {
+      "name": "Wall_Column_Round.glb",
+      "path": "models/Wall_Column_Round.glb"
+    },
+    "lib_206": {
+      "name": "Wall_Door.glb",
+      "path": "models/Wall_Door.glb"
+    },
+    "lib_207": {
+      "name": "Wall_Door_2.glb",
+      "path": "models/Wall_Door_2.glb"
+    },
+    "lib_208": {
+      "name": "Wall_Door_3.glb",
+      "path": "models/Wall_Door_3.glb"
+    },
+    "lib_209": {
+      "name": "Wall_Door_4.glb",
+      "path": "models/Wall_Door_4.glb"
+    },
+    "lib_210": {
+      "name": "Wall_Door_5.glb",
+      "path": "models/Wall_Door_5.glb"
+    },
+    "lib_211": {
+      "name": "Wall_Door_6.glb",
+      "path": "models/Wall_Door_6.glb"
+    },
+    "lib_212": {
+      "name": "Wall_Door_7.glb",
+      "path": "models/Wall_Door_7.glb"
+    },
+    "lib_213": {
+      "name": "Wall_Door_8.glb",
+      "path": "models/Wall_Door_8.glb"
+    },
+    "lib_214": {
+      "name": "Wall_Door_Double.glb",
+      "path": "models/Wall_Door_Double.glb"
+    },
+    "lib_215": {
+      "name": "Wall_Doorway.glb",
+      "path": "models/Wall_Doorway.glb"
+    },
+    "lib_216": {
+      "name": "Wall_Doorway_Front.glb",
+      "path": "models/Wall_Doorway_Front.glb"
+    },
+    "lib_217": {
+      "name": "Wall_Doorway_Open.glb",
+      "path": "models/Wall_Doorway_Open.glb"
+    },
+    "lib_218": {
+      "name": "Wall_Fireplace.glb",
+      "path": "models/Wall_Fireplace.glb"
+    },
+    "lib_219": {
+      "name": "Wall_Paneling.glb",
+      "path": "models/Wall_Paneling.glb"
+    },
+    "lib_220": {
+      "name": "Wall_Stairs.glb",
+      "path": "models/Wall_Stairs.glb"
+    },
+    "lib_221": {
+      "name": "Wall_Stairs_Corner.glb",
+      "path": "models/Wall_Stairs_Corner.glb"
+    },
+    "lib_222": {
+      "name": "Wall_Stairs_Open.glb",
+      "path": "models/Wall_Stairs_Open.glb"
+    },
+    "lib_223": {
+      "name": "Wall_Stairs_Open_Single.glb",
+      "path": "models/Wall_Stairs_Open_Single.glb"
+    },
+    "lib_224": {
+      "name": "Wall_Wall_Doorway.glb",
+      "path": "models/Wall_Wall_Doorway.glb"
+    },
+    "lib_225": {
+      "name": "Wall_Wall_Doorway_Wide.glb",
+      "path": "models/Wall_Wall_Doorway_Wide.glb"
+    },
+    "lib_226": {
+      "name": "Wall_Wall_Window.glb",
+      "path": "models/Wall_Wall_Window.glb"
+    },
+    "lib_227": {
+      "name": "Wall_Window_Large.glb",
+      "path": "models/Wall_Window_Large.glb"
+    },
+    "lib_228": {
+      "name": "Wall_Window_Round.glb",
+      "path": "models/Wall_Window_Round.glb"
+    },
+    "lib_229": {
+      "name": "Wall_Window_Small.glb",
+      "path": "models/Wall_Window_Small.glb"
     }
   }
 }

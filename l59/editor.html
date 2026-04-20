@@ -1,0 +1,2510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Soul Beat — Level Editor</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0; padding: 0; height: 100%;
+        background: #1f1f24; color: #ddd;
+        font-family: system-ui, sans-serif; font-size: 12px;
+        overflow: hidden; user-select: none;
+    }
+    /* ------- Layout ------- */
+    #app {
+        display: grid;
+        grid-template-rows: 28px 36px 1fr 22px;
+        grid-template-columns: 220px 260px 1fr;
+        grid-template-areas:
+            "menu menu menu"
+            "toolbar toolbar toolbar"
+            "hierarchy inspector viewport"
+            "status status status";
+        height: 100vh;
+    }
+    #menubar    { grid-area: menu; background: #2a2a30; border-bottom: 1px solid #181820; display: flex; align-items: center; }
+    #toolbar    { grid-area: toolbar; background: #252529; border-bottom: 1px solid #181820; display: flex; align-items: center; padding: 0 8px; gap: 4px; overflow-x: auto; }
+    #hierarchy  { grid-area: hierarchy; background: #22222a; border-right: 1px solid #181820; overflow-y: auto; display: flex; flex-direction: column; }
+    #hierList { flex: 1; overflow-y: auto; min-height: 40%; }
+    #assetsBlock { border-top: 1px solid #181820; background: #1e1e26; max-height: 40%; display: flex; flex-direction: column; }
+    #assetsList { overflow-y: auto; }
+    .asset-item { display: flex; align-items: center; gap: 5px; padding: 4px 8px 4px 22px; font-size: 11px; color: #bbb; }
+    .asset-item:hover { background: #2e2e3a; }
+    .asset-group-head {
+        display: flex; align-items: center; gap: 6px;
+        padding: 5px 8px; cursor: pointer; user-select: none;
+        background: #2a2a38; color: #d4d4e4;
+        font-size: 11px; letter-spacing: 0.05em;
+        border-top: 1px solid #1c1c26;
+    }
+    .asset-group-head:hover { background: #34344a; }
+    .asset-group-head .arr { width: 10px; opacity: 0.7; display: inline-block; transition: transform 0.12s; }
+    .asset-group.open .asset-group-head .arr { transform: rotate(90deg); }
+    .asset-group-head .count { margin-left: auto; color: #888; font-size: 10px; }
+    .asset-group-body { display: none; }
+    .asset-group.open .asset-group-body { display: block; }
+    .asset-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .asset-btn { padding: 1px 7px; background: #333; border: 1px solid #444; color: #ddd; cursor: pointer; border-radius: 2px; font-size: 11px; }
+    .asset-btn:hover { background: #4a3a8a; }
+    .asset-btn.danger { background: #5a2020; border-color: #7a2a2a; }
+    .asset-btn.danger:hover { background: #7a2a2a; }
+    .hier-eye { cursor: pointer; margin-left: 4px; opacity: 0.6; }
+    .hier-eye:hover { opacity: 1; }
+    .asset-import {
+        padding: 6px 10px; margin: 4px 8px 6px; text-align: center;
+        background: #3a2a6a; color: #fff;
+        border: 1px dashed #5a48a8; border-radius: 3px; cursor: pointer; font-size: 11px;
+    }
+    .asset-import:hover { background: #4a3a8a; }
+    #viewport   { grid-area: viewport; background: #0a0a10; position: relative; overflow: hidden; }
+    #inspector  { grid-area: inspector; background: #22222a; border-right: 1px solid #181820; overflow-y: auto; padding: 8px; }
+    #statusbar  { grid-area: status; background: #1a1a1f; border-top: 1px solid #181820; padding: 0 10px; line-height: 22px; font-size: 11px; color: #888; }
+    #statusbar b { color: #f0c36d; }
+
+    /* ------- Menu bar ------- */
+    .menu-item {
+        position: relative;
+        padding: 4px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #ccc;
+    }
+    .menu-item:hover, .menu-item.open { background: #3a3a46; color: #fff; }
+    .menu-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%; left: 0;
+        min-width: 200px;
+        background: #2a2a30;
+        border: 1px solid #111118;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        z-index: 1000;
+        padding: 4px 0;
+    }
+    .menu-item.open .menu-dropdown { display: block; }
+    .menu-entry {
+        padding: 5px 16px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        color: #ddd;
+    }
+    .menu-entry:hover { background: #4a3a8a; color: #fff; }
+    .menu-entry.disabled { color: #555; cursor: default; }
+    .menu-entry.disabled:hover { background: transparent; color: #555; }
+    .menu-entry .shortcut { color: #777; margin-left: 20px; font-size: 11px; }
+    .menu-separator { height: 1px; background: #181820; margin: 4px 0; }
+
+    /* ------- Toolbar ------- */
+    .tool-group {
+        display: flex; align-items: center; gap: 2px;
+        padding: 0 4px;
+        border-right: 1px solid #1a1a20;
+        height: 28px;
+    }
+    .tool-group:last-child { border-right: none; }
+    .tool-btn {
+        padding: 4px 10px;
+        background: #303038;
+        color: #ccc;
+        border: 1px solid #3c3c48;
+        border-radius: 2px;
+        cursor: pointer;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    .tool-btn:hover { background: #3c3c48; }
+    .tool-btn.active { background: #5e4a20; color: #fff; border-color: #f0c36d; }
+    .color-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+
+    /* ------- Hierarchy ------- */
+    .hier-head { padding: 6px 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #888; background: #1a1a20; border-bottom: 1px solid #0c0c10; position: sticky; top: 0; z-index: 2; }
+    .hier-group { padding: 2px 0; }
+    .hier-group-title { padding: 3px 10px; color: #888; font-size: 11px; font-weight: 600; }
+    .hier-item {
+        padding: 3px 10px 3px 20px;
+        cursor: pointer;
+        color: #bbb;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .hier-item:hover { background: #2e2e3a; color: #fff; }
+    .hier-item.selected { background: #4a3a8a; color: #fff; }
+    .hier-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ------- Inspector ------- */
+    .inspector-head {
+        padding: 6px 0 6px 0;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #888;
+        border-bottom: 1px solid #181820;
+        margin-bottom: 8px;
+    }
+    .inspector-head b { color: #f0c36d; font-size: 12px; letter-spacing: 0; text-transform: none; }
+    .prop-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 3px 0;
+        font-size: 11px;
+    }
+    .prop-row label { flex: 1; color: #aaa; }
+    .prop-row input {
+        width: 80px;
+        padding: 3px 5px;
+        background: #0c0c12;
+        color: #ddd;
+        border: 1px solid #2a2a38;
+        border-radius: 2px;
+        font-size: 11px;
+        font-family: inherit;
+    }
+    .prop-row input[type=color] { width: 40px; height: 22px; padding: 0; }
+    .prop-row input:focus { outline: 1px solid #5e4a20; border-color: #f0c36d; }
+
+    .inspector-btn {
+        display: block; width: 100%;
+        padding: 5px 8px;
+        margin-top: 8px;
+        background: #6a2020;
+        color: #fff;
+        border: 1px solid #882a2a;
+        border-radius: 2px;
+        cursor: pointer;
+        font-size: 11px;
+    }
+    .inspector-btn:hover { background: #882a2a; }
+
+    /* ------- Viewport overlays ------- */
+    #viewport canvas { display: block; }
+    #gizmoModes {
+        position: absolute; top: 8px; left: 8px;
+        display: flex; gap: 2px;
+        background: rgba(20, 20, 26, 0.85);
+        border: 1px solid #2a2a38;
+        border-radius: 3px;
+        padding: 2px;
+        z-index: 5;
+    }
+    #gizmoModes .gm-btn {
+        padding: 5px 10px;
+        background: transparent;
+        color: #bbb;
+        border: none;
+        cursor: pointer;
+        font-size: 11px;
+        border-radius: 2px;
+    }
+    #gizmoModes .gm-btn:hover { background: #3a3a48; color: #fff; }
+    #gizmoModes .gm-btn.active { background: #f0c36d; color: #222; font-weight: 600; }
+
+    #viewportHint {
+        position: absolute;
+        top: 8px; right: 12px;
+        font-size: 11px;
+        color: #555;
+        pointer-events: none;
+        z-index: 5;
+    }
+    #underlayPanel {
+        position: absolute;
+        top: 50px; right: 8px;
+        background: rgba(20, 20, 26, 0.85);
+        border: 1px solid #2a2a38;
+        border-radius: 3px;
+        padding: 6px 8px;
+        z-index: 5;
+        font-size: 11px;
+        min-width: 180px;
+    }
+    #underlayPanel .gp-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+    #underlayPanel label { color: #aaa; min-width: 48px; }
+    #underlayPanel input[type=number] {
+        width: 60px; padding: 2px 4px;
+        background: #0c0c12; color: #ddd;
+        border: 1px solid #2a2a38; border-radius: 2px; font-size: 11px;
+    }
+    #underlayPanel input[type=range] { flex: 1; }
+    #underlayPanel button { margin-top: 4px; padding: 3px 8px; background: #5a2020; color: #fff; border: 1px solid #7a2a2a; border-radius: 2px; cursor: pointer; font-size: 11px; }
+    #underlayPanel button:hover { background: #7a2a2a; }
+    #underlayPanel .hint { color: #666; font-size: 10px; line-height: 1.3; margin-top: 3px; }
+    #gridPanel {
+        position: absolute;
+        top: 50px; left: 8px;
+        background: rgba(20, 20, 26, 0.85);
+        border: 1px solid #2a2a38;
+        border-radius: 3px;
+        padding: 6px 8px;
+        z-index: 5;
+        font-size: 11px;
+    }
+    #gridPanel .gp-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+    #gridPanel label { color: #aaa; min-width: 40px; }
+    #gridPanel input {
+        width: 70px; padding: 2px 4px;
+        background: #0c0c12; color: #ddd;
+        border: 1px solid #2a2a38; border-radius: 2px; font-size: 11px;
+    }
+
+    /* ------- Scrollbars ------- */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #1a1a20; }
+    ::-webkit-scrollbar-thumb { background: #3a3a46; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a4a58; }
+
+    kbd { background: #333; padding: 1px 5px; border-radius: 2px; font-family: monospace; font-size: 10px; color: #eee; }
+</style>
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+}
+</script>
+</head>
+<body>
+<div id="app">
+
+<!-- ============ MENU BAR ============ -->
+<div id="menubar">
+    <div class="menu-item" data-menu="file">File
+        <div class="menu-dropdown">
+            <div class="menu-entry" data-act="new">New<span class="shortcut">Ctrl+N</span></div>
+            <div class="menu-entry" data-act="open">Open JSON…<span class="shortcut">Ctrl+O</span></div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-act="save">Save to level.json<span class="shortcut">Ctrl+S</span></div>
+            <div class="menu-entry" data-act="export">Download JSON (fallback)</div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-act="importObj">Import OBJ…</div>
+            <div class="menu-entry" data-act="sample">Load sample</div>
+        </div>
+    </div>
+    <div class="menu-item" data-menu="edit">Edit
+        <div class="menu-dropdown">
+            <div class="menu-entry" data-act="undo">Undo<span class="shortcut">Ctrl+Z</span></div>
+            <div class="menu-entry" data-act="redo">Redo<span class="shortcut">Ctrl+Shift+Z</span></div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-act="duplicate">Duplicate selected<span class="shortcut">Ctrl+D</span></div>
+            <div class="menu-entry" data-act="delete">Delete selected<span class="shortcut">Del</span></div>
+            <div class="menu-entry" data-act="clear">Clear all</div>
+        </div>
+    </div>
+    <div class="menu-item" data-menu="create">Create
+        <div class="menu-dropdown">
+            <div class="menu-entry" data-create="wall">Wall</div>
+            <div class="menu-entry" data-create="rectRoom">Room (drag 4 walls)</div>
+            <div class="menu-entry" data-create="cube">Cube (free 3D)</div>
+            <div class="menu-entry" data-create="sphere">Sphere (low-poly)</div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-create="body">Body (goal)</div>
+            <div class="menu-entry" data-create="soulStart">Soul start</div>
+            <div class="menu-entry" data-create="point">Point (spirit/pickup/sound/smell)</div>
+        </div>
+    </div>
+    <div class="menu-item" data-menu="view">View
+        <div class="menu-dropdown">
+            <div class="menu-entry" data-act="focus">Focus on selected<span class="shortcut">F</span></div>
+            <div class="menu-entry" data-act="resetCam">Reset camera</div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-act="gizmoMove">Move mode<span class="shortcut">G</span></div>
+            <div class="menu-entry" data-act="gizmoRotate">Rotate mode<span class="shortcut">R</span></div>
+            <div class="menu-entry" data-act="gizmoScale">Scale mode<span class="shortcut">S</span></div>
+            <div class="menu-entry" data-act="gizmoRect">Rect mode (XZ scale)<span class="shortcut">T</span></div>
+        </div>
+    </div>
+    <div class="menu-item" data-menu="help">Help
+        <div class="menu-dropdown">
+            <div class="menu-entry" data-act="helpShortcuts">Shortcuts</div>
+            <div class="menu-entry" data-act="helpAbout">About</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TOOLBAR ============ -->
+<div id="toolbar">
+    <div class="tool-group">
+        <button class="tool-btn" data-create="wall">▭ Wall</button>
+        <button class="tool-btn" data-create="rectRoom" title="Drag rectangle to create 4 walls forming a room">⬚ Room</button>
+        <button class="tool-btn" data-create="cube">□ Cube</button>
+        <button class="tool-btn" data-create="sphere">○ Sphere</button>
+    </div>
+    <div class="tool-group">
+        <button class="tool-btn" data-create="body"><span class="color-dot" style="background:#4aff6a"></span>Body</button>
+        <button class="tool-btn" data-create="soulStart"><span class="color-dot" style="background:#f0c36d"></span>Soul start</button>
+    </div>
+    <div class="tool-group">
+        <button class="tool-btn" data-create="point"><span class="color-dot" style="background:#ff9a4a"></span>Point</button>
+    </div>
+    <div class="tool-group">
+        <button class="tool-btn" data-create="wallChain" title="Click points to chain walls. Esc to finish.">📏 Wall chain</button>
+        <button class="tool-btn" data-create="drawPath" title="Select a point, then click floor to add waypoints. Esc to finish.">👣 Draw path</button>
+        <button class="tool-btn" data-create="cutDoor" title="Click on a wall to cut a door at that point">✂ Cut door</button>
+        <label style="font-size:11px; color:#aaa;">w:<input type="number" id="doorWidth" value="1.0" step="0.1" min="0.3" max="5" style="width:48px; margin-left:2px; padding:2px 4px; background:#0c0c12; color:#ddd; border:1px solid #2a2a38;">m</label>
+    </div>
+    <div class="tool-group" style="margin-left:auto;">
+        <button class="tool-btn" data-act="undo" title="Ctrl+Z">↺ Undo</button>
+        <button class="tool-btn" data-act="redo" title="Ctrl+Shift+Z">↻ Redo</button>
+    </div>
+</div>
+
+<!-- ============ HIERARCHY ============ -->
+<div id="hierarchy">
+    <div class="hier-head">Hierarchy</div>
+    <div id="hierList"></div>
+    <div id="assetsBlock">
+        <div class="hier-head">Assets / Models</div>
+        <div id="assetsList"></div>
+        <div style="display:flex; gap:4px; margin: 4px 8px 6px;">
+            <div class="asset-import" id="btnImportObjInline" style="margin:0; flex:1;">⬆ Import OBJ</div>
+            <div class="asset-import" id="btnRescanModels" style="margin:0; flex:1;" title="Load all .obj from ./models/ folder">🔄 Rescan</div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ VIEWPORT ============ -->
+<div id="viewport">
+    <div id="gizmoModes">
+        <button class="gm-btn active" data-gizmo="translate" title="Move (G)">↔ Move</button>
+        <button class="gm-btn" data-gizmo="rotate" title="Rotate (R)">↻ Rotate</button>
+        <button class="gm-btn" data-gizmo="scale" title="Scale (S)">⇆ Scale</button>
+        <button class="gm-btn" data-gizmo="rect" title="Rect — scale in XZ plane (T)">▢ Rect</button>
+    </div>
+    <div id="viewportHint">RMB drag — orbit · MMB — pan · wheel — zoom · drop PNG for underlay</div>
+    <div id="underlayPanel">
+        <div style="color:#f0c36d; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Map underlay</div>
+        <div class="gp-row"><label>width</label><input type="number" id="undW" step="0.5" value="40">m</div>
+        <div class="gp-row"><label>cx</label><input type="number" id="undCX" step="0.5" value="0"></div>
+        <div class="gp-row"><label>cy</label><input type="number" id="undCY" step="0.5" value="0"></div>
+        <div class="gp-row"><label>alpha</label><input type="range" id="undA" min="0" max="1" step="0.05" value="0.55"></div>
+        <div class="gp-row"><label>flipY</label><input type="checkbox" id="undFlipY"></div>
+        <button id="undClear">remove image</button>
+        <div class="hint">Drop a PNG onto the viewport. Saved in browser.</div>
+    </div>
+    <div id="gridPanel">
+        <div style="color:#f0c36d; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">Grid</div>
+        <div class="gp-row"><label>size</label><input type="number" id="gridSize" min="20" max="2000" step="20" value="400">m</div>
+        <div class="gp-row"><label>cell</label><input type="number" id="gridStep" min="0.25" max="10" step="0.25" value="1">m</div>
+        <div class="gp-row"><label>major</label><input type="number" id="gridMajor" min="1" max="50" step="1" value="10">×cell</div>
+        <div style="height:1px; background:#2a2a38; margin:6px 0;"></div>
+        <div style="color:#f0c36d; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">World</div>
+        <div class="gp-row"><label>ceiling</label><input type="number" id="worldCeilH" min="0" max="20" step="0.1" value="3">m</div>
+        <div class="gp-row"><label>show</label><input type="checkbox" id="worldCeilShow" checked></div>
+        <div style="color:#666; font-size:10px; line-height:1.3; margin-top:3px;">0 = no ceiling. Saved in level.json.</div>
+    </div>
+</div>
+
+<!-- ============ INSPECTOR ============ -->
+<div id="inspector">
+    <div class="inspector-head">Inspector · <b id="selInfo">—</b></div>
+    <div id="selProps"></div>
+</div>
+
+<!-- ============ STATUS BAR ============ -->
+<div id="statusbar">
+    <span id="statMouse">(0, 0, 0)</span>
+    · tool: <b id="statTool">none</b>
+    · entities: <b id="statCount">0</b>
+    · mode: <b id="statMode">translate</b>
+</div>
+
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none">
+<input type="file" id="objInput" accept=".obj" style="display:none">
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const objLoader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
+function parseGLB(buffer) {
+    return new Promise((resolve, reject) => {
+        gltfLoader.parse(buffer, '', g => resolve(g.scene), reject);
+    });
+}
+// Parsed GLB templates kept OUTSIDE state.entities so snapshot() / JSON.stringify() don't choke on THREE objects.
+const glbTemplateByName = new Map();
+function getLibraryTemplate(entry) {
+    if (!entry) return null;
+    const tpl = entry.name && glbTemplateByName.get(entry.name);
+    if (tpl) return tpl.clone(true);
+    if (entry.obj) {
+        try { return objLoader.parse(entry.obj); } catch (e) { return null; }
+    }
+    return null;
+}
+function hasLibraryTemplate(entry) {
+    return !!(entry && (entry.obj || (entry.name && glbTemplateByName.has(entry.name))));
+}
+
+// ========== Scene setup ==========
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+function resize() {
+    const r = viewport.getBoundingClientRect();
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+}
+viewport.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a10);
+
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 800);
+camera.position.set(12, 14, 16);
+camera.lookAt(0, 0, 0);
+
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE };
+orbit.target.set(0, 0, 0);
+orbit.update();
+
+const gizmo = new TransformControls(camera, renderer.domElement);
+gizmo.setSize(0.9);
+gizmo.addEventListener('dragging-changed', (e) => {
+    orbit.enabled = !e.value;
+    if (e.value) snapshot();
+});
+gizmo.addEventListener('objectChange', () => { syncPropsFromGizmo(); render(); });
+scene.add(gizmo.getHelper ? gizmo.getHelper() : gizmo);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+dirLight.position.set(10, 20, 15);
+scene.add(dirLight);
+
+// Two-tier grid (coarse major + fine). Rebuilt when user changes grid settings.
+let majorGrid, fineGrid;
+function rebuildGrid(size, cell, majorMul) {
+    if (majorGrid) { scene.remove(majorGrid); majorGrid.geometry.dispose(); }
+    if (fineGrid) { scene.remove(fineGrid); fineGrid.geometry.dispose(); }
+    const fineDiv = Math.max(1, Math.round(size / cell));
+    const majorDiv = Math.max(1, Math.round(size / (cell * majorMul)));
+    fineGrid = new THREE.GridHelper(size, fineDiv, 0x2a2a36, 0x2a2a36);
+    fineGrid.position.y = -0.001;
+    scene.add(fineGrid);
+    majorGrid = new THREE.GridHelper(size, majorDiv, 0x4a4a60, 0x4a4a60);
+    scene.add(majorGrid);
+}
+rebuildGrid(400, 1, 10);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshBasicMaterial({ visible: false }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+scene.add(new THREE.AxesHelper(2));
+
+resize();
+window.addEventListener('resize', resize);
+
+// ========== State ==========
+const state = {
+    gizmoMode: 'translate',
+    entities: { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: {} },
+    selected: null,
+    meshes: new Map(),
+    history: [],
+    redoStack: [],
+    maxHistory: 100,
+};
+let idCounter = 1;
+const nextId = () => idCounter++;
+
+// ---- Unified-point schema + legacy migration ----
+function blankPoint(x, y) {
+    return {
+        x, y, label: '', r: 0.5, scale: 1, modelName: '',
+        hostile: false, pickup: false,
+        trigger: null,   // null | { radius, effect: 'kill'|'heal'|'win' }
+        pulse: null, sound: null, smell: null, patrol: null,
+    };
+}
+function migrateLegacyPoint(p) {
+    // Legacy killRadius (before trigger feature) → kill-trigger.
+    if (p.killRadius && !p.trigger) {
+        p.trigger = { radius: p.killRadius, effect: 'kill' };
+    }
+    delete p.killRadius;
+    return p;
+}
+function migrateSpirit(s) {
+    const wps = (s.waypoints || []).map(w => Array.isArray(w) ? [w[0], w[1]] : [w.x, w.y]);
+    return {
+        x: s.x, y: s.y, label: s.label || '', r: s.r ?? 0.7, scale: s.scale ?? 1, modelName: s.modelName || '',
+        hostile: s.hostile !== false, pickup: false,
+        pulse: { period: s.period ?? 2.8 },
+        sound: null, smell: null,
+        patrol: wps.length ? { waypoints: wps, speed: s.speed ?? 1, turnRate: s.turnRate ?? 2 } : null,
+    };
+}
+function migratePickup(s) {
+    return { ...blankPoint(s.x, s.y), label: s.label || '', r: s.r ?? 0.5, scale: s.scale ?? 1, modelName: s.modelName || '', pickup: true };
+}
+function migrateSound(s) {
+    return { ...blankPoint(s.x, s.y), label: s.label || '', r: s.r ?? 0.4, scale: s.scale ?? 1, modelName: s.modelName || '', sound: { period: s.period ?? 3.0 } };
+}
+function migrateSmell(s) {
+    return { ...blankPoint(s.cx, s.cy), label: s.label || '', r: s.r ?? 0.5, scale: s.scale ?? 1, modelName: s.modelName || '',
+        smell: { radius: s.radius ?? 1.5, color: s.color || '#4aaaff' } };
+}
+function loadPointsFromData(data) {
+    for (const x of data.spirits || []) addEntityNoSnapshot('point', migrateSpirit(x));
+    for (const x of data.pickups || []) addEntityNoSnapshot('point', migratePickup(x));
+    for (const x of data.sounds  || []) addEntityNoSnapshot('point', migrateSound(x));
+    for (const x of data.smells  || []) addEntityNoSnapshot('point', migrateSmell(x));
+    for (const x of data.points  || []) addEntityNoSnapshot('point', migrateLegacyPoint({ ...blankPoint(x.x, x.y), ...x }));
+}
+
+// ========== Undo/Redo ==========
+function snapshot() {
+    state.history.push(JSON.stringify(state.entities));
+    if (state.history.length > state.maxHistory) state.history.shift();
+    state.redoStack.length = 0;
+}
+function restoreFromJSON(json) {
+    const data = JSON.parse(json);
+    const selectedIdBefore = state.selected?.id ?? null;
+    for (const obj of state.meshes.values()) scene.remove(obj);
+    state.meshes.clear();
+    clearAllWaypointOverlays();
+    gizmo.detach();
+    state.entities = { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: {}, ceilingHeight: data.ceilingHeight ?? 3 };
+    refreshWorldControls();
+    state.selected = null;
+    if (data.soulStart) addEntityNoSnapshot('soulStart', data.soulStart);
+    if (data.body) addEntityNoSnapshot('body', data.body);
+    for (const x of data.walls || []) addEntityNoSnapshot('wall', x);
+    for (const x of data.cubes || []) addEntityNoSnapshot('cube', x);
+    for (const x of data.spheres || []) addEntityNoSnapshot('sphere', x);
+    loadPointsFromData(data);
+    for (const x of data.models || []) addEntityNoSnapshot('model', x);
+    state.entities.modelLibrary = data.modelLibrary || {};
+    updateAssets();
+    if (selectedIdBefore && state.meshes.has(selectedIdBefore)) selectById(selectedIdBefore);
+    else { updateInspector(); updateHierarchy(); }
+    updateStatus();
+    render();
+}
+function undo() {
+    if (!state.history.length) return;
+    state.redoStack.push(JSON.stringify(state.entities));
+    restoreFromJSON(state.history.pop());
+}
+function redo() {
+    if (!state.redoStack.length) return;
+    state.history.push(JSON.stringify(state.entities));
+    restoreFromJSON(state.redoStack.pop());
+}
+
+// ========== Materials ==========
+const M = {
+    wall:   new THREE.MeshLambertMaterial({ color: 0x4a5a8a, transparent: true, opacity: 0.78 }),
+    cube:   new THREE.MeshLambertMaterial({ color: 0x8a7a9a, transparent: true, opacity: 0.78 }),
+    sphere: new THREE.MeshLambertMaterial({ color: 0x7a9a8a, transparent: true, opacity: 0.78 }),
+    body:   new THREE.MeshBasicMaterial({ color: 0x4aff6a }),
+    soul:   new THREE.MeshBasicMaterial({ color: 0xf0c36d }),
+    spirit: new THREE.MeshBasicMaterial({ color: 0xff4a4a }),
+    pickup: new THREE.MeshBasicMaterial({ color: 0xffdd4a }),
+    sound:  new THREE.MeshBasicMaterial({ color: 0xcbb14a }),
+};
+
+const KIND_LABEL = {
+    wall: 'Wall', cube: 'Cube', sphere: 'Sphere', body: 'Body', soulStart: 'Soul start',
+    point: 'Point', model: 'Model',
+};
+const KIND_COLOR = {
+    wall: '#6a88c8', cube: '#8a7a9a', sphere: '#7a9a8a',
+    body: '#4aff6a', soulStart: '#f0c36d',
+    point: '#ff9a4a', model: '#d0d0f0',
+};
+
+// ========== Mesh builders ==========
+function pointBadgeColor(data) {
+    if (data.hostile) return 0xff4a4a;
+    if (data.pickup) return 0xffdd4a;
+    if (data.sound) return 0xcbb14a;
+    if (data.smell) return 0x4aaaff;
+    return 0xff9a4a;
+}
+function buildPointMesh(data) {
+    const g = new THREE.Group();
+    const col = pointBadgeColor(data);
+    // ── core: OBJ model (if set) or placeholder cone ──
+    const entry = data.modelName ? Object.values(state.entities.modelLibrary || {}).find(e => e.name === data.modelName) : null;
+    const parsed = entry ? getLibraryTemplate(entry) : null;
+    if (parsed) {
+        const grayMat = new THREE.MeshLambertMaterial({ color: 0x9090a0, transparent: true, opacity: 0.82 });
+        parsed.traverse(c => {
+            if (c.isMesh) {
+                c.material = grayMat;
+                const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), new THREE.LineBasicMaterial({ color: 0xffffff }));
+                c.add(edges);
+            }
+        });
+        g.add(parsed);
+    } else {
+        const mat = new THREE.MeshBasicMaterial({ color: col });
+        const body = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 12), mat);
+        body.position.y = 0.45;
+        g.add(body);
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.25, 6), mat);
+        arrow.position.set(0, 0.9, 0.3);
+        arrow.rotation.x = Math.PI / 2;
+        g.add(arrow);
+    }
+    // ── badge marker on top (so you can always click it & see feature color) ──
+    const badge = new THREE.Mesh(new THREE.OctahedronGeometry(0.18), new THREE.MeshBasicMaterial({ color: col }));
+    badge.position.y = 1.7;
+    badge.userData.role = 'pointBadge';
+    g.add(badge);
+    // ── smell halo (translucent sphere) ──
+    if (data.smell) {
+        const hmat = new THREE.MeshBasicMaterial({ color: data.smell.color || '#4aaaff', transparent: true, opacity: 0.22, depthWrite: false });
+        const halo = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), hmat);
+        halo.userData.role = 'smellHalo';
+        g.add(halo);
+    }
+    // ── trigger zone (wireframe sphere, editor-only visual) ──
+    if (data.trigger?.radius > 0) {
+        const r = data.trigger.radius;
+        const kGeom = new THREE.SphereGeometry(r, 16, 12);
+        const kWire = new THREE.WireframeGeometry(kGeom);
+        kGeom.dispose();
+        const kCol = triggerEffectColor(data.trigger.effect);
+        const kMat = new THREE.LineBasicMaterial({ color: kCol, transparent: true, opacity: 0.55, depthTest: false });
+        const tr = new THREE.LineSegments(kWire, kMat);
+        tr.userData.role = 'triggerZone';
+        tr.renderOrder = 5;
+        g.add(tr);
+    }
+    return g;
+}
+function triggerEffectColor(effect) {
+    if (effect === 'win')  return 0xffd030;
+    if (effect === 'heal') return 0x30ff60;
+    return 0xff3030; // kill or default
+}
+function buildMesh(kind, data) {
+    let obj;
+    if (kind === 'wall') {
+        obj = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.wall);
+    } else if (kind === 'cube') {
+        const g = new THREE.Group();
+        const solid = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.cube);
+        g.add(solid);
+        const wire = new THREE.LineSegments(new THREE.EdgesGeometry(solid.geometry), new THREE.LineBasicMaterial({ color: 0xffffff }));
+        g.add(wire);
+        obj = g;
+    } else if (kind === 'sphere') {
+        const g = new THREE.Group();
+        const solid = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 1), M.sphere);
+        g.add(solid);
+        const wire = new THREE.LineSegments(new THREE.WireframeGeometry(solid.geometry), new THREE.LineBasicMaterial({ color: 0xffffff }));
+        g.add(wire);
+        obj = g;
+    } else if (kind === 'body') {
+        obj = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 12), M.body);
+    } else if (kind === 'soulStart') {
+        const g = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 24), M.soul);
+        g.add(base);
+        // direction arrow: points along local +Z (= forward)
+        const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.4, 10), M.soul);
+        arrow.rotation.x = Math.PI / 2;
+        arrow.position.set(0, 0.1, 0.45);
+        g.add(arrow);
+        obj = g;
+    } else if (kind === 'point') {
+        obj = buildPointMesh(data);
+    } else if (kind === 'model') {
+        const group = new THREE.Group();
+        const entry = state.entities.modelLibrary[data.libraryId];
+        const parsed = getLibraryTemplate(entry) || (data.obj ? objLoader.parse(data.obj) : null);
+        if (parsed) {
+            const grayMat = new THREE.MeshLambertMaterial({ color: 0x9090a0, transparent: true, opacity: 0.82 });
+            parsed.traverse(c => {
+                if (c.isMesh) {
+                    c.material = grayMat;
+                    const edges = new THREE.LineSegments(
+                        new THREE.EdgesGeometry(c.geometry, 20),
+                        new THREE.LineBasicMaterial({ color: 0xffffff })
+                    );
+                    c.add(edges);
+                }
+            });
+            group.add(parsed);
+        }
+        obj = group;
+    }
+    obj.userData.kind = kind;
+    obj.userData.id = data.id;
+    return obj;
+}
+
+function syncMeshFromData(kind, data, obj) {
+    if (kind === 'wall') {
+        obj.scale.set(data.w, data.h, data.d);
+        const baseY = data.baseY ?? 0;
+        obj.position.set(data.cx, baseY + data.h / 2, data.cy);
+    } else if (kind === 'cube') {
+        obj.position.set(data.x || 0, data.yWorld ?? 0.5, data.y || 0);
+        obj.rotation.set(data.rx || 0, data.ry || 0, data.rz || 0);
+        obj.scale.set(data.sx ?? 1, data.sy ?? 1, data.sz ?? 1);
+    } else if (kind === 'sphere') {
+        obj.position.set(data.x || 0, data.yWorld ?? 1, data.y || 0);
+        const r = data.radius ?? 0.5;
+        obj.scale.set(r, r, r);
+    } else if (kind === 'body' || kind === 'soulStart') {
+        obj.position.set(data.x, kind === 'soulStart' ? 0.025 : 0.5, data.y);
+        if (kind === 'soulStart') obj.rotation.y = data.yaw || 0;
+    } else if (kind === 'point') {
+        obj.position.set(data.x, 0, data.y);
+        const s = data.scale ?? 1;
+        obj.scale.set(s, s, s);
+        // update badge color (reflects hostile/pickup/sound/smell)
+        const col = pointBadgeColor(data);
+        for (const c of obj.children) {
+            if (c.userData?.role === 'pointBadge' && c.material?.color) c.material.color.setHex(col);
+        }
+        // trigger zone wireframe: add/remove/rescale
+        let tr = obj.children.find(c => c.userData?.role === 'triggerZone');
+        if (data.trigger?.radius > 0) {
+            if (tr) { obj.remove(tr); tr.geometry.dispose(); tr.material.dispose(); }
+            const r = data.trigger.radius;
+            const kGeom = new THREE.SphereGeometry(r, 16, 12);
+            const kWire = new THREE.WireframeGeometry(kGeom);
+            kGeom.dispose();
+            const kCol = triggerEffectColor(data.trigger.effect);
+            const kMat = new THREE.LineBasicMaterial({ color: kCol, transparent: true, opacity: 0.55, depthTest: false });
+            tr = new THREE.LineSegments(kWire, kMat);
+            tr.userData.role = 'triggerZone';
+            tr.renderOrder = 5;
+            obj.add(tr);
+        } else if (tr) {
+            obj.remove(tr); tr.geometry.dispose(); tr.material.dispose();
+        }
+        // smell halo: add/remove/scale
+        let halo = obj.children.find(c => c.userData?.role === 'smellHalo');
+        if (data.smell) {
+            if (!halo) {
+                const hmat = new THREE.MeshBasicMaterial({ color: data.smell.color || '#4aaaff', transparent: true, opacity: 0.22, depthWrite: false });
+                halo = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), hmat);
+                halo.userData.role = 'smellHalo';
+                obj.add(halo);
+            }
+            halo.scale.setScalar(data.smell.radius || 1);
+            halo.position.y = (data.smell.radius || 1) * 0.5;
+            if (halo.material?.color) halo.material.color.set(data.smell.color || '#4aaaff');
+        } else if (halo) {
+            obj.remove(halo); halo.geometry.dispose(); halo.material.dispose();
+        }
+        // rebuild scene-level waypoint overlay (world coords, independent of point group transform)
+        rebuildPointWaypoints(data);
+    } else if (kind === 'model') {
+        obj.position.set(data.x, data.yWorld ?? 0, data.y);
+        obj.rotation.set(data.rx || 0, data.ry || 0, data.rz || 0);
+        const s = data.scale ?? 1;
+        obj.scale.set(s, s, s);
+    }
+}
+function syncDataFromMesh(kind, data, obj) {
+    if (kind === 'wall') {
+        data.w = Math.max(0.1, obj.scale.x);
+        data.h = Math.max(0.1, obj.scale.y);
+        data.d = Math.max(0.1, obj.scale.z);
+        data.cx = obj.position.x;
+        data.cy = obj.position.z;
+        data.baseY = obj.position.y - data.h / 2; // bottom of wall
+    } else if (kind === 'cube') {
+        data.x = obj.position.x;
+        data.y = obj.position.z;
+        data.yWorld = obj.position.y;
+        data.rx = obj.rotation.x; data.ry = obj.rotation.y; data.rz = obj.rotation.z;
+        data.sx = Math.max(0.05, obj.scale.x);
+        data.sy = Math.max(0.05, obj.scale.y);
+        data.sz = Math.max(0.05, obj.scale.z);
+    } else if (kind === 'sphere') {
+        data.x = obj.position.x;
+        data.y = obj.position.z;
+        data.yWorld = obj.position.y;
+        data.radius = Math.max(0.05, (obj.scale.x + obj.scale.y + obj.scale.z) / 3);
+        obj.scale.set(data.radius, data.radius, data.radius);
+    } else if (kind === 'body' || kind === 'soulStart' || kind === 'point') {
+        data.x = obj.position.x;
+        data.y = obj.position.z;
+        obj.position.y = kind === 'soulStart' ? 0.025 : (kind === 'body' ? 0.5 : 0);
+        if (kind === 'soulStart') data.yaw = obj.rotation.y;
+        if (kind === 'point') {
+            data.scale = Math.max(0.05, (obj.scale.x + obj.scale.y + obj.scale.z) / 3);
+            updateWaypointLineOnly(data);
+        }
+    } else if (kind === 'model') {
+        data.x = obj.position.x;
+        data.y = obj.position.z;
+        data.yWorld = obj.position.y;
+        data.rx = obj.rotation.x;
+        data.ry = obj.rotation.y;
+        data.rz = obj.rotation.z;
+        data.scale = (obj.scale.x + obj.scale.y + obj.scale.z) / 3;
+    }
+}
+
+// ========== Entity CRUD ==========
+function addEntity(kind, data) {
+    snapshot();
+    return addEntityNoSnapshot(kind, data);
+}
+function addEntityNoSnapshot(kind, data) {
+    if (!data.id) data.id = nextId();
+    else if (data.id >= idCounter) idCounter = data.id + 1;
+    if (kind === 'body' || kind === 'soulStart') {
+        if (state.entities[kind]) removeEntityNoSnapshot(kind, state.entities[kind].id);
+        state.entities[kind] = data;
+    } else {
+        state.entities[kind + 's'].push(data);
+    }
+    const obj = buildMesh(kind, data);
+    syncMeshFromData(kind, data, obj);
+    scene.add(obj);
+    if (data._hidden) obj.visible = false;
+    state.meshes.set(data.id, obj);
+    updateStatus();
+    updateHierarchy();
+    if (kind === 'model') updateAssets();
+    render();
+    return { kind, data, obj };
+}
+function removeEntity(kind, id) { snapshot(); removeEntityNoSnapshot(kind, id); }
+function removeEntityNoSnapshot(kind, id) {
+    if (kind === 'point') clearPointWaypoints(id);
+    const obj = state.meshes.get(id);
+    if (obj) {
+        if (gizmo.object === obj) gizmo.detach();
+        scene.remove(obj);
+        state.meshes.delete(id);
+    }
+    if (kind === 'body' || kind === 'soulStart') state.entities[kind] = null;
+    else {
+        const arr = state.entities[kind + 's'];
+        const i = arr.findIndex(e => e.id === id);
+        if (i >= 0) arr.splice(i, 1);
+    }
+    if (state.selected?.id === id) state.selected = null;
+    updateInspector();
+    updateHierarchy();
+    updateStatus();
+    if (kind === 'model') updateAssets();
+}
+
+function selectById(id) {
+    const obj = state.meshes.get(id);
+    if (!obj) return;
+    const kind = obj.userData.kind;
+    const data = findData(kind, id);
+    state.selected = { kind, id, data, obj };
+    gizmo.attach(obj);
+    setGizmoMode(state.gizmoMode);
+    updateInspector();
+    updateHierarchy();
+    render();
+}
+function deselect() {
+    gizmo.detach();
+    state.selected = null;
+    hideRectHandles();
+    updateInspector();
+    updateHierarchy();
+}
+function findData(kind, id) {
+    if (kind === 'body') return state.entities.body;
+    if (kind === 'soulStart') return state.entities.soulStart;
+    return state.entities[kind + 's'].find(e => e.id === id);
+}
+// Waypoint overlays live at scene root (world coords), independent of the point mesh.
+// Map<pointId, { line, spheres[] }>
+const wpOverlays = new Map();
+function clearPointWaypoints(pointId) {
+    const o = wpOverlays.get(pointId);
+    if (!o) return;
+    scene.remove(o.line); o.line.geometry.dispose(); o.line.material.dispose();
+    for (const s of o.spheres) { scene.remove(s); s.geometry.dispose(); s.material.dispose(); }
+    wpOverlays.delete(pointId);
+}
+function clearAllWaypointOverlays() {
+    for (const id of [...wpOverlays.keys()]) clearPointWaypoints(id);
+}
+const WP_Y = 0.05; // overlay drawn on the floor
+function rebuildPointWaypoints(data) {
+    clearPointWaypoints(data.id);
+    const wps = data.patrol?.waypoints;
+    if (!wps || wps.length === 0) return;
+    const col = data.hostile ? 0xff4a4a : 0xffd060;
+    const pts = [new THREE.Vector3(data.x, WP_Y, data.y)];
+    for (const wp of wps) pts.push(new THREE.Vector3(wp[0], WP_Y, wp[1]));
+    pts.push(new THREE.Vector3(data.x, WP_Y, data.y));
+    const lineGeom = new THREE.BufferGeometry().setFromPoints(pts);
+    const line = new THREE.Line(lineGeom, new THREE.LineBasicMaterial({ color: col, depthTest: false, transparent: true, opacity: 0.85 }));
+    line.renderOrder = 8;
+    scene.add(line);
+    const spheres = [];
+    for (let i = 0; i < wps.length; i++) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.04, 12), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.9, depthTest: false }));
+        m.position.set(wps[i][0], WP_Y + 0.02, wps[i][1]);
+        m.renderOrder = 9;
+        scene.add(m);
+        spheres.push(m);
+    }
+    wpOverlays.set(data.id, { line, spheres });
+}
+function updateWaypointLineOnly(data) {
+    rebuildPointWaypoints(data);
+}
+// Alias preserved for any lingering callers
+function updateWaypointLine(data) { updateWaypointLineOnly(data); }
+function syncPropsFromGizmo() {
+    if (!state.selected) return;
+    const { kind, data, obj } = state.selected;
+    syncDataFromMesh(kind, data, obj);
+    updateInspector(true);
+}
+
+// ========== Hierarchy UI ==========
+// Collapsed state of asset category groups, persisted across updateAssets calls.
+const assetGroupOpen = new Set();
+function assetCategoryOf(name) {
+    const m = /^([A-Za-z]+)_/.exec(name || '');
+    return m ? m[1] : 'Other';
+}
+function updateAssets() {
+    const host = document.getElementById('assetsList');
+    host.innerHTML = '';
+    const lib = state.entities.modelLibrary || {};
+    const ids = Object.keys(lib);
+    if (!ids.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding: 12px 10px; color:#555; font-style:italic; font-size:11px;';
+        empty.textContent = 'No models. Import an .obj file.';
+        host.appendChild(empty);
+        return;
+    }
+    // Group ids by category prefix (e.g. NPC_Foo.obj → "NPC"). First group open by default on first render.
+    const buckets = new Map();
+    for (const id of ids) {
+        const cat = assetCategoryOf(lib[id].name);
+        if (!buckets.has(cat)) buckets.set(cat, []);
+        buckets.get(cat).push(id);
+    }
+    const sortedCats = [...buckets.keys()].sort();
+    if (assetGroupOpen.size === 0 && sortedCats.length) assetGroupOpen.add(sortedCats[0]);
+    for (const cat of sortedCats) {
+        const groupIds = buckets.get(cat);
+        const groupEl = document.createElement('div');
+        groupEl.className = 'asset-group' + (assetGroupOpen.has(cat) ? ' open' : '');
+        const head = document.createElement('div');
+        head.className = 'asset-group-head';
+        head.innerHTML = `<span class="arr">▸</span><span>${cat}</span><span class="count">${groupIds.length}</span>`;
+        head.addEventListener('click', () => {
+            if (assetGroupOpen.has(cat)) assetGroupOpen.delete(cat);
+            else assetGroupOpen.add(cat);
+            groupEl.classList.toggle('open');
+        });
+        groupEl.appendChild(head);
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'asset-group-body';
+        groupEl.appendChild(bodyEl);
+        host.appendChild(groupEl);
+        for (const id of groupIds) renderAssetRow(id, lib[id], bodyEl);
+    }
+    // hint about folder
+    const hint = document.createElement('div');
+    hint.style.cssText = 'padding: 6px 10px 4px; color: #666; font-size: 10px; line-height: 1.4;';
+    hint.innerHTML = 'Export keeps only <b>name + path</b>. Put .obj/.glb files in <code>models/</code> folder next to index.html for the game.';
+    host.appendChild(hint);
+}
+
+function renderAssetRow(id, entry, host) {
+    {
+        const instances = state.entities.models.filter(m => m.libraryId === id).length;
+        const row = document.createElement('div');
+        row.className = 'asset-item';
+        const name = document.createElement('span');
+        name.className = 'asset-name';
+        name.title = entry.path || entry.name;
+        const loaded = hasLibraryTemplate(entry);
+        name.innerHTML = `${loaded ? '' : '<span style="color:#c44;">⚠ </span>'}${entry.name} ×${instances}`;
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'asset-btn';
+        dlBtn.textContent = '⬇';
+        dlBtn.title = 'Download this .obj so you can place it in models/ folder';
+        dlBtn.addEventListener('click', () => {
+            if (!entry.obj) { alert('OBJ content not loaded'); return; }
+            const blob = new Blob([entry.obj], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = entry.name;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+        const previewBtn = document.createElement('button');
+        previewBtn.className = 'asset-btn';
+        previewBtn.textContent = '👁';
+        previewBtn.title = 'Preview model';
+        previewBtn.disabled = !loaded;
+        previewBtn.addEventListener('click', () => showModelPreview(id));
+        const addBtn = document.createElement('button');
+        addBtn.className = 'asset-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'Spawn instance at origin';
+        addBtn.disabled = !loaded;
+        addBtn.addEventListener('click', () => spawnModelInstance(id));
+        const delBtn = document.createElement('button');
+        delBtn.className = 'asset-btn danger';
+        delBtn.textContent = '×';
+        delBtn.title = 'Remove from library (and all instances)';
+        delBtn.addEventListener('click', () => {
+            if (instances > 0 && !confirm(`Remove "${entry.name}" and its ${instances} instance(s)?`)) return;
+            snapshot();
+            for (const inst of [...state.entities.models]) {
+                if (inst.libraryId === id) removeEntityNoSnapshot('model', inst.id);
+            }
+            delete state.entities.modelLibrary[id];
+            updateAssets();
+            updateHierarchy();
+        });
+        row.appendChild(name);
+        row.appendChild(previewBtn);
+        row.appendChild(dlBtn);
+        row.appendChild(addBtn);
+        row.appendChild(delBtn);
+        host.appendChild(row);
+    }
+}
+
+function updateHierarchy() {
+    const host = document.getElementById('hierList');
+    host.innerHTML = '';
+    const e = state.entities;
+    const singles = [];
+    if (e.soulStart) singles.push({ kind: 'soulStart', data: e.soulStart });
+    if (e.body) singles.push({ kind: 'body', data: e.body });
+    if (singles.length) addHierGroup(host, 'Singletons', singles);
+    if (e.walls.length) addHierGroup(host, 'Walls', e.walls.map(d => ({ kind: 'wall', data: d })));
+    if (e.cubes.length) addHierGroup(host, 'Cubes', e.cubes.map(d => ({ kind: 'cube', data: d })));
+    if (e.spheres.length) addHierGroup(host, 'Spheres', e.spheres.map(d => ({ kind: 'sphere', data: d })));
+    if (e.points.length) addHierGroup(host, 'Points', e.points.map(d => ({ kind: 'point', data: d })));
+    if (e.models.length) addHierGroup(host, 'Models', e.models.map(d => ({ kind: 'model', data: d })));
+    if (!host.children.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:20px 10px; color:#555; font-style:italic;';
+        empty.textContent = 'Empty scene. Use Create menu or toolbar.';
+        host.appendChild(empty);
+    }
+}
+const hierCollapsed = (() => {
+    try { return new Set(JSON.parse(localStorage.getItem('ld59_hier_collapsed') || '[]')); }
+    catch (e) { return new Set(); }
+})();
+function saveHierCollapsed() {
+    try { localStorage.setItem('ld59_hier_collapsed', JSON.stringify([...hierCollapsed])); } catch (e) {}
+}
+// Default: all groups start collapsed on first load (no saved state)
+function defaultHierCollapsed(title) {
+    if (hierCollapsed.size === 0 && !localStorage.getItem('ld59_hier_collapsed')) return true;
+    return hierCollapsed.has(title);
+}
+function addHierGroup(host, title, items) {
+    const group = document.createElement('div');
+    group.className = 'hier-group';
+    const th = document.createElement('div');
+    th.className = 'hier-group-title';
+    th.style.cursor = 'pointer';
+    th.style.userSelect = 'none';
+    const collapsed = defaultHierCollapsed(title);
+    if (collapsed) { hierCollapsed.add(title); saveHierCollapsed(); }
+    const chevron = collapsed ? '▸' : '▾';
+    th.textContent = `${chevron} ${title} (${items.length})`;
+    th.addEventListener('click', () => {
+        if (hierCollapsed.has(title)) hierCollapsed.delete(title);
+        else hierCollapsed.add(title);
+        saveHierCollapsed();
+        updateHierarchy();
+    });
+    group.appendChild(th);
+    if (collapsed) { host.appendChild(group); return; }
+    for (const { kind, data } of items) {
+        const row = document.createElement('div');
+        row.className = 'hier-item';
+        if (state.selected?.id === data.id) row.classList.add('selected');
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.style.background = KIND_COLOR[kind];
+        row.appendChild(dot);
+        const label = document.createElement('span');
+        label.style.flex = '1';
+        const pos = 'x' in data ? `(${data.x.toFixed(1)}, ${data.y.toFixed(1)})` : `(${data.cx.toFixed(1)}, ${data.cy.toFixed(1)})`;
+        label.textContent = data.label ? `${KIND_LABEL[kind]} "${data.label}" ${pos}` : `${KIND_LABEL[kind]} ${pos}`;
+        row.appendChild(label);
+        const eye = document.createElement('span');
+        eye.className = 'hier-eye';
+        eye.textContent = data._hidden ? '🚫' : '👁';
+        eye.title = data._hidden ? 'Show in editor' : 'Hide in editor (save keeps visible)';
+        eye.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            data._hidden = !data._hidden;
+            const obj = state.meshes.get(data.id);
+            if (obj) obj.visible = !data._hidden;
+            updateHierarchy();
+            render();
+        });
+        row.appendChild(eye);
+        row.addEventListener('click', () => selectById(data.id));
+        group.appendChild(row);
+    }
+    host.appendChild(group);
+}
+
+// ---- Point inspector: model dropdown + feature toggles ----
+function buildPointInspector(box, data) {
+    const kind = 'point';
+    const refresh = () => { syncMeshFromData(kind, data, state.selected.obj); updateHierarchy(); render(); };
+    const rebuildMesh = () => {
+        // badge color / smell halo update is cheap; but when modelName changes we need full rebuild
+        const old = state.selected.obj;
+        scene.remove(old);
+        const fresh = buildMesh(kind, data);
+        syncMeshFromData(kind, data, fresh);
+        scene.add(fresh);
+        state.meshes.set(data.id, fresh);
+        state.selected.obj = fresh;
+        gizmo.attach(fresh);
+        render();
+    };
+
+    // ── Model dropdown ──
+    const mRow = document.createElement('div'); mRow.className = 'prop-row';
+    const mLab = document.createElement('label'); mLab.textContent = 'model';
+    const mSel = document.createElement('select');
+    const optEmpty = document.createElement('option'); optEmpty.value = ''; optEmpty.textContent = '(none)';
+    mSel.appendChild(optEmpty);
+    for (const entry of Object.values(state.entities.modelLibrary || {})) {
+        const opt = document.createElement('option'); opt.value = entry.name; opt.textContent = entry.name;
+        mSel.appendChild(opt);
+    }
+    mSel.value = data.modelName || '';
+    mSel.addEventListener('change', () => { snapshot(); data.modelName = mSel.value; rebuildMesh(); });
+    mRow.appendChild(mLab); mRow.appendChild(mSel); box.appendChild(mRow);
+
+    // ── Helpers for feature toggles ──
+    const addToggle = (labelTxt, getVal, setVal) => {
+        const row = document.createElement('div'); row.className = 'prop-row';
+        const lab = document.createElement('label'); lab.textContent = labelTxt;
+        const inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = !!getVal();
+        inp.addEventListener('change', () => { snapshot(); setVal(inp.checked); updateInspector(); refresh(); });
+        row.appendChild(lab); row.appendChild(inp); box.appendChild(row);
+    };
+    const addNumField = (labelTxt, get, set, step = 0.1) => {
+        const row = document.createElement('div'); row.className = 'prop-row';
+        row.style.paddingLeft = '16px';
+        const lab = document.createElement('label'); lab.textContent = labelTxt;
+        const inp = document.createElement('input'); inp.type = 'number'; inp.step = step; inp.value = get();
+        inp.addEventListener('focus', () => snapshot());
+        inp.addEventListener('input', () => { set(parseFloat(inp.value) || 0); refresh(); });
+        row.appendChild(lab); row.appendChild(inp); box.appendChild(row);
+    };
+    const addColorField = (labelTxt, get, set) => {
+        const row = document.createElement('div'); row.className = 'prop-row';
+        row.style.paddingLeft = '16px';
+        const lab = document.createElement('label'); lab.textContent = labelTxt;
+        const inp = document.createElement('input'); inp.type = 'color'; inp.value = get();
+        inp.addEventListener('focus', () => snapshot());
+        inp.addEventListener('input', () => { set(inp.value); refresh(); });
+        row.appendChild(lab); row.appendChild(inp); box.appendChild(row);
+    };
+    const sectionTitle = (txt) => {
+        const t = document.createElement('div');
+        t.style.cssText = 'margin:8px 0 2px; color:#c9d9ff; font-size:11px; font-weight:600;';
+        t.textContent = txt;
+        box.appendChild(t);
+    };
+
+    // ── Contact features ──
+    sectionTitle('Contact');
+    addToggle('hostile', () => data.hostile, v => data.hostile = v);
+    addToggle('pickup',  () => data.pickup,  v => data.pickup  = v);
+
+    // ── Trigger zone (kill / heal / win) ──
+    sectionTitle('Trigger zone');
+    addToggle('enabled', () => !!data.trigger, v => { data.trigger = v ? { radius: 1.5, effect: 'kill' } : null; updateInspector(); });
+    if (data.trigger) {
+        addNumField('radius', () => data.trigger.radius, v => data.trigger.radius = v, 0.1);
+        const row = document.createElement('div'); row.className = 'prop-row'; row.style.paddingLeft = '16px';
+        const lab = document.createElement('label'); lab.textContent = 'effect';
+        const sel = document.createElement('select');
+        for (const e of ['kill', 'heal', 'win']) {
+            const o = document.createElement('option'); o.value = e; o.textContent = e;
+            sel.appendChild(o);
+        }
+        sel.value = data.trigger.effect || 'kill';
+        sel.addEventListener('change', () => { snapshot(); data.trigger.effect = sel.value; refresh(); });
+        row.appendChild(lab); row.appendChild(sel); box.appendChild(row);
+    }
+
+    // ── Pulse (self-visibility echo) ──
+    sectionTitle('Pulse (self-echo)');
+    addToggle('enabled', () => !!data.pulse, v => { data.pulse = v ? { period: 2.8, color: '' } : null; updateInspector(); });
+    if (data.pulse) {
+        addNumField('period', () => data.pulse.period, v => data.pulse.period = v, 0.25);
+        addColorField('color', () => data.pulse.color || '#ff3030', v => data.pulse.color = v);
+    }
+
+    // ── Sound ──
+    sectionTitle('Sound (yellow, fades)');
+    addToggle('enabled', () => !!data.sound, v => data.sound = v ? { period: 3.0 } : null);
+    if (data.sound) {
+        addNumField('period', () => data.sound.period, v => data.sound.period = v, 0.25);
+    }
+
+    // ── Smell ──
+    sectionTitle('Smell (vapor cloud)');
+    addToggle('enabled', () => !!data.smell, v => data.smell = v ? { radius: 1.5, color: '#4aaaff' } : null);
+    if (data.smell) {
+        addNumField('radius', () => data.smell.radius, v => data.smell.radius = v, 0.1);
+        addColorField('color', () => data.smell.color, v => data.smell.color = v);
+    }
+
+    // ── Patrol ──
+    sectionTitle('Patrol');
+    addToggle('enabled', () => !!data.patrol, v => data.patrol = v ? { waypoints: [], speed: 1, turnRate: 2, loop: true, loopDelay: 2 } : null);
+    if (data.patrol) {
+        addNumField('speed',    () => data.patrol.speed,    v => data.patrol.speed = v, 0.1);
+        addNumField('turnRate', () => data.patrol.turnRate, v => data.patrol.turnRate = v, 0.2);
+        addToggle('loop', () => data.patrol.loop !== false, v => { data.patrol.loop = v; updateInspector(); });
+        if (data.patrol.loop !== false) {
+            addNumField('loop delay (s)', () => data.patrol.loopDelay ?? 0, v => data.patrol.loopDelay = v, 0.25);
+        }
+        const wLab = document.createElement('div');
+        wLab.style.cssText = 'margin:4px 0 2px 16px; color:#aab; font-size:11px;';
+        wLab.textContent = 'Waypoints';
+        box.appendChild(wLab);
+        const wps = data.patrol.waypoints;
+        for (let i = 0; i < wps.length; i++) {
+            const wp = wps[i];
+            const r = document.createElement('div'); r.className = 'prop-row'; r.style.gap = '4px'; r.style.paddingLeft = '16px';
+            const idx = document.createElement('span'); idx.textContent = '#' + i; idx.style.minWidth = '20px';
+            const xi = document.createElement('input'); xi.type = 'number'; xi.step = '0.25'; xi.value = wp[0]; xi.style.width = '56px';
+            const yi = document.createElement('input'); yi.type = 'number'; yi.step = '0.25'; yi.value = wp[1]; yi.style.width = '56px';
+            const upd = () => { wp[0] = parseFloat(xi.value) || 0; wp[1] = parseFloat(yi.value) || 0; refresh(); };
+            xi.addEventListener('focus', () => snapshot()); yi.addEventListener('focus', () => snapshot());
+            xi.addEventListener('input', upd); yi.addEventListener('input', upd);
+            const del = document.createElement('button'); del.textContent = '✕'; del.style.cssText = 'padding:2px 6px;';
+            del.addEventListener('click', () => { snapshot(); wps.splice(i, 1); updateInspector(); refresh(); });
+            r.appendChild(idx); r.appendChild(xi); r.appendChild(yi); r.appendChild(del);
+            box.appendChild(r);
+        }
+        const addWp = document.createElement('button');
+        addWp.textContent = '+ Add waypoint';
+        addWp.style.cssText = 'width:calc(100% - 16px); margin:4px 0 4px 16px; padding:4px; background:#2a3a55; color:#c9d9ff; border:1px solid #445; cursor:pointer;';
+        addWp.addEventListener('click', () => {
+            snapshot();
+            const last = wps[wps.length - 1];
+            const nx = last ? last[0] + 1 : data.x + 1;
+            const ny = last ? last[1] : data.y;
+            wps.push([nx, ny]);
+            updateInspector(); refresh();
+        });
+        box.appendChild(addWp);
+    }
+}
+
+// ========== Inspector UI ==========
+function updateInspector(keepFocus) {
+    const info = document.getElementById('selInfo');
+    const box = document.getElementById('selProps');
+    if (keepFocus && state.selected) {
+        for (const inp of box.querySelectorAll('input[data-key]')) {
+            const k = inp.dataset.key;
+            if (inp.type !== 'color' && inp.type !== 'text' && document.activeElement !== inp) {
+                let v = state.selected.data[k];
+                if (inp.dataset.unit === 'deg' && typeof v === 'number') v = v * 180 / Math.PI;
+                if (typeof v === 'number') inp.value = Number(v.toFixed(2));
+            }
+        }
+        return;
+    }
+    box.innerHTML = '';
+    if (!state.selected) { info.textContent = '—'; return; }
+    const { kind, data } = state.selected;
+    info.textContent = `${KIND_LABEL[kind]}${data.id ? ' #' + data.id : ''}`;
+    const fields = getFields(kind, data);
+    for (const f of fields) {
+        const row = document.createElement('div');
+        row.className = 'prop-row';
+        const lab = document.createElement('label');
+        lab.textContent = f.key;
+        const inp = document.createElement('input');
+        inp.dataset.key = f.key;
+        inp.type = f.type || 'number';
+        if (f.step) inp.step = f.step;
+        if (f.unit) inp.dataset.unit = f.unit;
+        // initial value (convert rad→deg for deg-unit fields)
+        let initVal = data[f.key] ?? '';
+        if (f.unit === 'deg' && typeof initVal === 'number') initVal = Number((initVal * 180 / Math.PI).toFixed(2));
+        inp.value = initVal;
+        inp.addEventListener('focus', () => snapshot());
+        inp.addEventListener('input', () => {
+            if (f.type === 'text' || f.type === 'color') data[f.key] = inp.value;
+            else if (f.unit === 'deg') data[f.key] = (parseFloat(inp.value) || 0) * Math.PI / 180;
+            else data[f.key] = parseFloat(inp.value) || 0;
+            syncMeshFromData(kind, data, state.selected.obj);
+            updateHierarchy();
+            render();
+        });
+        row.appendChild(lab); row.appendChild(inp);
+        if (f.unit) { const u = document.createElement('span'); u.textContent = f.unit; u.style.color = '#777'; u.style.fontSize = '10px'; row.appendChild(u); }
+        box.appendChild(row);
+    }
+
+    // ---- Point-specific UI: modelName + feature toggles ----
+    if (kind === 'point') buildPointInspector(box, data);
+
+    const rm = document.createElement('button');
+    rm.className = 'inspector-btn';
+    rm.textContent = 'Delete';
+    rm.addEventListener('click', () => { removeEntity(kind, state.selected.id); });
+    box.appendChild(rm);
+}
+function getFields(kind, data) {
+    const f = [];
+    if ('name' in data) f.push({ key: 'name', type: 'text' });
+    if ('label' in data) f.push({ key: 'label', type: 'text' });
+    if ('x' in data) f.push({ key: 'x', step: 0.25 }, { key: 'y', step: 0.25 });
+    if ('yWorld' in data) f.push({ key: 'yWorld', step: 0.25 });
+    if ('cx' in data) f.push({ key: 'cx', step: 0.25 }, { key: 'cy', step: 0.25 });
+    if ('w' in data) f.push({ key: 'w', step: 0.25 }, { key: 'd', step: 0.25 });
+    if ('h' in data) f.push({ key: 'h', step: 0.1 });
+    if ('baseY' in data) f.push({ key: 'baseY', step: 0.1 });
+    if ('sx' in data) f.push({ key: 'sx', step: 0.1 }, { key: 'sy', step: 0.1 }, { key: 'sz', step: 0.1 });
+    if ('r' in data) f.push({ key: 'r', step: 0.05 });
+    if ('radius' in data) f.push({ key: 'radius', step: 0.1 });
+    if ('rx' in data) f.push({ key: 'rx', step: 5, unit: 'deg' }, { key: 'ry', step: 5, unit: 'deg' }, { key: 'rz', step: 5, unit: 'deg' });
+    if ('yaw' in data) f.push({ key: 'yaw', step: 5, unit: 'deg' });
+    if ('scale' in data) f.push({ key: 'scale', step: 0.1 });
+    if ('period' in data) f.push({ key: 'period', step: 0.25 });
+    if ('speed' in data) f.push({ key: 'speed', step: 0.1 });
+    if ('turnRate' in data) f.push({ key: 'turnRate', step: 0.2 });
+    if ('color' in data) f.push({ key: 'color', type: 'color' });
+    return f;
+}
+
+// ========== Status ==========
+function updateStatus() {
+    const e = state.entities;
+    const n = (e.soulStart ? 1 : 0) + (e.body ? 1 : 0) + e.walls.length + e.cubes.length + e.spheres.length + e.points.length + e.models.length;
+    document.getElementById('statCount').textContent = n;
+}
+
+// ========== Creation state (pending-add on click) ==========
+let pendingCreate = null;
+function setCreate(kind) {
+    pendingCreate = kind;
+    document.getElementById('statTool').textContent = kind ? 'add ' + kind : 'none';
+    for (const b of document.querySelectorAll('[data-create]')) {
+        b.classList.toggle('active', b.dataset.create === kind);
+    }
+}
+
+// ========== Viewport interaction ==========
+const raycaster = new THREE.Raycaster();
+const mouseNDC = new THREE.Vector2();
+function pick(eX, eY) {
+    const r = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((eX - r.left) / r.width) * 2 - 1;
+    mouseNDC.y = -((eY - r.top) / r.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    const objs = [...state.meshes.values()];
+    const hits = raycaster.intersectObjects(objs, true);
+    if (hits.length) {
+        let o = hits[0].object;
+        while (o && !o.userData.id) o = o.parent;
+        if (o) return { obj: o, point: hits[0].point };
+    }
+    const gHits = raycaster.intersectObject(ground);
+    if (gHits.length) return { obj: null, point: gHits[0].point };
+    return null;
+}
+const snap = (v) => Math.round(v * 4) / 4;
+
+// Rect-drag preview mesh
+let rectDragStart = null;
+let rectPreview = null;
+function ensureRectPreview() {
+    if (rectPreview) return;
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(15), 3));
+    rectPreview = new THREE.LineLoop(geom, new THREE.LineBasicMaterial({ color: 0xf0c36d, transparent: true, opacity: 0.9, depthTest: false }));
+    rectPreview.renderOrder = 10;
+    scene.add(rectPreview);
+}
+function updateRectPreview(a, b) {
+    ensureRectPreview();
+    const pts = rectPreview.geometry.attributes.position.array;
+    const y = 0.03;
+    pts[0]=a.x; pts[1]=y; pts[2]=a.z;
+    pts[3]=b.x; pts[4]=y; pts[5]=a.z;
+    pts[6]=b.x; pts[7]=y; pts[8]=b.z;
+    pts[9]=a.x; pts[10]=y; pts[11]=b.z;
+    pts[12]=a.x; pts[13]=y; pts[14]=a.z;
+    rectPreview.geometry.attributes.position.needsUpdate = true;
+    rectPreview.visible = true;
+    render();
+}
+function hideRectPreview() { if (rectPreview) rectPreview.visible = false; render(); }
+
+function commitRectWall(a, b) {
+    const cx = (a.x + b.x) / 2, cy = (a.z + b.z) / 2;
+    const w = Math.max(0.2, Math.abs(b.x - a.x));
+    const d = Math.max(0.2, Math.abs(b.z - a.z));
+    if (w < 0.2 && d < 0.2) return;
+    const added = addEntity('wall', { cx: snap(cx), cy: snap(cy), w: snap(w), d: snap(d), h: 2.4, baseY: 0 });
+    selectById(added.data.id);
+}
+function commitRectRoom(a, b) {
+    const minX = Math.min(a.x, b.x), maxX = Math.max(a.x, b.x);
+    const minZ = Math.min(a.z, b.z), maxZ = Math.max(a.z, b.z);
+    const W = maxX - minX, D = maxZ - minZ;
+    if (W < 1 || D < 1) return;
+    const T = 0.3, H = 2.4;
+    snapshot();
+    // 4 walls along perimeter, centered on each side
+    const walls = [
+        { cx: (minX+maxX)/2, cy: minZ, w: W + T, d: T, h: H, baseY: 0 }, // north
+        { cx: (minX+maxX)/2, cy: maxZ, w: W + T, d: T, h: H, baseY: 0 }, // south
+        { cx: minX, cy: (minZ+maxZ)/2, w: T, d: D + T, h: H, baseY: 0 }, // west
+        { cx: maxX, cy: (minZ+maxZ)/2, w: T, d: D + T, h: H, baseY: 0 }, // east
+    ];
+    for (const w of walls) addEntityNoSnapshot('wall', {
+        cx: snap(w.cx), cy: snap(w.cy), w: snap(w.w), d: snap(w.d), h: w.h, baseY: w.baseY
+    });
+}
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || gizmo.dragging) return;
+    // Rect mode: check handle hits first
+    if (state.gizmoMode === 'rect' && state.selected && rectHandles.length) {
+        const r = renderer.domElement.getBoundingClientRect();
+        mouseNDC.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+        mouseNDC.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+        raycaster.setFromCamera(mouseNDC, camera);
+        const hhits = raycaster.intersectObjects(rectHandles);
+        if (hhits.length) {
+            const handle = hhits[0].object;
+            const box = new THREE.Box3().setFromObject(state.selected.obj);
+            rectDragging = {
+                corner: handle.userData.cornerIdx,
+                startScale: state.selected.obj.scale.clone(),
+                startPos: state.selected.obj.position.clone(),
+                startMinX: box.min.x, startMaxX: box.max.x,
+                startMinY: box.min.y, startMaxY: box.max.y,
+                startMinZ: box.min.z, startMaxZ: box.max.z,
+            };
+            orbit.enabled = false;
+            snapshot();
+            e.preventDefault();
+            return;
+        }
+    }
+    const hit = pick(e.clientX, e.clientY);
+    if (!hit) return;
+    // Draw-path tool: append waypoints to selected point
+    if (pendingCreate === 'drawPath') {
+        if (!pathDraw) { if (!startPathDraw()) return; }
+        addPathWaypoint(hit.point.x, hit.point.z);
+        return;
+    }
+    // Wall-chain tool: click points, create walls between consecutive clicks
+    if (pendingCreate === 'wallChain') {
+        const p = hit.point;
+        if (!wallChain) wallChain = { points: [], previewLine: null };
+        const prev = wallChain.points[wallChain.points.length - 1];
+        const pt = prev ? snapToAxis(prev, { x: p.x, z: p.z }) : { x: snap(p.x), z: snap(p.z) };
+        if (!prev) snapshot();
+        if (prev) addChainWall(prev, pt);
+        wallChain.points.push(pt);
+        return;
+    }
+    // Cut-door tool: click on a wall → cut at that point
+    if (pendingCreate === 'cutDoor') {
+        if (hit.obj && hit.obj.userData?.kind === 'wall') {
+            const wall = state.entities.walls.find(w => w.id === hit.obj.userData.id);
+            if (wall) { cutWallDoor(wall, hit.point); setCreate(null); }
+        }
+        return;
+    }
+    // Start rect drag for rectWall/rectRoom
+    if ((pendingCreate === 'rectWall' || pendingCreate === 'rectRoom') && !hit.obj) {
+        rectDragStart = { x: hit.point.x, z: hit.point.z, tool: pendingCreate };
+        orbit.enabled = false;
+        return;
+    }
+    if (pendingCreate && !hit.obj) {
+        const p = hit.point;
+        const k = pendingCreate;
+        let d;
+        if (k === 'wall') d = { cx: snap(p.x), cy: snap(p.z), w: 1, d: 0.3, h: 2.4, baseY: 0 };
+        else if (k === 'cube') d = { x: snap(p.x), y: snap(p.z), yWorld: 0.5, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
+        else if (k === 'sphere') d = { x: snap(p.x), y: snap(p.z), yWorld: 1, radius: 0.5 };
+        else if (k === 'body') d = { x: snap(p.x), y: snap(p.z) };
+        else if (k === 'soulStart') d = { x: snap(p.x), y: snap(p.z), yaw: 0 };
+        else if (k === 'point') d = blankPoint(snap(p.x), snap(p.z));
+        const added = addEntity(k, d);
+        selectById(added.data.id);
+        setCreate(null);
+    } else if (hit.obj) {
+        selectById(hit.obj.userData.id);
+    } else {
+        deselect();
+    }
+});
+function projectMouseToVertPlane(e, throughX, throughZ) {
+    const r = renderer.domElement.getBoundingClientRect();
+    mouseNDC.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    mouseNDC.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    camDir.y = 0;
+    camDir.normalize();
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(camDir.multiplyScalar(-1), new THREE.Vector3(throughX, 0, throughZ));
+    const hit = new THREE.Vector3();
+    return raycaster.ray.intersectPlane(plane, hit) ? hit : null;
+}
+
+renderer.domElement.addEventListener('pointermove', (e) => {
+    const hit = pick(e.clientX, e.clientY);
+    if (hit) {
+        document.getElementById('statMouse').textContent = `(${hit.point.x.toFixed(2)}, ${hit.point.y.toFixed(2)}, ${hit.point.z.toFixed(2)})`;
+        if (rectDragStart) updateRectPreview(rectDragStart, { x: hit.point.x, z: hit.point.z });
+        if (pendingCreate === 'wallChain' && wallChain?.points.length) updateChainPreview({ x: hit.point.x, z: hit.point.z });
+        if (pendingCreate === 'drawPath' && pathDraw) updatePathPreview({ x: hit.point.x, z: hit.point.z });
+    }
+    if (rectDragging && state.selected) {
+        const obj = state.selected.obj;
+        const rd = rectDragging;
+        if (rd.corner >= 0 && rd.corner <= 3 && hit) {
+            const px = hit.point.x, pz = hit.point.z;
+            let newMinX = rd.startMinX, newMaxX = rd.startMaxX;
+            let newMinZ = rd.startMinZ, newMaxZ = rd.startMaxZ;
+            if (rd.corner === 0) { newMinX = px; newMinZ = pz; }
+            else if (rd.corner === 1) { newMaxX = px; newMinZ = pz; }
+            else if (rd.corner === 2) { newMaxX = px; newMaxZ = pz; }
+            else if (rd.corner === 3) { newMinX = px; newMaxZ = pz; }
+            const newW = Math.max(0.1, newMaxX - newMinX);
+            const newD = Math.max(0.1, newMaxZ - newMinZ);
+            const oldW = rd.startMaxX - rd.startMinX;
+            const oldD = rd.startMaxZ - rd.startMinZ;
+            obj.scale.x = rd.startScale.x * (newW / oldW);
+            obj.scale.z = rd.startScale.z * (newD / oldD);
+            obj.position.x = rd.startPos.x + ((newMinX + newMaxX) / 2 - (rd.startMinX + rd.startMaxX) / 2);
+            obj.position.z = rd.startPos.z + ((newMinZ + newMaxZ) / 2 - (rd.startMinZ + rd.startMaxZ) / 2);
+        } else if (rd.corner === -1 && hit) {
+            const dx = hit.point.x - (rd.startMinX + rd.startMaxX) / 2;
+            const dz = hit.point.z - (rd.startMinZ + rd.startMaxZ) / 2;
+            obj.position.x = rd.startPos.x + dx;
+            obj.position.z = rd.startPos.z + dz;
+        } else if (rd.corner === 4 || rd.corner === 5) {
+            // Y scaling — project mouse onto vertical plane through handle XZ
+            const cx = (rd.startMinX + rd.startMaxX) / 2;
+            const cz = (rd.startMinZ + rd.startMaxZ) / 2;
+            const vh = projectMouseToVertPlane(e, cx, cz);
+            if (!vh) return;
+            let newMinY = rd.startMinY, newMaxY = rd.startMaxY;
+            if (rd.corner === 4) newMaxY = Math.max(rd.startMinY + 0.1, vh.y);
+            else newMinY = Math.min(rd.startMaxY - 0.1, vh.y);
+            const newH = newMaxY - newMinY;
+            const oldH = rd.startMaxY - rd.startMinY;
+            obj.scale.y = rd.startScale.y * (newH / oldH);
+            obj.position.y = rd.startPos.y + ((newMinY + newMaxY) / 2 - (rd.startMinY + rd.startMaxY) / 2);
+        }
+        syncPropsFromGizmo();
+        updateRectHandles();
+        render();
+    }
+});
+renderer.domElement.addEventListener('pointerup', (e) => {
+    if (e.button !== 0) return;
+    if (rectDragging) {
+        rectDragging = null;
+        orbit.enabled = true;
+        return;
+    }
+    if (rectDragStart) {
+        const hit = pick(e.clientX, e.clientY);
+        if (hit) {
+            const a = { x: rectDragStart.x, z: rectDragStart.z };
+            const b = { x: hit.point.x, z: hit.point.z };
+            if (rectDragStart.tool === 'rectWall') commitRectWall(a, b);
+            else if (rectDragStart.tool === 'rectRoom') commitRectRoom(a, b);
+        }
+        rectDragStart = null;
+        hideRectPreview();
+        orbit.enabled = true;
+        setCreate(null);
+    }
+});
+
+// ========== Custom Rect gizmo (corner handles in XZ plane) ==========
+let rectHandles = [];
+let rectDragging = null;
+function createRectHandle(color, sizeRadius) {
+    const h = new THREE.Mesh(
+        new THREE.SphereGeometry(sizeRadius || 0.18, 12, 8),
+        new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.95 })
+    );
+    h.renderOrder = 100;
+    h.userData.isRectHandle = true;
+    return h;
+}
+function hideRectHandles() {
+    for (const h of rectHandles) { scene.remove(h); h.geometry.dispose(); h.material.dispose(); }
+    rectHandles = [];
+}
+function updateRectHandles() {
+    if (!state.selected || state.gizmoMode !== 'rect') { hideRectHandles(); return; }
+    const obj = state.selected.obj;
+    const box = new THREE.Box3().setFromObject(obj);
+    if (!isFinite(box.min.x)) { hideRectHandles(); return; }
+    if (!rectHandles.length) {
+        // 4 XZ corners (gold)
+        for (let i = 0; i < 4; i++) { const h = createRectHandle(0xf0c36d); scene.add(h); rectHandles.push(h); }
+        // 1 center translate (white)
+        const c = createRectHandle(0xffffff, 0.14); scene.add(c); rectHandles.push(c);
+        // Y top + bottom handles (green/red)
+        const top = createRectHandle(0x4aff6a, 0.15); scene.add(top); rectHandles.push(top);
+        const bot = createRectHandle(0xff6a4a, 0.15); scene.add(bot); rectHandles.push(bot);
+    }
+    const minX = box.min.x, maxX = box.max.x;
+    const minZ = box.min.z, maxZ = box.max.z;
+    const midY = Math.max(0.05, (box.min.y + box.max.y) / 2);
+    const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+    rectHandles[0].position.set(minX, midY, minZ); rectHandles[0].userData.cornerIdx = 0;
+    rectHandles[1].position.set(maxX, midY, minZ); rectHandles[1].userData.cornerIdx = 1;
+    rectHandles[2].position.set(maxX, midY, maxZ); rectHandles[2].userData.cornerIdx = 2;
+    rectHandles[3].position.set(minX, midY, maxZ); rectHandles[3].userData.cornerIdx = 3;
+    rectHandles[4].position.set(cx, midY, cz);     rectHandles[4].userData.cornerIdx = -1;
+    rectHandles[5].position.set(cx, box.max.y + 0.1, cz); rectHandles[5].userData.cornerIdx = 4; // top Y
+    rectHandles[6].position.set(cx, box.min.y - 0.1, cz); rectHandles[6].userData.cornerIdx = 5; // bottom Y
+}
+
+function setGizmoMode(mode) {
+    state.gizmoMode = mode;
+    if (mode === 'rect') {
+        gizmo.detach();
+        updateRectHandles();
+    } else {
+        hideRectHandles();
+        if (state.selected) gizmo.attach(state.selected.obj);
+        gizmo.setMode(mode);
+        gizmo.showX = true; gizmo.showY = true; gizmo.showZ = true;
+    }
+    for (const b of document.querySelectorAll('[data-gizmo]')) b.classList.toggle('active', b.dataset.gizmo === mode);
+    document.getElementById('statMode').textContent = mode;
+}
+for (const b of document.querySelectorAll('[data-gizmo]')) b.addEventListener('click', () => setGizmoMode(b.dataset.gizmo));
+
+// ========== Menu system ==========
+const menuBar = document.getElementById('menubar');
+function closeAllMenus() {
+    for (const m of menuBar.querySelectorAll('.menu-item.open')) m.classList.remove('open');
+}
+for (const m of menuBar.querySelectorAll('.menu-item')) {
+    m.addEventListener('click', (e) => {
+        if (e.target.classList.contains('menu-entry')) return;
+        const wasOpen = m.classList.contains('open');
+        closeAllMenus();
+        if (!wasOpen) m.classList.add('open');
+        e.stopPropagation();
+    });
+    m.addEventListener('mouseenter', () => {
+        // if any menu is already open, switch on hover
+        if (menuBar.querySelector('.menu-item.open')) {
+            closeAllMenus();
+            m.classList.add('open');
+        }
+    });
+}
+document.addEventListener('click', closeAllMenus);
+
+// menu actions
+function runAction(act) {
+    if (act === 'new' || act === 'clear') { if (confirm('Clear all entities?')) clearAll(); }
+    else if (act === 'open') document.getElementById('fileInput').click();
+    else if (act === 'save') saveToDisk();
+    else if (act === 'export') exportJSON();
+    else if (act === 'sample') loadLevel(SAMPLE_LEVEL);
+    else if (act === 'importObj') document.getElementById('objInput').click();
+    else if (act === 'undo') undo();
+    else if (act === 'redo') redo();
+    else if (act === 'delete') { if (state.selected) removeEntity(state.selected.kind, state.selected.id); }
+    else if (act === 'duplicate') duplicateSelected();
+    else if (act === 'focus') focusSelected();
+    else if (act === 'resetCam') { camera.position.set(12, 14, 16); orbit.target.set(0, 0, 0); orbit.update(); render(); }
+    else if (act === 'gizmoMove') setGizmoMode('translate');
+    else if (act === 'gizmoRotate') setGizmoMode('rotate');
+    else if (act === 'gizmoScale') setGizmoMode('scale');
+    else if (act === 'gizmoRect') setGizmoMode('rect');
+    else if (act === 'helpShortcuts') alert('G/R/S — Move/Rotate/Scale\nF — Focus on selected\nDel — Delete selected\nEsc — Deselect / cancel Create\nCtrl+Z — Undo · Ctrl+Shift+Z — Redo\nCtrl+S — Save · Ctrl+O — Open · Ctrl+N — New');
+    else if (act === 'helpAbout') alert('Soul Beat — Level Editor\nThree.js · LD59 jam tool');
+}
+document.addEventListener('click', (e) => {
+    const entry = e.target.closest('.menu-entry');
+    if (!entry || entry.classList.contains('disabled')) return;
+    const act = entry.dataset.act;
+    const create = entry.dataset.create;
+    if (act) runAction(act);
+    else if (create) setCreate(create);
+    closeAllMenus();
+});
+
+// toolbar [data-create]
+for (const b of document.querySelectorAll('.tool-btn[data-create]')) {
+    b.addEventListener('click', () => {
+        setCreate(pendingCreate === b.dataset.create ? null : b.dataset.create);
+    });
+}
+for (const b of document.querySelectorAll('.tool-btn[data-act]')) {
+    b.addEventListener('click', () => runAction(b.dataset.act));
+}
+
+// ========== Keyboard (layout-independent via e.code) ==========
+window.addEventListener('keydown', (e) => {
+    const code = e.code;
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && code === 'KeyZ') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+    if (ctrl && code === 'KeyY') { e.preventDefault(); redo(); return; }
+    if (ctrl && code === 'KeyS') { e.preventDefault(); saveToDisk(); return; }
+    if (ctrl && code === 'KeyO') { e.preventDefault(); document.getElementById('fileInput').click(); return; }
+    if (ctrl && code === 'KeyN') { e.preventDefault(); if (confirm('New scene — clear all?')) clearAll(); return; }
+    if (ctrl && code === 'KeyD') { e.preventDefault(); duplicateSelected(); return; }
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (code === 'KeyG') setGizmoMode('translate');
+    else if (code === 'KeyR') setGizmoMode('rotate');
+    else if (code === 'KeyS') setGizmoMode('scale');
+    else if (code === 'KeyT') setGizmoMode('rect');
+    else if (code === 'Delete' || code === 'Backspace') { if (state.selected) removeEntity(state.selected.kind, state.selected.id); }
+    else if (code === 'Escape') {
+        if (previewModal) { closeModelPreview(); return; }
+        if (wallChain) endWallChain();
+        if (pathDraw) endPathDraw();
+        setCreate(null); deselect(); closeAllMenus();
+    }
+    else if (code === 'KeyF' && state.selected) focusSelected();
+});
+function focusSelected() {
+    if (!state.selected) return;
+    orbit.target.copy(state.selected.obj.position);
+    orbit.update();
+}
+
+function duplicateSelected() {
+    if (!state.selected) return;
+    const { kind, data } = state.selected;
+    if (kind === 'body' || kind === 'soulStart') { alert(`${KIND_LABEL[kind]} is a singleton — can't duplicate.`); return; }
+    const copy = JSON.parse(JSON.stringify(data));
+    delete copy.id;
+    // offset slightly so it's visible
+    if ('x' in copy) copy.x += 1;
+    if ('cx' in copy) copy.cx += 1;
+    const added = addEntity(kind, copy);
+    selectById(added.data.id);
+}
+
+// ========== File I/O ==========
+function getLevelJson() {
+    const stripUnder = obj => {
+        const out = {};
+        for (const k of Object.keys(obj)) if (!k.startsWith('_') && k !== 'id') out[k] = obj[k];
+        return out;
+    };
+    const clean = arr => arr.map(stripUnder);
+    const stripId = x => x ? stripUnder(x) : null;
+    const e = state.entities;
+    return {
+        ceilingHeight: e.ceilingHeight ?? 3,
+        soulStart: stripId(e.soulStart),
+        body: stripId(e.body),
+        walls: clean(e.walls),
+        cubes: clean(e.cubes),
+        spheres: clean(e.spheres),
+        points: clean(e.points),
+        models: clean(e.models),
+        modelLibrary: exportLibrary(e.modelLibrary || {}),
+    };
+}
+function exportLibrary(lib) {
+    const out = {};
+    for (const [id, entry] of Object.entries(lib)) {
+        // strip heavy `obj` text — keep only name + path reference
+        out[id] = { name: entry.name, path: entry.path || ('models/' + entry.name) };
+    }
+    return out;
+}
+function exportJSON() {
+    const json = JSON.stringify(getLevelJson(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'level.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function showSaveToast(msg, isError) {
+    let t = document.getElementById('saveToast');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'saveToast';
+        t.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); padding:8px 16px; border-radius:4px; font-size:12px; z-index:20000; pointer-events:none; transition:opacity 0.3s;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.background = isError ? '#5a2020' : '#2a5a2a';
+    t.style.color = '#fff';
+    t.style.opacity = '1';
+    clearTimeout(t._fadeTimer);
+    t._fadeTimer = setTimeout(() => { t.style.opacity = '0'; }, 1800);
+}
+async function saveToDisk() {
+    const json = JSON.stringify(getLevelJson(), null, 2);
+    let r;
+    try {
+        r = await fetch('./__save_level', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: json,
+        });
+    } catch (e) {
+        console.warn('[save] network failed:', e);
+        showSaveToast('⚠ network error — downloaded instead', true);
+        exportJSON();
+        return;
+    }
+    if (!r.ok) {
+        const text = await r.text().catch(() => '');
+        console.warn('[save] server responded', r.status, text);
+        showSaveToast(`⚠ ${r.status} — ${text || 'falling back to download'}`, true);
+        exportJSON();
+        return;
+    }
+    showSaveToast('✓ saved → level.json');
+    // notify game tabs to reload
+    if (typeof BroadcastChannel !== 'undefined') {
+        try { new BroadcastChannel('ld59-level-save').postMessage('reload'); } catch (e) {}
+    }
+}
+function clearAll() {
+    snapshot();
+    for (const obj of state.meshes.values()) scene.remove(obj);
+    state.meshes.clear();
+    clearAllWaypointOverlays();
+    state.entities = { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: {}, ceilingHeight: 3 };
+    deselect();
+    updateStatus();
+    updateHierarchy();
+    updateAssets();
+    render();
+}
+async function fetchLibraryObjs(lib) {
+    const missing = [];
+    for (const [id, entry] of Object.entries(lib)) {
+        if (!entry.path) continue;
+        const isGLB = /\.(glb|gltf)$/i.test(entry.path);
+        if (isGLB && glbTemplateByName.has(entry.name)) continue;
+        if (!isGLB && entry.obj) continue;
+        try {
+            const r = await fetch('./' + entry.path, { cache: 'no-cache' });
+            if (!r.ok) { missing.push(entry.path); continue; }
+            if (isGLB) glbTemplateByName.set(entry.name, await parseGLB(await r.arrayBuffer()));
+            else entry.obj = await r.text();
+        } catch (e) {
+            missing.push(entry.path);
+        }
+    }
+    if (missing.length) {
+        alert('Missing model files (put them in models/ folder):\n\n' + missing.join('\n'));
+    }
+}
+
+async function loadLevel(data, takeSnapshot = true) {
+    if (takeSnapshot) snapshot();
+    for (const obj of state.meshes.values()) scene.remove(obj);
+    state.meshes.clear();
+    clearAllWaypointOverlays();
+    const loadedLibrary = data.modelLibrary || {};
+    state.entities = { soulStart: null, body: null, walls: [], cubes: [], spheres: [], points: [], models: [], modelLibrary: loadedLibrary, ceilingHeight: data.ceilingHeight ?? 3 };
+    refreshWorldControls();
+    // update libCounter so new IDs don't collide with loaded ones
+    for (const id of Object.keys(loadedLibrary)) {
+        const n = parseInt(id.replace(/\D/g, ''), 10);
+        if (!isNaN(n) && n >= libCounter) libCounter = n + 1;
+    }
+    // fetch OBJ texts that are referenced by path (not inline)
+    await fetchLibraryObjs(loadedLibrary);
+    deselect();
+    if (data.soulStart) addEntityNoSnapshot('soulStart', { ...data.soulStart });
+    if (data.body) addEntityNoSnapshot('body', { ...data.body });
+    for (const x of data.walls || []) addEntityNoSnapshot('wall', { baseY: 0, ...x });
+    for (const x of data.cubes || []) addEntityNoSnapshot('cube', { yWorld: 0.5, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1, ...x });
+    for (const x of data.spheres || []) addEntityNoSnapshot('sphere', { yWorld: 1, radius: 0.5, ...x });
+    loadPointsFromData(data);
+    for (const x of data.models || []) addEntityNoSnapshot('model', { yWorld: 0, rx: 0, ry: 0, rz: 0, scale: 1, ...x });
+    updateAssets();
+    render();
+}
+document.getElementById('fileInput').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try { loadLevel(JSON.parse(reader.result)); }
+        catch (err) { alert('Invalid JSON: ' + err.message); }
+    };
+    reader.readAsText(f);
+});
+let libCounter = 1;
+function addToLibrary(name, objText) {
+    snapshot();
+    const id = 'lib_' + (libCounter++);
+    // obj text kept in memory for display; path tells game+editor where to fetch at load
+    state.entities.modelLibrary[id] = { name, path: 'models/' + name, obj: objText };
+    updateAssets();
+    return id;
+}
+function spawnModelInstance(libraryId, pos) {
+    const added = addEntity('model', {
+        libraryId,
+        x: pos?.x ?? 0, y: pos?.y ?? 0, yWorld: pos?.yWorld ?? 0,
+        rx: 0, ry: 0, rz: 0, scale: 1,
+    });
+    selectById(added.data.id);
+    return added;
+}
+
+document.getElementById('objInput').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        const libId = addToLibrary(f.name, reader.result);
+        spawnModelInstance(libId);
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+});
+document.getElementById('btnImportObjInline').addEventListener('click', () => {
+    document.getElementById('objInput').click();
+});
+
+// Scan ./models/ folder (works on http-server with directory listing, e.g. python http.server)
+async function discoverModelsFolder() {
+    // Prefer manifest (works under Vite / static hosts without directory listing).
+    try {
+        const r = await fetch('./models/index.json', { cache: 'no-cache' });
+        if (r.ok) {
+            const names = await r.json();
+            if (Array.isArray(names) && names.length) return names;
+        }
+    } catch (e) {}
+    // Fallback: scrape directory listing (works with Python's http.server etc.)
+    try {
+        const r = await fetch('./models/');
+        if (!r.ok) return [];
+        const html = await r.text();
+        const names = [...html.matchAll(/href="([^"]+\.(?:obj|glb|gltf))"/gi)]
+            .map(m => decodeURIComponent(m[1]).replace(/^.*\//, ''));
+        return [...new Set(names)];
+    } catch (e) { return []; }
+}
+async function rescanModelsFolder() {
+    const names = await discoverModelsFolder();
+    if (!names.length) {
+        alert('No .obj files found in ./models/\n\nMake sure you serve this folder with directory listing enabled (python http.server does).');
+        return;
+    }
+    // skip names already present in library
+    const existing = new Set(Object.values(state.entities.modelLibrary || {}).map(e => e.name));
+    let added = 0;
+    snapshot();
+    for (const name of names) {
+        if (existing.has(name)) continue;
+        try {
+            const res = await fetch('./models/' + name, { cache: 'no-cache' });
+            if (!res.ok) continue;
+            const id = 'lib_' + (libCounter++);
+            if (/\.(glb|gltf)$/i.test(name)) {
+                const template = await parseGLB(await res.arrayBuffer());
+                glbTemplateByName.set(name, template);
+                state.entities.modelLibrary[id] = { name, path: 'models/' + name };
+            } else {
+                const text = await res.text();
+                state.entities.modelLibrary[id] = { name, path: 'models/' + name, obj: text };
+            }
+            added++;
+        } catch (e) { console.warn('rescan', name, e); }
+    }
+    updateAssets();
+    if (added) alert(`Added ${added} model(s) from ./models/`);
+    else alert('All files in ./models/ already in library.');
+}
+document.getElementById('btnRescanModels').addEventListener('click', rescanModelsFolder);
+
+// ========== Sample level ==========
+const SAMPLE_LEVEL = {
+    soulStart: { x: -8, y: -5 },
+    body: { x: 8, y: 5 },
+    walls: [
+        { cx: 0, cy: -8, w: 20, d: 0.3, h: 2.4 },
+        { cx: 0, cy:  8, w: 20, d: 0.3, h: 2.4 },
+        { cx: -10, cy: 0, w: 0.3, d: 16, h: 2.4 },
+        { cx:  10, cy: 0, w: 0.3, d: 16, h: 2.4 },
+        { cx: 0, cy: -3, w: 0.3, d: 10, h: 2.4 },
+        { cx: 0, cy:  5, w: 0.3, d: 6, h: 2.4 },
+        { cx: 4, cy: 1, w: 8, d: 0.3, h: 2.4 },
+    ],
+    spirits: [{ x: 3, y: -5, waypoints: [[5, -5], [5, -2], [3, -2]], speed: 1.0 }],
+    pickups: [{ x: -3, y: -2 }, { x: 5, y: 3 }],
+    sounds: [{ x: -8, y: 7, period: 3 }],
+    smells: [{ cx: 8, cy: 5, radius: 2, color: '#4aff6a' }],
+};
+
+// ========== Render loop ==========
+function render() { renderer.render(scene, camera); }
+function animate() { orbit.update(); render(); requestAnimationFrame(animate); }
+animate();
+
+// Initial
+(async () => {
+    // Try to load ./level.json first (same source the game reads); fall back to SAMPLE_LEVEL.
+    let initial = SAMPLE_LEVEL;
+    try {
+        const r = await fetch('./level.json', { cache: 'no-cache' });
+        if (r.ok) {
+            initial = await r.json();
+            console.log('[editor] loaded ./level.json');
+        } else {
+            console.log('[editor] no level.json — using sample');
+        }
+    } catch (e) {
+        console.log('[editor] level.json fetch failed — using sample');
+    }
+    await loadLevel(initial, false);
+    // Auto-discover models on startup (works on dev server with directory listing)
+    const names = await discoverModelsFolder();
+    if (names.length) {
+        const existing = new Set(Object.values(state.entities.modelLibrary).map(e => e.name));
+        for (const name of names) {
+            if (existing.has(name)) continue;
+            try {
+                const res = await fetch('./models/' + name, { cache: 'no-cache' });
+                if (!res.ok) continue;
+                const text = await res.text();
+                const id = 'lib_' + (libCounter++);
+                state.entities.modelLibrary[id] = { name, path: 'models/' + name, obj: text };
+            } catch (e) {}
+        }
+        updateAssets();
+        console.log(`[editor] auto-loaded ${names.length} model(s) from ./models/`);
+    }
+})();
+
+// ========== Model preview modal ==========
+let previewModal = null;
+function closeModelPreview() {
+    if (!previewModal) return;
+    previewModal.stop();
+    previewModal.overlay.remove();
+    previewModal = null;
+}
+function showModelPreview(libraryId) {
+    closeModelPreview();
+    const entry = state.entities.modelLibrary?.[libraryId];
+    if (!hasLibraryTemplate(entry)) { alert('Model not loaded — drop it into models/ and Rescan'); return; }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10000; display:flex; align-items:center; justify-content:center;';
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModelPreview(); });
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#1a1a22; border:1px solid #3a3a48; border-radius:4px; padding:12px; display:flex; flex-direction:column; gap:8px;';
+    const title = document.createElement('div');
+    title.textContent = entry.name;
+    title.style.cssText = 'color:#f0c36d; font-size:12px;';
+    const canvas = document.createElement('canvas');
+    canvas.width = 420; canvas.height = 420;
+    canvas.style.cssText = 'display:block; background:#0a0a14; cursor:grab;';
+    const hint = document.createElement('div');
+    hint.style.cssText = 'color:#888; font-size:10px;';
+    hint.textContent = 'LMB rotate · wheel zoom · Esc close';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.cssText = 'padding:4px 12px; background:#333; color:#ddd; border:1px solid #444; cursor:pointer; align-self:flex-end;';
+    closeBtn.addEventListener('click', closeModelPreview);
+    box.append(title, canvas, hint, closeBtn);
+    overlay.append(box);
+    document.body.append(overlay);
+
+    const prend = new THREE.WebGLRenderer({ canvas, antialias: true });
+    prend.setPixelRatio(window.devicePixelRatio);
+    prend.setSize(420, 420, false);
+    const pscene = new THREE.Scene();
+    pscene.background = new THREE.Color(0x0a0a14);
+    pscene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const pdir = new THREE.DirectionalLight(0xffffff, 0.6);
+    pdir.position.set(5, 10, 5);
+    pscene.add(pdir);
+    const pcam = new THREE.PerspectiveCamera(40, 1, 0.001, 10000);
+    const pctl = new OrbitControls(pcam, canvas);
+    try {
+        const parsed = getLibraryTemplate(entry);
+        if (!parsed) throw new Error('no template');
+        const mat = new THREE.MeshLambertMaterial({ color: 0xb0b0c0 });
+        let meshCount = 0;
+        parsed.traverse(c => {
+            if (c.isMesh && c.geometry) {
+                meshCount++;
+                c.material = mat;
+                try {
+                    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), new THREE.LineBasicMaterial({ color: 0xffffff }));
+                    c.add(edges);
+                } catch (e) { /* some GLB geometries lack index/position attribute */ }
+            }
+        });
+        if (!meshCount) console.warn('preview: model has no meshes', entry.name);
+        pscene.add(parsed);
+        // Compute world-space bbox AFTER adding to scene, so matrices are up to date.
+        parsed.updateMatrixWorld(true);
+        const bbox = new THREE.Box3().setFromObject(parsed);
+        const center = bbox.getCenter(new THREE.Vector3());
+        const size = bbox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        // Recenter via an outer wrapper so we don't fight the GLB's own transforms.
+        parsed.position.sub(center);
+        parsed.updateMatrixWorld(true);
+        const dist = maxDim * 2.2;
+        pcam.position.set(dist, dist * 0.7, dist);
+        pctl.target.set(0, 0, 0);
+        pctl.update();
+    } catch (e) { console.error('preview parse failed', e); }
+
+    let alive = true;
+    function pframe() { if (!alive) return; pctl.update(); prend.render(pscene, pcam); requestAnimationFrame(pframe); }
+    pframe();
+    previewModal = { overlay, stop: () => { alive = false; prend.dispose(); } };
+}
+
+// ========== Map underlay (editor-only, stored in localStorage) ==========
+let underlayMesh = null;
+const underlayState = { dataURL: '', width: 40, cx: 0, cy: 0, opacity: 0.55, flipY: false };
+try {
+    const saved = JSON.parse(localStorage.getItem('ld59_editor_underlay') || 'null');
+    if (saved) Object.assign(underlayState, saved);
+} catch (e) {}
+
+function rebuildUnderlay() {
+    if (underlayMesh) {
+        scene.remove(underlayMesh);
+        underlayMesh.geometry.dispose();
+        if (underlayMesh.material.map) underlayMesh.material.map.dispose();
+        underlayMesh.material.dispose();
+        underlayMesh = null;
+    }
+    if (!underlayState.dataURL) { render(); return; }
+    const img = new Image();
+    img.onload = () => {
+        const aspect = img.width / img.height;
+        const tex = new THREE.Texture(img);
+        tex.needsUpdate = true;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = !underlayState.flipY;  // three default flipY=true; checkbox lets user flip Y
+        const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: underlayState.opacity, depthWrite: false });
+        const w = underlayState.width;
+        const h = w / aspect;
+        const geom = new THREE.PlaneGeometry(w, h);
+        underlayMesh = new THREE.Mesh(geom, mat);
+        underlayMesh.rotation.x = -Math.PI / 2;
+        underlayMesh.position.set(underlayState.cx, 0.003, underlayState.cy);
+        underlayMesh.renderOrder = -10;
+        scene.add(underlayMesh);
+        render();
+    };
+    img.src = underlayState.dataURL;
+}
+function saveUnderlay() {
+    try { localStorage.setItem('ld59_editor_underlay', JSON.stringify(underlayState)); } catch (e) {}
+}
+function setUnderlayField(key, val) {
+    underlayState[key] = val;
+    saveUnderlay();
+    if (key === 'opacity' && underlayMesh) {
+        underlayMesh.material.opacity = val;
+        render();
+    } else if ((key === 'cx' || key === 'cy') && underlayMesh) {
+        underlayMesh.position.set(underlayState.cx, 0.003, underlayState.cy);
+        render();
+    } else {
+        rebuildUnderlay();
+    }
+}
+
+(function wireUnderlayPanel() {
+    const wInp = document.getElementById('undW');
+    const cxInp = document.getElementById('undCX');
+    const cyInp = document.getElementById('undCY');
+    const aInp = document.getElementById('undA');
+    const flipInp = document.getElementById('undFlipY');
+    const clearBtn = document.getElementById('undClear');
+    wInp.value = underlayState.width;
+    cxInp.value = underlayState.cx;
+    cyInp.value = underlayState.cy;
+    aInp.value = underlayState.opacity;
+    flipInp.checked = !!underlayState.flipY;
+    wInp.addEventListener('input', () => setUnderlayField('width', parseFloat(wInp.value) || 40));
+    cxInp.addEventListener('input', () => setUnderlayField('cx', parseFloat(cxInp.value) || 0));
+    cyInp.addEventListener('input', () => setUnderlayField('cy', parseFloat(cyInp.value) || 0));
+    aInp.addEventListener('input', () => setUnderlayField('opacity', parseFloat(aInp.value)));
+    flipInp.addEventListener('change', () => setUnderlayField('flipY', flipInp.checked));
+    clearBtn.addEventListener('click', () => { underlayState.dataURL = ''; saveUnderlay(); rebuildUnderlay(); });
+})();
+
+viewport.addEventListener('dragover', e => { e.preventDefault(); });
+viewport.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const f = e.dataTransfer?.files?.[0];
+    if (!f || !f.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        underlayState.dataURL = reader.result;
+        saveUnderlay();
+        rebuildUnderlay();
+    };
+    reader.readAsDataURL(f);
+});
+rebuildUnderlay();
+
+// ========== Wall-chain tool ==========
+let wallChain = null; // { points: [{x,z}], previewLine }
+function snapToAxis(from, to) {
+    const dx = Math.abs(to.x - from.x);
+    const dz = Math.abs(to.z - from.z);
+    return dx >= dz ? { x: to.x, z: from.z } : { x: from.x, z: to.z };
+}
+function addChainWall(a, b) {
+    if (a.x === b.x && a.z === b.z) return;
+    const T = 0.3, H = 2.4;
+    const cx = (a.x + b.x) / 2;
+    const cy = (a.z + b.z) / 2;
+    const dx = Math.abs(b.x - a.x), dz = Math.abs(b.z - a.z);
+    const w = dx > 0.01 ? dx : T;
+    const d = dz > 0.01 ? dz : T;
+    addEntityNoSnapshot('wall', { cx: snap(cx), cy: snap(cy), w: snap(w), d: snap(d), h: H, baseY: 0 });
+}
+function updateChainPreview(cursorPoint) {
+    if (!wallChain || !wallChain.points.length || !cursorPoint) return;
+    const last = wallChain.points[wallChain.points.length - 1];
+    const p = snapToAxis(last, cursorPoint);
+    if (!wallChain.previewLine) {
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3));
+        wallChain.previewLine = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0xf0c36d, depthTest: false }));
+        wallChain.previewLine.renderOrder = 10;
+        scene.add(wallChain.previewLine);
+    }
+    const arr = wallChain.previewLine.geometry.attributes.position.array;
+    arr[0] = last.x; arr[1] = 0.05; arr[2] = last.z;
+    arr[3] = p.x;    arr[4] = 0.05; arr[5] = p.z;
+    wallChain.previewLine.geometry.attributes.position.needsUpdate = true;
+    render();
+}
+function endWallChain() {
+    if (wallChain?.previewLine) {
+        scene.remove(wallChain.previewLine);
+        wallChain.previewLine.geometry.dispose();
+        wallChain.previewLine.material.dispose();
+    }
+    wallChain = null;
+    setCreate(null);
+}
+
+// ========== Draw-path tool (append waypoints to selected point) ==========
+let pathDraw = null; // { previewLine }
+function startPathDraw() {
+    if (!state.selected || state.selected.kind !== 'point') {
+        alert('Select a point first, then click "Draw path".');
+        setCreate(null);
+        return false;
+    }
+    const data = state.selected.data;
+    if (!data.patrol) {
+        data.patrol = { waypoints: [], speed: 1, turnRate: 2, loop: true, loopDelay: 2 };
+        updateInspector();
+    }
+    pathDraw = { previewLine: null };
+    snapshot();
+    return true;
+}
+function endPathDraw() {
+    if (pathDraw?.previewLine) {
+        scene.remove(pathDraw.previewLine);
+        pathDraw.previewLine.geometry.dispose();
+        pathDraw.previewLine.material.dispose();
+    }
+    pathDraw = null;
+}
+function addPathWaypoint(worldX, worldZ) {
+    if (!state.selected || state.selected.kind !== 'point') return;
+    const data = state.selected.data;
+    if (!data.patrol) data.patrol = { waypoints: [], speed: 1, turnRate: 2, loop: true, loopDelay: 2 };
+    data.patrol.waypoints.push([worldX, worldZ]);
+    rebuildPointWaypoints(data);
+    render();
+}
+function updatePathPreview(cursor) {
+    if (!pathDraw || !state.selected || state.selected.kind !== 'point') return;
+    const data = state.selected.data;
+    const wps = data.patrol?.waypoints || [];
+    const lastX = wps.length ? wps[wps.length - 1][0] : data.x;
+    const lastZ = wps.length ? wps[wps.length - 1][1] : data.y;
+    if (!pathDraw.previewLine) {
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(6), 3));
+        pathDraw.previewLine = new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true, opacity: 0.7 }));
+        pathDraw.previewLine.renderOrder = 11;
+        scene.add(pathDraw.previewLine);
+    }
+    const arr = pathDraw.previewLine.geometry.attributes.position.array;
+    arr[0] = lastX;   arr[1] = WP_Y; arr[2] = lastZ;
+    arr[3] = cursor.x; arr[4] = WP_Y; arr[5] = cursor.z;
+    pathDraw.previewLine.geometry.attributes.position.needsUpdate = true;
+    render();
+}
+
+// ========== Cut-door tool ==========
+function cutWallDoor(wall, clickPoint) {
+    const doorWidth = Math.max(0.1, parseFloat(document.getElementById('doorWidth').value) || 1.0);
+    const horizontal = wall.w > wall.d;
+    snapshot();
+    const baseY = wall.baseY ?? 0;
+    const h = wall.h ?? 3;
+    if (horizontal) {
+        const s = wall.cx - wall.w / 2, e = wall.cx + wall.w / 2;
+        const cut = Math.max(s + doorWidth/2, Math.min(e - doorWidth/2, clickPoint.x));
+        const seg1End = cut - doorWidth / 2;
+        const seg2Start = cut + doorWidth / 2;
+        removeEntityNoSnapshot('wall', wall.id);
+        if (seg1End - s > 0.1) addEntityNoSnapshot('wall', { cx: (s + seg1End)/2, cy: wall.cy, w: seg1End - s, d: wall.d, h, baseY });
+        if (e - seg2Start > 0.1) addEntityNoSnapshot('wall', { cx: (seg2Start + e)/2, cy: wall.cy, w: e - seg2Start, d: wall.d, h, baseY });
+    } else {
+        const s = wall.cy - wall.d / 2, e = wall.cy + wall.d / 2;
+        const cut = Math.max(s + doorWidth/2, Math.min(e - doorWidth/2, clickPoint.z));
+        const seg1End = cut - doorWidth / 2;
+        const seg2Start = cut + doorWidth / 2;
+        removeEntityNoSnapshot('wall', wall.id);
+        if (seg1End - s > 0.1) addEntityNoSnapshot('wall', { cx: wall.cx, cy: (s + seg1End)/2, w: wall.w, d: seg1End - s, h, baseY });
+        if (e - seg2Start > 0.1) addEntityNoSnapshot('wall', { cx: wall.cx, cy: (seg2Start + e)/2, w: wall.w, d: e - seg2Start, h, baseY });
+    }
+    render();
+}
+
+// Grid controls
+// ---- World settings: ceilingHeight (stored on level.json) ----
+let ceilingGrid = null;
+let ceilingShow = true;
+try { ceilingShow = localStorage.getItem('ld59_editor_ceil_show') !== '0'; } catch (e) {}
+function refreshWorldControls() {
+    const ceilInp = document.getElementById('worldCeilH');
+    const showInp = document.getElementById('worldCeilShow');
+    if (ceilInp) ceilInp.value = state.entities.ceilingHeight ?? 3;
+    if (showInp) showInp.checked = ceilingShow;
+    rebuildCeilingPreview();
+}
+function buildCeilingGridGeom(y, size, step) {
+    const half = size / 2;
+    const n = Math.max(1, Math.round(size / step));
+    const verts = [];
+    for (let i = 0; i <= n; i++) {
+        const x = -half + i * step;
+        verts.push(x, y, -half, x, y, half);
+    }
+    for (let j = 0; j <= n; j++) {
+        const z = -half + j * step;
+        verts.push(-half, y, z, half, y, z);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+    return g;
+}
+function rebuildCeilingPreview() {
+    if (ceilingGrid) {
+        scene.remove(ceilingGrid);
+        ceilingGrid.geometry.dispose();
+        ceilingGrid.material.dispose();
+        ceilingGrid = null;
+    }
+    const h = state.entities.ceilingHeight ?? 0;
+    if (h <= 0 || !ceilingShow) { render(); return; }
+    const size = parseFloat(document.getElementById('gridSize')?.value) || 40;
+    const step = parseFloat(document.getElementById('gridStep')?.value) || 1;
+    const geom = buildCeilingGridGeom(h, size, step);
+    const mat = new THREE.LineBasicMaterial({ color: 0x6a88c8, transparent: true, opacity: 0.55 });
+    ceilingGrid = new THREE.LineSegments(geom, mat);
+    scene.add(ceilingGrid);
+    render();
+}
+(function wireWorldPanel() {
+    const ceilInp = document.getElementById('worldCeilH');
+    const showInp = document.getElementById('worldCeilShow');
+    if (!ceilInp || !showInp) return;
+    ceilInp.addEventListener('input', () => {
+        const v = parseFloat(ceilInp.value);
+        if (!isNaN(v)) {
+            state.entities.ceilingHeight = Math.max(0, Math.min(20, v));
+            rebuildCeilingPreview();
+        }
+    });
+    showInp.addEventListener('change', () => {
+        ceilingShow = showInp.checked;
+        try { localStorage.setItem('ld59_editor_ceil_show', ceilingShow ? '1' : '0'); } catch (e) {}
+        rebuildCeilingPreview();
+    });
+})();
+
+(function wireGridPanel() {
+    const sizeInp = document.getElementById('gridSize');
+    const cellInp = document.getElementById('gridStep');
+    const majorInp = document.getElementById('gridMajor');
+    function apply() {
+        const size = Math.max(20, Math.min(2000, parseFloat(sizeInp.value) || 400));
+        const cell = Math.max(0.05, Math.min(20, parseFloat(cellInp.value) || 1));
+        const major = Math.max(1, Math.min(100, parseInt(majorInp.value) || 10));
+        rebuildGrid(size, cell, major);
+        rebuildCeilingPreview();
+        try { localStorage.setItem('ld59_editor_grid', JSON.stringify({ size, cell, major })); } catch (e) {}
+        render();
+    }
+    sizeInp.addEventListener('change', apply);
+    cellInp.addEventListener('change', apply);
+    majorInp.addEventListener('change', apply);
+    try {
+        const s = JSON.parse(localStorage.getItem('ld59_editor_grid') || 'null');
+        if (s) { sizeInp.value = s.size; cellInp.value = s.cell; majorInp.value = s.major; apply(); }
+    } catch (e) {}
+})();
+</script>
+</body>
+</html>

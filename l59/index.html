@@ -317,7 +317,14 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const objLoader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
+function parseGLB(buffer) {
+    return new Promise((resolve, reject) => {
+        gltfLoader.parse(buffer, '', (gltf) => resolve(gltf.scene), reject);
+    });
+}
 
 // ----- Renderer, scene, camera -----
 const app = document.getElementById('app');
@@ -704,7 +711,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 8;
+const CFG_VERSION = 9;
 // Keys that are in cfg but must NEVER be persisted (always derived per session).
 const CFG_SESSION_KEYS = new Set(['virtualJoystick']);
 function saveCfg() {
@@ -719,9 +726,9 @@ function saveCfg() {
 const cfg = {
     beatRange: 5.5,
     beatCooldown: 2.2,
-    chargesStart: 6,
-    chargesMax: 10,
-    chargesPerPickup: 2,
+    chargesStart: 12,
+    chargesMax: 12,
+    chargesPerPickup: 6,
     bodyRange: 2.5,
     bodyPulsePeriod: 2.0,
     signalSpeed: 4.0,
@@ -1589,21 +1596,28 @@ window.addEventListener('resize', () => {
 const parsedLibrary = new Map(); // libraryId → Group template
 async function buildLibraryCache(modelLibrary = {}) {
     for (const [id, entry] of Object.entries(modelLibrary)) {
-        let text = entry.obj;
-        if (!text && entry.path) {
-            try {
-                const r = await fetch('./' + entry.path, { cache: 'no-cache' });
-                if (r.ok) text = await r.text();
-                else console.warn('OBJ fetch failed', entry.path, r.status);
-            } catch (e) { console.warn('OBJ fetch error', entry.path, e); }
-        }
-        if (!text) continue;
+        const path = entry.path || '';
+        const isGLB = /\.(glb|gltf)$/i.test(path);
+        let parsed = null;
         try {
-            const parsed = objLoader.parse(text);
-            parsedLibrary.set(id, parsed);
-            if (entry.name) spiritModelByName.set(entry.name, parsed);
-        }
-        catch (e) { console.warn('lib parse failed', entry.name, e); }
+            if (isGLB) {
+                const r = await fetch('./' + path, { cache: 'no-cache' });
+                if (!r.ok) { console.warn('GLB fetch failed', path, r.status); continue; }
+                parsed = await parseGLB(await r.arrayBuffer());
+            } else {
+                let text = entry.obj;
+                if (!text && path) {
+                    const r = await fetch('./' + path, { cache: 'no-cache' });
+                    if (r.ok) text = await r.text();
+                    else { console.warn('OBJ fetch failed', path, r.status); continue; }
+                }
+                if (!text) continue;
+                parsed = objLoader.parse(text);
+            }
+        } catch (e) { console.warn('lib load failed', entry.name, e); continue; }
+        if (!parsed) continue;
+        parsedLibrary.set(id, parsed);
+        if (entry.name) spiritModelByName.set(entry.name, parsed);
     }
 }
 function addModel(m) {
@@ -1792,6 +1806,12 @@ async function bootstrap() {
     const wp = points.find(p => p.trigger?.effect === 'win');
     if (wp) winPoint = { x: wp.x, y: wp.y };
     else if (body) winPoint = { x: body.x, y: body.y };
+    // Fire an initial menu pulse so the scene lights up the moment the page renders,
+    // without waiting for the first animate-loop tick (which can be delayed by an unfocused tab).
+    if (winPoint) {
+        spawnEcho(winPoint.x, 0.6, winPoint.y, COLOR_BODY, 2.8);
+        winPoint._lastPulse = 0;
+    }
     // Find the Grim Reaper (by model name) for breadcrumb-chase behaviour.
     reaperPt = points.find(p => p.modelName && /GrimReaper/i.test(p.modelName)) || null;
     if (reaperPt) {
