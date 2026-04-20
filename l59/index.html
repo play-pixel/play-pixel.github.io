@@ -921,6 +921,19 @@ function playHeartbeat() {
     thump(0.17, 0.55);
 }
 
+// One-shot SFX from audio/sfx/ (decoded + cached via loadPointAudioBuffer).
+async function playSfx(filename, volume = 1) {
+    if (ambientCtx.state === 'suspended') ambientCtx.resume();
+    const buf = await loadPointAudioBuffer('audio/sfx/' + filename);
+    if (!buf) return;
+    const src = ambientCtx.createBufferSource();
+    const g = ambientCtx.createGain();
+    g.gain.value = volume;
+    src.buffer = buf;
+    src.connect(g).connect(ambientCtx.destination);
+    src.start();
+}
+
 // Smell zones — colored vapor drifting upward
 const smellZones = [];
 const smellDefs = []; // persistent zone definitions, used to rebuild on count change
@@ -1231,6 +1244,7 @@ function showWin() {
     releaseMouse();
     hideAllOverlays();
     setOverlay('winOverlay', true);
+    playSfx('heart_alive_72bpm.ogg');
 }
 function showLose(what) {
     releaseMouse();
@@ -1238,6 +1252,7 @@ function showLose(what) {
     const detail = document.getElementById('loseDetail');
     if (detail) detail.textContent = DEATH_PHRASES[Math.floor(Math.random() * DEATH_PHRASES.length)];
     setOverlay('loseOverlay', true);
+    playSfx('heart_flatline.ogg');
 }
 
 // Grim Reaper chase: records the player's path as breadcrumbs and walks it, slightly cutting corners.

@@ -1086,7 +1086,7 @@
       "y": -17.557523568587097,
       "label": "",
       "r": 0.5,
-      "scale": 2,
+      "scale": 2.4,
       "modelName": "Prop_Operation.obj",
       "hostile": false,
       "pickup": false,
@@ -1141,6 +1141,138 @@
         "radius": 1.5,
         "color": "#00ff11"
       },
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": 15.62135866694668,
+      "y": 3.9261703163399533,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 1.5,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.8,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": 12.632714504430691,
+      "y": -3.7999194349991083,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 0.8,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.25,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": 15.57481754971435,
+      "y": -9.194153248941031,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 0.8,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.25,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": 11.015961514881829,
+      "y": -14.684299777208729,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 0.8,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.25,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": -1.1460196980119006,
+      "y": -11.642239615147664,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 0.8,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.25,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
+      "patrol": null,
+      "audio": null
+    },
+    {
+      "x": 0.17478124145613894,
+      "y": -18.439817601467055,
+      "label": "",
+      "r": 0.5,
+      "scale": 1,
+      "modelName": "",
+      "hostile": false,
+      "pickup": true,
+      "trigger": {
+        "radius": 0.8,
+        "effect": "heal"
+      },
+      "pulse": {
+        "period": 2.25,
+        "color": "#d4ff00"
+      },
+      "sound": null,
+      "smell": null,
       "patrol": null,
       "audio": null
     }
