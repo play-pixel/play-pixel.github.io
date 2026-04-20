@@ -97,7 +97,8 @@
     .overlay.on { display: flex; }
     #menuOverlay { background: rgba(0,0,0,0.25); }
     #menuStart {
-        position: absolute; right: 32px; bottom: 32px;
+        position: absolute; left: 50%; bottom: 18%;
+        transform: translateX(-50%);
         padding: 18px 42px;
         font-size: 28px; letter-spacing: 0.2em;
         background: rgba(40,20,60,0.75);
@@ -109,7 +110,8 @@
     }
     #menuStart:hover { background: rgba(80,40,100,0.85); }
     #menuSkip {
-        position: absolute; right: 32px; bottom: 120px;
+        position: absolute; left: 50%; bottom: calc(18% - 36px);
+        transform: translateX(-50%);
         font-size: 11px; color: #666;
         background: transparent; border: 1px solid #333;
         padding: 4px 10px;
@@ -130,7 +132,9 @@
         font-size: 12px;
         line-height: 18px;
         text-align: center;
+        display: none;
     }
+    body.devUI #menuCamToggle { display: block; }
     #menuCamToggle:hover { opacity: 0.9; }
     #menuCamToggle.on { opacity: 0.9; background: #555; color: #fff; }
     #menuCam {
@@ -171,10 +175,10 @@
         image-rendering: pixelated;
     }
     #introNext {
-        position: absolute; left: 50%; bottom: 28px;
+        position: absolute; left: 50%; bottom: 36px;
         transform: translateX(-50%);
-        padding: 6px 18px;
-        font-size: 12px; letter-spacing: 0.2em;
+        padding: 14px 36px;
+        font-size: 20px; letter-spacing: 0.25em;
         background: transparent; color: #aaa;
         border: 1px solid #555;
         cursor: pointer;
@@ -201,6 +205,21 @@
         font-family: system-ui, sans-serif;
     }
     .retryBtn:hover { background: rgba(120,40,40,0.8); }
+    #playIntroText {
+        position: fixed; left: 50%; top: 38%;
+        transform: translate(-50%, -50%);
+        z-index: 18; pointer-events: none;
+        font-family: "Impact", "Arial Black", system-ui, sans-serif;
+        font-size: 56px; letter-spacing: 0.12em;
+        color: #f4ecd8;
+        text-align: center;
+        text-shadow: 0 0 18px rgba(0,0,0,0.9), 0 2px 0 rgba(0,0,0,0.7);
+        opacity: 0;
+        transition: opacity 0.35s;
+        white-space: pre-line;
+        max-width: 80vw;
+    }
+    #playIntroText.on { opacity: 1; }
     #preloadOverlay {
         position: fixed; inset: 0;
         display: flex; align-items: center; justify-content: center;
@@ -247,7 +266,9 @@
         font-size: 11px;
         color: #c9d9ff;
         z-index: 40;
+        display: none;
     }
+    body.devUI #panel { display: block; }
     #panelToggle {
         background: rgba(0,0,0,0.6);
         border: 1px solid #333;
@@ -317,6 +338,7 @@
     </div>
 </div>
 <div id="reticle"></div>
+<div id="playIntroText"></div>
 <div id="charges"></div>
 <div id="panel">
     <button id="panelToggle" type="button">⚙</button>
@@ -753,7 +775,7 @@ function addCeiling(size, y) {
 }
 
 // ----- Tunable config (declared early so level-building functions see it) -----
-const CFG_VERSION = 9;
+const CFG_VERSION = 10;
 // Keys that are in cfg but must NEVER be persisted (always derived per session).
 const CFG_SESSION_KEYS = new Set(['virtualJoystick']);
 function saveCfg() {
@@ -776,7 +798,7 @@ const cfg = {
     signalSpeed: 4.0,
     mouseSens: 0.0025,
     flashOnBeat: 0.5,
-    fadeMul: 3.4,
+    fadeMul: 3.9,
     autoBeatPreview: 1,
     autoBeatPeriod: 2.0,
     beatCone: 120,
@@ -796,8 +818,8 @@ const cfg = {
     touchLookSens: 0.006,
     musicVolume: 0.5,
     beatVolume: 0.6,
-    menuCamAngle: 57,
-    menuCamDist: 0.9,
+    menuCamAngle: 61,
+    menuCamDist: 1.40,
     menuCamHeight: 1.3,
     reaperEnabled: 1,
     reaperSpeedMin: 0.15,
@@ -905,6 +927,29 @@ function startAmbient() {
 }
 window.addEventListener('pointerdown', startAmbient);
 window.addEventListener('keydown', startAmbient);
+
+// ----- One-shot SFX cache (decoded once, replayed instantly) -----
+const oneShotBuffers = new Map();
+function loadOneShot(path) {
+    if (oneShotBuffers.has(path)) return;
+    fetch('./' + path)
+        .then(r => r.arrayBuffer())
+        .then(b => ambientCtx.decodeAudioData(b))
+        .then(buf => oneShotBuffers.set(path, buf))
+        .catch(e => console.warn('sfx load failed', path, e));
+}
+function playOneShot(path, volume = 1) {
+    const buf = oneShotBuffers.get(path);
+    if (!buf) return;
+    if (ambientCtx.state === 'suspended') ambientCtx.resume();
+    const src = ambientCtx.createBufferSource();
+    src.buffer = buf;
+    const g = ambientCtx.createGain();
+    g.gain.value = volume;
+    src.connect(g).connect(ambientCtx.destination);
+    src.start();
+}
+loadOneShot('audio/sfx/pickup_charge.ogg');
 
 // ----- Heartbeat SFX (synthesized "lub-dub" via Web Audio) -----
 function playHeartbeat() {
@@ -1404,6 +1449,36 @@ let reaperLastCrumb = null;
 const STARE_DURATION = 2.5;
 const TURN_DURATION = 1.6;
 let stareT = 0, turnT = 0, turnFromYaw = 0, turnToYaw = 0;
+let _introTimers = [];
+function clearPlayIntroText() {
+    for (const t of _introTimers) clearTimeout(t);
+    _introTimers = [];
+    const el = document.getElementById('playIntroText');
+    if (el) { el.classList.remove('on'); }
+}
+function runPlayIntroText() {
+    clearPlayIntroText();
+    const el = document.getElementById('playIntroText');
+    if (!el) return;
+    const lines = [
+        { text: 'Run.',                     at: 0.05, hold: 1.1 },
+        { text: 'Find the operating room.', at: 1.30, hold: 1.6 },
+        { text: 'Beat to see.',             at: 3.05, hold: 1.4 },
+    ];
+    if (!cfg.virtualJoystick) {
+        lines.push({ text: 'Click LMB / SPACE', at: 4.55, hold: 1.6 });
+    }
+    for (const line of lines) {
+        _introTimers.push(setTimeout(() => {
+            el.textContent = line.text;
+            el.classList.add('on');
+        }, line.at * 1000));
+        _introTimers.push(setTimeout(() => {
+            el.classList.remove('on');
+        }, (line.at + line.hold) * 1000));
+    }
+}
+
 function enterPlaying() {
     gameState = 'playing';
     won = false; lost = false;
@@ -1416,6 +1491,7 @@ function enterPlaying() {
     turnT = 0;
     // One free beat facing backwards — reveals the Reaper behind the soul.
     fireBeat({ cost: false });
+    runPlayIntroText();
 }
 
 // ---- Intro sequence ----
@@ -1441,6 +1517,11 @@ function enterIntro() {
 }
 
 // Use e.code (physical key) — layout-independent (RU/EN/etc.)
+// Hidden hotkey: backtick toggles all dev UI (settings panel + menu-camera tuner).
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Backquote') document.body.classList.toggle('devUI');
+});
+
 window.onkeydown = (e) => {
     if (gameState !== 'playing' || stareT > 0 || turnT > 0) return;
     keys.add(e.code);
@@ -1774,6 +1855,7 @@ function animate() {
                 if (pt.mesh) pt.mesh.visible = false;
                 charges = Math.min(cfg.chargesMax, charges + cfg.chargesPerPickup);
                 renderCharges();
+                playOneShot('audio/sfx/pickup_charge.ogg');
             }
         }
     }
