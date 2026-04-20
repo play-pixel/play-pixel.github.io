@@ -776,6 +776,72 @@ const cfg = {
     reaperShortcut: 0.3,
 };
 
+// ----- Audio listener for 3D positional audio on points -----
+const audioListener = new THREE.AudioListener();
+camera.add(audioListener);
+// Cache of decoded AudioBuffers keyed by fetch path, shared across points.
+const audioBufferCache = new Map();
+async function loadPointAudioBuffer(path) {
+    if (!path) return null;
+    if (audioBufferCache.has(path)) return audioBufferCache.get(path);
+    try {
+        const r = await fetch('./' + path, { cache: 'force-cache' });
+        if (!r.ok) { console.warn('audio fetch failed', path, r.status); return null; }
+        const buf = await audioListener.context.decodeAudioData(await r.arrayBuffer());
+        audioBufferCache.set(path, buf);
+        return buf;
+    } catch (e) { console.warn('audio decode failed', path, e); return null; }
+}
+
+// Attach a THREE.PositionalAudio to a point's mesh and wire the track queue.
+function attachPointAudio(pt) {
+    const cfg = pt.audio;
+    const node = new THREE.PositionalAudio(audioListener);
+    node.setRefDistance(cfg.refDistance ?? 3);
+    node.setMaxDistance(cfg.maxDistance ?? 15);
+    node.setRolloffFactor(cfg.rolloff ?? 1);
+    node.setDistanceModel('linear');
+    node.setVolume(cfg.volume ?? 1);
+    pt.mesh.add(node);
+    pt._audioNode = node;
+    pt._audioIdx = 0;
+    pt._audioWaitUntil = 0; // in seconds (elapsed-based)
+    pt._audioBuffers = cfg.tracks.map(() => null);
+    // Preload buffers asynchronously
+    cfg.tracks.forEach(async (t, i) => {
+        pt._audioBuffers[i] = await loadPointAudioBuffer(t.file);
+    });
+}
+
+function updatePointAudio(dt) {
+    if (gameState !== 'playing') return;
+    for (const pt of points) {
+        if (!pt._audioNode || pt.collected) continue;
+        const node = pt._audioNode;
+        if (node.isPlaying) continue;
+        if (elapsed < pt._audioWaitUntil) continue;
+        const tracks = pt.audio.tracks;
+        const buf = pt._audioBuffers[pt._audioIdx];
+        if (!buf) { // buffer still loading or missing — wait a beat and retry
+            pt._audioWaitUntil = elapsed + 0.25;
+            continue;
+        }
+        const track = tracks[pt._audioIdx];
+        try {
+            node.setBuffer(buf);
+            node.play();
+        } catch (e) { /* autoplay blocked until first gesture — silently wait */ }
+        // Schedule next: play duration is buf.duration, then delay.
+        pt._audioWaitUntil = elapsed + buf.duration + (track.delay ?? 0);
+        const next = pt._audioIdx + 1;
+        if (next >= tracks.length) {
+            pt._audioIdx = pt.audio.loop === false ? tracks.length : 0;
+        } else {
+            pt._audioIdx = next;
+        }
+    }
+}
+
 // ----- Ambient music (Web Audio, avoids mobile media-session UI) -----
 const ambientCtx = new (window.AudioContext || window.webkitAudioContext)();
 const ambientGain = ambientCtx.createGain();
@@ -787,6 +853,7 @@ fetch('./audio/ambient.mp3')
     .then(b => ambientCtx.decodeAudioData(b))
     .then(buf => { ambientBuffer = buf; });
 function startAmbient() {
+    if (audioListener.context.state === 'suspended') audioListener.context.resume();
     if (ambientStarted) return;
     if (ambientCtx.state === 'suspended') ambientCtx.resume();
     if (!ambientBuffer) return;
@@ -1052,7 +1119,7 @@ let lost = false;
 function blankPointRT(x, y) {
     return { x, y, label: '', r: 0.5, modelName: '',
         hostile: false, pickup: false,
-        pulse: null, sound: null, smell: null, patrol: null };
+        pulse: null, sound: null, smell: null, patrol: null, audio: null };
 }
 function migrateSpiritRT(s) {
     const wps = (s.waypoints || []).map(w => Array.isArray(w) ? [w[0], w[1]] : [w.x, w.y]);
@@ -1584,6 +1651,7 @@ function animate() {
 
 
     updateSmellZones(dt);
+    updatePointAudio(dt);
 
     flashT = Math.max(0, flashT - dt * 0.8);
     noisePass.uniforms.uTime.value = elapsed;
@@ -1765,7 +1833,10 @@ async function buildLevel(data) {
     body = data.body ? { x: data.body.x, y: data.body.y, lastPulse: -10 } : null;
 
     // clear old points
-    for (const p of points) if (p.mesh) scene.remove(p.mesh);
+    for (const p of points) {
+        if (p._audioNode && p._audioNode.isPlaying) p._audioNode.stop();
+        if (p.mesh) scene.remove(p.mesh);
+    }
     points.length = 0;
     const loaded = collectPointsFromLevel(data);
     let i = 0;
@@ -1790,6 +1861,7 @@ async function buildLevel(data) {
         scene.add(pt.mesh);
         points.push(pt);
         if (pt.smell) addSmellZone(pt.x, pt.y, pt.smell.radius, pt.smell.color);
+        if (pt.audio?.tracks?.length) attachPointAudio(pt);
         i++;
     }
 

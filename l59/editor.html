@@ -258,6 +258,20 @@
     ::-webkit-scrollbar-thumb:hover { background: #4a4a58; }
 
     kbd { background: #333; padding: 1px 5px; border-radius: 2px; font-family: monospace; font-size: 10px; color: #eee; }
+
+    /* ------- Loading overlay ------- */
+    #loadingOverlay {
+        position: fixed; inset: 0; z-index: 10000;
+        background: rgba(10, 10, 16, 0.92);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; color: #ddd; font-size: 13px; pointer-events: auto;
+        transition: opacity 0.25s;
+    }
+    #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+    #loadingBarWrap { width: 320px; height: 10px; background: #22222c; border: 1px solid #2a2a38; border-radius: 5px; overflow: hidden; }
+    #loadingBar { height: 100%; width: 0%; background: linear-gradient(90deg, #5a48a8, #8a7aff); transition: width 0.1s linear; }
+    #loadingText { color: #bbb; font-family: system-ui, sans-serif; }
+    #loadingTitle { color: #f0c36d; font-size: 15px; letter-spacing: 0.06em; }
 </style>
 <script type="importmap">
 {
@@ -269,6 +283,11 @@
 </script>
 </head>
 <body>
+<div id="loadingOverlay">
+    <div id="loadingTitle">Soul Beat — Editor</div>
+    <div id="loadingText">Starting…</div>
+    <div id="loadingBarWrap"><div id="loadingBar"></div></div>
+</div>
 <div id="app">
 
 <!-- ============ MENU BAR ============ -->
@@ -292,6 +311,8 @@
             <div class="menu-separator"></div>
             <div class="menu-entry" data-act="duplicate">Duplicate selected<span class="shortcut">Ctrl+D</span></div>
             <div class="menu-entry" data-act="delete">Delete selected<span class="shortcut">Del</span></div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-act="dedupe">Find &amp; remove duplicates…</div>
             <div class="menu-entry" data-act="clear">Clear all</div>
         </div>
     </div>
@@ -525,7 +546,7 @@ function blankPoint(x, y) {
         x, y, label: '', r: 0.5, scale: 1, modelName: '',
         hostile: false, pickup: false,
         trigger: null,   // null | { radius, effect: 'kill'|'heal'|'win' }
-        pulse: null, sound: null, smell: null, patrol: null,
+        pulse: null, sound: null, smell: null, patrol: null, audio: null,
     };
 }
 function migrateLegacyPoint(p) {
@@ -1282,6 +1303,54 @@ function buildPointInspector(box, data) {
         addColorField('color', () => data.smell.color, v => data.smell.color = v);
     }
 
+    // ── Audio (3D positional, track queue) ──
+    sectionTitle('Audio (3D positional)');
+    addToggle('enabled', () => !!data.audio, v => {
+        data.audio = v ? { tracks: [], loop: true, volume: 1, refDistance: 3, maxDistance: 15 } : null;
+        updateInspector();
+    });
+    if (data.audio) {
+        addNumField('volume',      () => data.audio.volume ?? 1, v => data.audio.volume = v, 0.05);
+        addNumField('ref dist (m)', () => data.audio.refDistance ?? 3, v => data.audio.refDistance = v, 0.5);
+        addNumField('max dist (m)', () => data.audio.maxDistance ?? 15, v => data.audio.maxDistance = v, 0.5);
+        addToggle('loop', () => data.audio.loop !== false, v => { data.audio.loop = v; });
+        const tLab = document.createElement('div');
+        tLab.style.cssText = 'margin:4px 0 2px 16px; color:#aab; font-size:11px;';
+        tLab.textContent = 'Tracks (playing in order, delay = pause after)';
+        box.appendChild(tLab);
+        const tracks = data.audio.tracks;
+        for (let i = 0; i < tracks.length; i++) {
+            const t = tracks[i];
+            const r = document.createElement('div'); r.className = 'prop-row'; r.style.gap = '4px'; r.style.paddingLeft = '16px';
+            const idx = document.createElement('span'); idx.textContent = '#' + i; idx.style.minWidth = '20px';
+            const sel = document.createElement('select'); sel.style.flex = '1'; sel.style.minWidth = '0';
+            const empty = document.createElement('option'); empty.value = ''; empty.textContent = '(none)';
+            sel.appendChild(empty);
+            for (const path of audioFileList) {
+                const o = document.createElement('option'); o.value = path; o.textContent = path.replace(/^audio\/sfx\//, '');
+                sel.appendChild(o);
+            }
+            if (t.file && !audioFileList.includes(t.file)) {
+                const o = document.createElement('option'); o.value = t.file; o.textContent = t.file + ' (missing)';
+                sel.appendChild(o);
+            }
+            sel.value = t.file || '';
+            sel.addEventListener('change', () => { snapshot(); t.file = sel.value; });
+            const di = document.createElement('input'); di.type = 'number'; di.step = '0.25'; di.value = t.delay ?? 0; di.style.width = '56px'; di.title = 'delay (s) after this track';
+            di.addEventListener('focus', () => snapshot());
+            di.addEventListener('input', () => { t.delay = parseFloat(di.value) || 0; });
+            const del = document.createElement('button'); del.textContent = '✕'; del.style.cssText = 'padding:2px 6px;';
+            del.addEventListener('click', () => { snapshot(); tracks.splice(i, 1); updateInspector(); });
+            r.appendChild(idx); r.appendChild(sel); r.appendChild(di); r.appendChild(del);
+            box.appendChild(r);
+        }
+        const addT = document.createElement('button');
+        addT.textContent = '+ Add track';
+        addT.style.cssText = 'width:calc(100% - 16px); margin:4px 0 4px 16px; padding:4px; background:#2a3a55; color:#c9d9ff; border:1px solid #445; cursor:pointer;';
+        addT.addEventListener('click', () => { snapshot(); tracks.push({ file: '', delay: 0 }); updateInspector(); });
+        box.appendChild(addT);
+    }
+
     // ── Patrol ──
     sectionTitle('Patrol');
     addToggle('enabled', () => !!data.patrol, v => data.patrol = v ? { waypoints: [], speed: 1, turnRate: 2, loop: true, loopDelay: 2 } : null);
@@ -1756,6 +1825,7 @@ function runAction(act) {
     else if (act === 'redo') redo();
     else if (act === 'delete') { if (state.selected) removeEntity(state.selected.kind, state.selected.id); }
     else if (act === 'duplicate') duplicateSelected();
+    else if (act === 'dedupe') runDedupe(true);
     else if (act === 'focus') focusSelected();
     else if (act === 'resetCam') { camera.position.set(12, 14, 16); orbit.target.set(0, 0, 0); orbit.update(); render(); }
     else if (act === 'gizmoMove') setGizmoMode('translate');
@@ -1923,25 +1993,85 @@ function clearAll() {
     updateAssets();
     render();
 }
-async function fetchLibraryObjs(lib) {
+async function fetchLibraryObjs(lib, onProgress) {
     const missing = [];
+    const tasks = [];
     for (const [id, entry] of Object.entries(lib)) {
         if (!entry.path) continue;
         const isGLB = /\.(glb|gltf)$/i.test(entry.path);
         if (isGLB && glbTemplateByName.has(entry.name)) continue;
         if (!isGLB && entry.obj) continue;
-        try {
-            const r = await fetch('./' + entry.path, { cache: 'no-cache' });
-            if (!r.ok) { missing.push(entry.path); continue; }
-            if (isGLB) glbTemplateByName.set(entry.name, await parseGLB(await r.arrayBuffer()));
-            else entry.obj = await r.text();
-        } catch (e) {
-            missing.push(entry.path);
+        tasks.push({ entry, isGLB });
+    }
+    const total = tasks.length;
+    let done = 0;
+    if (onProgress) onProgress(0, total);
+    const CONCURRENCY = 16;
+    let idx = 0;
+    async function worker() {
+        while (idx < tasks.length) {
+            const my = tasks[idx++];
+            try {
+                const r = await fetch('./' + my.entry.path, { cache: 'no-cache' });
+                if (!r.ok) { missing.push(my.entry.path); }
+                else if (my.isGLB) glbTemplateByName.set(my.entry.name, await parseGLB(await r.arrayBuffer()));
+                else my.entry.obj = await r.text();
+            } catch (e) {
+                missing.push(my.entry.path);
+            }
+            done++;
+            if (onProgress) onProgress(done, total);
         }
     }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, total) }, worker));
     if (missing.length) {
         alert('Missing model files (put them in models/ folder):\n\n' + missing.join('\n'));
     }
+}
+
+// Dedupe arrays of entity data by byte-identical JSON signature.
+// Returns { cleanedData, counts } where counts describes what was removed.
+function dedupeLevelData(data) {
+    const counts = {};
+    const clean = (arr, kind) => {
+        if (!Array.isArray(arr)) return arr;
+        const seen = new Set();
+        const out = [];
+        for (const e of arr) {
+            // Ignore id when hashing — we care about the actual content.
+            const { id, ...rest } = e || {};
+            const k = JSON.stringify(rest);
+            if (seen.has(k)) continue;
+            seen.add(k);
+            out.push(e);
+        }
+        const removed = arr.length - out.length;
+        if (removed > 0) counts[kind] = removed;
+        return out;
+    };
+    const d = { ...data };
+    d.points = clean(data.points, 'points');
+    d.models = clean(data.models, 'models');
+    d.walls = clean(data.walls, 'walls');
+    d.cubes = clean(data.cubes, 'cubes');
+    d.spheres = clean(data.spheres, 'spheres');
+    return { cleanedData: d, counts };
+}
+
+function runDedupe(interactive) {
+    const data = getLevelJson();
+    const { cleanedData, counts } = dedupeLevelData(data);
+    const total = Object.values(counts).reduce((s, v) => s + v, 0);
+    if (!total) {
+        if (interactive) alert('No duplicates found. Scene is clean.');
+        return 0;
+    }
+    const summary = Object.entries(counts).map(([k, v]) => `  ${k}: ${v}`).join('\n');
+    if (interactive && !confirm(`Found ${total} duplicate entitie(s):\n${summary}\n\nRemove them?`)) return 0;
+    // Reload scene from cleaned data (keep current library templates).
+    loadLevel(cleanedData, true);
+    if (interactive) showSaveToast(`✓ removed ${total} duplicate(s)`);
+    return total;
 }
 
 async function loadLevel(data, takeSnapshot = true) {
@@ -1958,7 +2088,9 @@ async function loadLevel(data, takeSnapshot = true) {
         if (!isNaN(n) && n >= libCounter) libCounter = n + 1;
     }
     // fetch OBJ texts that are referenced by path (not inline)
-    await fetchLibraryObjs(loadedLibrary);
+    await fetchLibraryObjs(loadedLibrary, (done, total) => {
+        if (total > 0) setLoadingProgress(`Loading models… ${done}/${total}`, done / total);
+    });
     deselect();
     if (data.soulStart) addEntityNoSnapshot('soulStart', { ...data.soulStart });
     if (data.body) addEntityNoSnapshot('body', { ...data.body });
@@ -2015,6 +2147,18 @@ document.getElementById('btnImportObjInline').addEventListener('click', () => {
 });
 
 // Scan ./models/ folder (works on http-server with directory listing, e.g. python http.server)
+// Known audio files (relative to project root). Populated on load from audio/index.json.
+let audioFileList = [];
+async function refreshAudioFileList() {
+    try {
+        const r = await fetch('./audio/index.json', { cache: 'no-cache' });
+        if (!r.ok) { audioFileList = []; return; }
+        const names = await r.json();
+        audioFileList = Array.isArray(names) ? names.map(n => 'audio/sfx/' + n) : [];
+    } catch (e) { audioFileList = []; }
+}
+refreshAudioFileList();
+
 async function discoverModelsFolder() {
     // Prefer manifest (works under Vite / static hosts without directory listing).
     try {
@@ -2091,8 +2235,26 @@ function render() { renderer.render(scene, camera); }
 function animate() { orbit.update(); render(); requestAnimationFrame(animate); }
 animate();
 
+// Loading overlay helpers
+const _loadingOverlay = document.getElementById('loadingOverlay');
+const _loadingBar = document.getElementById('loadingBar');
+const _loadingText = document.getElementById('loadingText');
+function setLoadingProgress(text, frac) {
+    if (_loadingText) _loadingText.textContent = text;
+    if (_loadingBar) _loadingBar.style.width = Math.max(0, Math.min(1, frac)) * 100 + '%';
+}
+function hideLoadingOverlay() {
+    if (!_loadingOverlay) return;
+    _loadingOverlay.classList.add('hidden');
+    setTimeout(() => _loadingOverlay.remove(), 400);
+}
+
 // Initial
 (async () => {
+    // Let the UI paint before we start heavy work.
+    setLoadingProgress('Reading level.json…', 0.02);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
     // Try to load ./level.json first (same source the game reads); fall back to SAMPLE_LEVEL.
     let initial = SAMPLE_LEVEL;
     try {
@@ -2106,28 +2268,80 @@ animate();
     } catch (e) {
         console.log('[editor] level.json fetch failed — using sample');
     }
+    // Auto-dedupe on load — guards against the duplication bug that occasionally
+    // produces byte-identical copies of the same entity (24x Enemy_Minion seen in the wild).
+    const { cleanedData, counts } = dedupeLevelData(initial);
+    const removed = Object.values(counts).reduce((s, v) => s + v, 0);
+    if (removed > 0) {
+        console.warn('[editor] auto-removed', removed, 'duplicate(s) on load:', counts);
+        initial = cleanedData;
+        setTimeout(() => showSaveToast(`⚠ auto-removed ${removed} duplicate(s) — save to persist`), 1500);
+    }
     await loadLevel(initial, false);
-    // Auto-discover models on startup (works on dev server with directory listing)
+
+    // Auto-discover models on startup (works on dev server with directory listing).
+    // Only fetch entries that are NOT already in the library — avoids a second pass over every GLB.
+    setLoadingProgress('Scanning models/ folder…', 0.9);
     const names = await discoverModelsFolder();
     if (names.length) {
         const existing = new Set(Object.values(state.entities.modelLibrary).map(e => e.name));
-        for (const name of names) {
-            if (existing.has(name)) continue;
+        const fresh = names.filter(n => !existing.has(n));
+        let done = 0;
+        await Promise.all(fresh.map(async (name) => {
+            const isGLB = /\.(glb|gltf)$/i.test(name);
             try {
                 const res = await fetch('./models/' + name, { cache: 'no-cache' });
-                if (!res.ok) continue;
-                const text = await res.text();
+                if (!res.ok) return;
                 const id = 'lib_' + (libCounter++);
-                state.entities.modelLibrary[id] = { name, path: 'models/' + name, obj: text };
+                if (isGLB) {
+                    glbTemplateByName.set(name, await parseGLB(await res.arrayBuffer()));
+                    state.entities.modelLibrary[id] = { name, path: 'models/' + name };
+                } else {
+                    state.entities.modelLibrary[id] = { name, path: 'models/' + name, obj: await res.text() };
+                }
             } catch (e) {}
-        }
+            done++;
+            setLoadingProgress(`Adding new models… ${done}/${fresh.length}`, 0.9 + 0.1 * (done / Math.max(1, fresh.length)));
+        }));
         updateAssets();
-        console.log(`[editor] auto-loaded ${names.length} model(s) from ./models/`);
+        console.log(`[editor] auto-loaded ${names.length} model(s) from ./models/ (${fresh.length} new)`);
     }
+    setLoadingProgress('Ready', 1);
+    hideLoadingOverlay();
 })();
 
 // ========== Model preview modal ==========
+// IMPORTANT: one shared WebGLRenderer across all previews. Creating a fresh
+// renderer per preview leaked WebGL contexts (browsers cap at ~8–16) which
+// eventually forced the MAIN editor canvas to lose its context → black screen.
 let previewModal = null;
+let sharedPreviewRenderer = null;
+let sharedPreviewCanvas = null;
+function getSharedPreviewRenderer() {
+    if (sharedPreviewRenderer) return { renderer: sharedPreviewRenderer, canvas: sharedPreviewCanvas };
+    sharedPreviewCanvas = document.createElement('canvas');
+    sharedPreviewCanvas.width = 420;
+    sharedPreviewCanvas.height = 420;
+    sharedPreviewCanvas.style.cssText = 'display:block; background:#0a0a14; cursor:grab;';
+    sharedPreviewRenderer = new THREE.WebGLRenderer({ canvas: sharedPreviewCanvas, antialias: true });
+    sharedPreviewRenderer.setPixelRatio(window.devicePixelRatio);
+    sharedPreviewRenderer.setSize(420, 420, false);
+    return { renderer: sharedPreviewRenderer, canvas: sharedPreviewCanvas };
+}
+function disposeSceneDeep(root) {
+    root.traverse(o => {
+        if (o.geometry) o.geometry.dispose?.();
+        if (o.material) {
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            for (const m of mats) {
+                for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap']) {
+                    if (m[k]) m[k].dispose?.();
+                }
+                m.dispose?.();
+            }
+        }
+    });
+}
 function closeModelPreview() {
     if (!previewModal) return;
     previewModal.stop();
@@ -2146,9 +2360,9 @@ function showModelPreview(libraryId) {
     const title = document.createElement('div');
     title.textContent = entry.name;
     title.style.cssText = 'color:#f0c36d; font-size:12px;';
-    const canvas = document.createElement('canvas');
-    canvas.width = 420; canvas.height = 420;
-    canvas.style.cssText = 'display:block; background:#0a0a14; cursor:grab;';
+    const { renderer: prend, canvas } = getSharedPreviewRenderer();
+    // Detach canvas from any previous modal, attach to this one.
+    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
     const hint = document.createElement('div');
     hint.style.cssText = 'color:#888; font-size:10px;';
     hint.textContent = 'LMB rotate · wheel zoom · Esc close';
@@ -2160,9 +2374,6 @@ function showModelPreview(libraryId) {
     overlay.append(box);
     document.body.append(overlay);
 
-    const prend = new THREE.WebGLRenderer({ canvas, antialias: true });
-    prend.setPixelRatio(window.devicePixelRatio);
-    prend.setSize(420, 420, false);
     const pscene = new THREE.Scene();
     pscene.background = new THREE.Color(0x0a0a14);
     pscene.add(new THREE.AmbientLight(0xffffff, 0.7));
@@ -2171,32 +2382,35 @@ function showModelPreview(libraryId) {
     pscene.add(pdir);
     const pcam = new THREE.PerspectiveCamera(40, 1, 0.001, 10000);
     const pctl = new OrbitControls(pcam, canvas);
+    let parsedRoot = null;
+    const edgeGeoms = [];
+    const edgeMats = [];
+    const overrideMat = new THREE.MeshLambertMaterial({ color: 0xb0b0c0 });
     try {
-        const parsed = getLibraryTemplate(entry);
-        if (!parsed) throw new Error('no template');
-        const mat = new THREE.MeshLambertMaterial({ color: 0xb0b0c0 });
+        parsedRoot = getLibraryTemplate(entry);
+        if (!parsedRoot) throw new Error('no template');
         let meshCount = 0;
-        parsed.traverse(c => {
+        parsedRoot.traverse(c => {
             if (c.isMesh && c.geometry) {
                 meshCount++;
-                c.material = mat;
+                c.material = overrideMat;
                 try {
-                    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(c.geometry, 20), new THREE.LineBasicMaterial({ color: 0xffffff }));
-                    c.add(edges);
+                    const eg = new THREE.EdgesGeometry(c.geometry, 20);
+                    const em = new THREE.LineBasicMaterial({ color: 0xffffff });
+                    edgeGeoms.push(eg); edgeMats.push(em);
+                    c.add(new THREE.LineSegments(eg, em));
                 } catch (e) { /* some GLB geometries lack index/position attribute */ }
             }
         });
         if (!meshCount) console.warn('preview: model has no meshes', entry.name);
-        pscene.add(parsed);
-        // Compute world-space bbox AFTER adding to scene, so matrices are up to date.
-        parsed.updateMatrixWorld(true);
-        const bbox = new THREE.Box3().setFromObject(parsed);
+        pscene.add(parsedRoot);
+        parsedRoot.updateMatrixWorld(true);
+        const bbox = new THREE.Box3().setFromObject(parsedRoot);
         const center = bbox.getCenter(new THREE.Vector3());
         const size = bbox.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        // Recenter via an outer wrapper so we don't fight the GLB's own transforms.
-        parsed.position.sub(center);
-        parsed.updateMatrixWorld(true);
+        parsedRoot.position.sub(center);
+        parsedRoot.updateMatrixWorld(true);
         const dist = maxDim * 2.2;
         pcam.position.set(dist, dist * 0.7, dist);
         pctl.target.set(0, 0, 0);
@@ -2206,8 +2420,26 @@ function showModelPreview(libraryId) {
     let alive = true;
     function pframe() { if (!alive) return; pctl.update(); prend.render(pscene, pcam); requestAnimationFrame(pframe); }
     pframe();
-    previewModal = { overlay, stop: () => { alive = false; prend.dispose(); } };
+    previewModal = {
+        overlay,
+        stop: () => {
+            alive = false;
+            pctl.dispose?.();
+            if (parsedRoot) {
+                pscene.remove(parsedRoot);
+                disposeSceneDeep(parsedRoot);
+            }
+            for (const g of edgeGeoms) g.dispose?.();
+            for (const m of edgeMats) m.dispose?.();
+            overrideMat.dispose?.();
+            // Drop any GPU objects bound to this scene but keep the renderer's context alive.
+            prend.renderLists.dispose?.();
+        },
+    };
 }
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && previewModal) { e.stopPropagation(); closeModelPreview(); }
+}, true);
 
 // ========== Map underlay (editor-only, stored in localStorage) ==========
 let underlayMesh = null;
