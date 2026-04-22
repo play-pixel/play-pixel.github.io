@@ -330,7 +330,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "twenty-five. i live in Brooklyn", "ru": "двадцать пять. живу в Бруклине" },
+          "text": { "en": "25. i live in Brooklyn", "ru": "25. живу в Бруклине" },
           "delay": 4500
         },
         {
@@ -988,7 +988,7 @@
       "messages": [
         {
           "type": "text",
-          "text": { "en": "i walked through maybe five or six rooms looking for an exit", "ru": "я прошла наверное пять или шесть комнат пока искала выход" },
+          "text": { "en": "i walked through maybe 5 or 6 rooms looking for an exit", "ru": "я прошла наверное 5 или 6 комнат пока искала выход" },
           "delay": 5000
         },
         {
@@ -1114,7 +1114,7 @@
             },
             {
               "type": "text",
-              "text": { "en": "found him two years ago behind the coffee shop", "ru": "нашла его два года назад за кофейней" }
+              "text": { "en": "found him 2 years ago behind the coffee shop", "ru": "нашла его 2 года назад за кофейней" }
             },
             {
               "type": "text",
@@ -1461,7 +1461,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "the corridor i came from five minutes ago", "ru": "коридор откуда я пришла пять минут назад" },
+          "text": { "en": "the corridor i came from 5 minutes ago", "ru": "коридор откуда я пришла 5 минут назад" },
           "delay": 0
         },
         {
@@ -2085,7 +2085,7 @@
           "optional": true,
           "response": [
             { "type": "text", "text": { "en": "...i need this", "ru": "...мне нужно это" }, "delay": 3000 },
-            { "type": "text", "text": { "en": "i've seen maybe ten rooms in this place and they're all empty", "ru": "я видела тут десяток комнат и все пустые" }, "delay": 5500 },
+            { "type": "text", "text": { "en": "i've seen maybe 10 rooms in this place and they're all empty", "ru": "я видела тут десяток комнат и все пустые" }, "delay": 5500 },
             { "type": "text", "text": { "en": "this is the first sign of another person. i'm not walking past that", "ru": "это первый знак что есть кто-то ещё. я мимо не пройду" }, "delay": 6500 }
           ]
         }
@@ -2119,7 +2119,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "dates go back like two months", "ru": "даты уходят на два месяца назад" },
+          "text": { "en": "dates go back like 2 months", "ru": "даты уходят на 2 месяца назад" },
           "delay": 5000
         },
         {
@@ -2172,7 +2172,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "the last entry is four days ago", "ru": "последняя запись четыре дня назад" },
+          "text": { "en": "the last entry is 4 days ago", "ru": "последняя запись 4 дня назад" },
           "delay": 4500
         },
         {
@@ -2226,7 +2226,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "a guy, maybe thirty. holding a baby. both smiling", "ru": "парень, около тридцати. держит малыша. оба улыбаются" },
+          "text": { "en": "a guy, maybe 30. holding a baby. both smiling", "ru": "парень, около 30. держит малыша. оба улыбаются" },
           "delay": 0
         },
         {
@@ -2524,7 +2524,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "but the sound. god. the echo in here. you can hear it like two rooms away", "ru": "но звук. боже. эхо тут жуткое. слышно как минимум через две комнаты" },
+          "text": { "en": "but the sound. god. the echo in here. you can hear it like 2 rooms away", "ru": "но звук. боже. эхо тут жуткое. слышно как минимум через 2 комнаты" },
           "delay": 7500
         }
       ],
@@ -3285,7 +3285,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "but. my phone says it's been four months", "ru": "но. телефон говорит прошло четыре месяца" },
+          "text": { "en": "but. my phone says it's been 4 months", "ru": "но. телефон говорит прошло 4 месяца" },
           "delay": 5500
         },
         {
