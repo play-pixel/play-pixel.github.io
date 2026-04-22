@@ -1406,15 +1406,15 @@
         });
       }
 
-      // Admin Skip — visible only in test mode. Forces first default/key choice.
-      if (prefs.testMode) {
+      // Admin Skip — visible only when turbo is ON. Forces first default/key choice.
+      if (turboMode) {
         const keyChoices = node.choices.filter(ch => ch.key);
         if (keyChoices.length > 0) {
           const pick = keyChoices.find(ch => ch.default) || keyChoices[0];
           const pickIdx = node.choices.indexOf(pick);
           const skipBtn = document.createElement('button');
           skipBtn.className = 'admin-skip';
-          skipBtn.textContent = '⏭ Skip';
+          skipBtn.textContent = '⏭ ' + t('skip');
           skipBtn.disabled = optBusy;
           skipBtn.onclick = () => playerChoose(pickIdx);
           bottomChoices.appendChild(skipBtn);
@@ -1462,9 +1462,9 @@
         (!wc.requires || state.knowledgeFlags.includes(wc.requires))
       ) : [];
 
-      if (prefs.testMode) {
+      if (turboMode) {
         bottomStatus.innerHTML = timeStr +
-          ' <button class="wait-skip" id="waitSkipBtn">' + t('skip') + '</button>';
+          ' <button class="wait-skip" id="waitSkipBtn">⏭ ' + t('skip') + '</button>';
         const skipBtn = $('waitSkipBtn');
         if (skipBtn) skipBtn.onclick = () => {
           state.waitUntil = Date.now(); save(); tick();
