@@ -803,10 +803,11 @@
       return 600;
     }
     // Typing indicator duration — scales with length, ±15% jitter.
-    // base = 400 + len * 150, floor 1500ms. Short msgs stay snappy, long msgs feel human.
+    // base = 400 + len * 188, floor 1500ms. Short msgs stay snappy, long msgs feel human.
+    // (per-char multiplier bumped +25% from 150 → 188 so readers keep up with longer lines.)
     function typingDuration(len) {
       if (turboMode) return TURBO_TYPING;
-      const base = Math.max(1500, 400 + len * 150);
+      const base = Math.max(1500, 400 + len * 188);
       const jitter = 0.85 + Math.random() * 0.30; // 0.85..1.15
       return Math.round(base * jitter);
     }
@@ -1314,6 +1315,13 @@
         dots.innerHTML = '<span></span><span></span><span></span>';
         row.appendChild(av); row.appendChild(dots);
         chatArea.appendChild(row);
+        scroll();
+      } else if (isTyping && existing && chatArea.lastElementChild !== existing) {
+        // A new NPC message was appended after the existing typing bubble
+        // (happens when typing_end+msg and the next typing_start are delivered
+        // in the same tick). Move bubble back to the end so it stays below
+        // the latest message instead of leaking between messages.
+        chatArea.appendChild(existing);
         scroll();
       } else if (!isTyping && existing) {
         existing.remove();
