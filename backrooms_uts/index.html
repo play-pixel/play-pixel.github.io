@@ -1749,6 +1749,7 @@
       if (!state.timeline || state.timeline.length === 0) return;
       const now = Date.now();
       let prev = now;
+      let lastMsgTs = now;
       for (let i = state.timelineIdx; i < state.timeline.length; i++) {
         const evt = state.timeline[i];
         // For typing_end and msg we want small gap; typing_start immediately after prev.
@@ -1759,15 +1760,21 @@
         const target = prev + gap;
         if (evt.ts > target) evt.ts = target;
         prev = evt.ts;
+        if (evt.type === 'msg') lastMsgTs = evt.ts;
       }
-      if (state.waitUntil && state.waitUntil > now + TURBO_MSG_GAP) {
-        state.waitUntil = now + TURBO_MSG_GAP;
+      // Gates must not open before the last pending message is delivered.
+      // Clamp to `max(now + TURBO_MSG_GAP, lastMsgTs + TURBO_MSG_GAP)` — this
+      // keeps turbo fast but preserves the invariant: choices/input/wait
+      // unlock AFTER all queued NPC messages arrive.
+      const gateFloor = lastMsgTs + TURBO_MSG_GAP;
+      if (state.waitUntil && state.waitUntil > gateFloor) {
+        state.waitUntil = gateFloor;
       }
-      if (state.choiceAvailableAt && state.choiceAvailableAt > now + TURBO_MSG_GAP) {
-        state.choiceAvailableAt = now + TURBO_MSG_GAP;
+      if (state.choiceAvailableAt && state.choiceAvailableAt > gateFloor) {
+        state.choiceAvailableAt = gateFloor;
       }
-      if (state.inputAvailableAt && state.inputAvailableAt > now + TURBO_MSG_GAP) {
-        state.inputAvailableAt = now + TURBO_MSG_GAP;
+      if (state.inputAvailableAt && state.inputAvailableAt > gateFloor) {
+        state.inputAvailableAt = gateFloor;
       }
       save();
       tick();
