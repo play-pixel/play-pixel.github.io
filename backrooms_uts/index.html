@@ -987,14 +987,22 @@
       const now = Date.now();
       if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
       const ch = node.choices[choiceIdx];
-      state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+      // If target is an input-node, skip pushing the button label as a player message.
+      // The player's typed text will be pushed by submitInput() instead.
+      const target = scenario.nodes[ch.next];
+      const isInputTarget = !!(target && target.input);
+      if (!isInputTarget) {
+        state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+      }
       vibrate(30);
       state.choices.push(ch.tag);
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
-      setTimeout(() => {
-        const pm = [...state.history].reverse().find(m => m.type === 'player');
-        if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
-      }, 1000);
+      if (!isInputTarget) {
+        setTimeout(() => {
+          const pm = [...state.history].reverse().find(m => m.type === 'player');
+          if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
+        }, 1000);
+      }
       scheduleNode(ch.next, now + (turboMode ? 400 : 1500));
       save(); renderUI(); updateBottomPanel();
     }
