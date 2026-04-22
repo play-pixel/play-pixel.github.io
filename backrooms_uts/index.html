@@ -236,6 +236,9 @@
     /* Admin panel */
     .admin-toggle { width:32px; height:32px; border:none; background:none; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:8px; opacity:.5; }
     .admin-toggle:active { opacity:1; }
+    .admin-toggle.active { color:var(--accent); opacity:1; }
+    .admin-skip { align-self:flex-end; margin-top:4px; padding:4px 10px; border:1px dashed var(--border); border-radius:6px; background:transparent; color:var(--text-dim); cursor:pointer; font-size:11px; font-family:monospace; opacity:.7; }
+    .admin-skip:active { opacity:1; background:var(--accent); color:#fff; }
     .admin-panel { background:var(--surface); border-bottom:2px solid var(--accent); padding:8px 12px; font-size:12px; flex-shrink:0; font-family:monospace; }
     .admin-row { display:flex; align-items:center; gap:6px; margin:3px 0; flex-wrap:wrap; }
     .admin-label { color:var(--text-dim); font-size:11px; }
@@ -334,6 +337,9 @@
       <div class="chat-hdr-info"><div class="chat-hdr-name" id="chatHdrName"></div><div class="chat-hdr-status" id="hdrStatus"></div></div>
       <button class="admin-toggle" id="adminToggle" title="Admin">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+      <button class="admin-toggle" id="turboToggle" title="Turbo (P)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><polygon points="4 4 13 12 4 20 4 4"/><polygon points="13 4 22 12 13 20 13 4"/></svg>
       </button>
     </div>
     <!-- Admin panel -->
@@ -773,12 +779,41 @@
     }
     function isChatVisible() { return currentScreen === 'chatScreen'; }
 
+    // ── Turbo (admin) ─────────────────
+    // Not persisted — off by default each page load. Accelerates NPC-side pacing
+    // and realtime waits to ~1s gaps. Never auto-selects player choices/input.
+    let turboMode = false;
+    const TURBO_MSG_GAP = 1000; // target gap between NPC messages in turbo
+    const TURBO_TYPING = 300;   // typing indicator duration in turbo
+
     // ── Time helpers ─────────────────
     function getChoiceTimeout() {
       return (prefs.testMode ? CHOICE_TIMEOUT_TEST : CHOICE_TIMEOUT_REAL) * 1000;
     }
     function scaleWait(seconds) {
+      if (turboMode) return TURBO_MSG_GAP;
       return prefs.testMode ? (seconds / TIME_SCALE_TEST) * 1000 : seconds * 1000;
+    }
+
+    // ── Message pacing (length-aware) ─────────────
+    // Think pause before typing starts. Respects authored msg.delay fully.
+    function thinkPause(delay) {
+      if (turboMode) return 200;
+      if (typeof delay === 'number' && delay > 0) return delay;
+      return 600;
+    }
+    // Typing indicator duration — scales with length, ±15% jitter.
+    // base = 400 + len * 150, floor 1500ms. Short msgs stay snappy, long msgs feel human.
+    function typingDuration(len) {
+      if (turboMode) return TURBO_TYPING;
+      const base = Math.max(1500, 400 + len * 150);
+      const jitter = 0.85 + Math.random() * 0.30; // 0.85..1.15
+      return Math.round(base * jitter);
+    }
+    // Effective length for pacing: voice uses transcript, else text.
+    function msgPaceLen(msg) {
+      const src = L(msg.text) || L(msg.transcript) || '';
+      return src.length;
     }
 
     // ── Time formatting ─────────────
@@ -813,12 +848,12 @@
         }
         if (msg.type === 'status') {
           state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
-          t += 500; continue;
+          t += (turboMode ? 300 : 500); continue;
         }
         if (msg.type === 'image') {
-          t += msg.delay > 0 ? msg.delay : 1500;
+          t += turboMode ? 300 : (msg.delay > 0 ? msg.delay : 1500);
           state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
-          t += 2000; // pause after image
+          t += turboMode ? TURBO_MSG_GAP : 2000; // pause after image
           continue;
         }
         if (msg.type === 'update_profile') {
@@ -826,15 +861,13 @@
           state.timeline.push({ ts:t, type:'update_profile', data:localizeMsg(msg) });
           continue;
         }
-        const text = L(msg.text) || '';
-        const len = text.length;
-        t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
-        const typeTime = Math.max(1500, Math.min(len * 45, 4000));
+        const len = msgPaceLen(msg);
+        t += thinkPause(msg.delay);
+        const typeTime = typingDuration(len);
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
         state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
-        t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
       if (node.input) {
@@ -961,7 +994,7 @@
         const pm = [...state.history].reverse().find(m => m.type === 'player');
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
-      scheduleNode(ch.next, now + 1500);
+      scheduleNode(ch.next, now + (turboMode ? 400 : 1500));
       save(); renderUI(); updateBottomPanel();
     }
 
@@ -985,15 +1018,13 @@
       // Schedule response messages, then return to choice
       let t = now + 1500;
       for (const msg of ch.response) {
-        const text = L(msg.text) || '';
-        const len = text.length;
-        t += msg.delay > 0 ? Math.min(msg.delay, 3000) : 800;
-        const typeTime = Math.max(1500, Math.min(len * 45, 4000));
+        const len = msgPaceLen(msg);
+        t += thinkPause(msg.delay);
+        const typeTime = typingDuration(len);
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
         state.timeline.push({ ts:t, type:'msg', data:localizeMsg(msg) });
-        t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
       // Reset deadline from end of optional response
@@ -1374,6 +1405,21 @@
           bottomChoices.appendChild(btn);
         });
       }
+
+      // Admin Skip — visible only in test mode. Forces first default/key choice.
+      if (prefs.testMode) {
+        const keyChoices = node.choices.filter(ch => ch.key);
+        if (keyChoices.length > 0) {
+          const pick = keyChoices.find(ch => ch.default) || keyChoices[0];
+          const pickIdx = node.choices.indexOf(pick);
+          const skipBtn = document.createElement('button');
+          skipBtn.className = 'admin-skip';
+          skipBtn.textContent = '⏭ Skip';
+          skipBtn.disabled = optBusy;
+          skipBtn.onclick = () => playerChoose(pickIdx);
+          bottomChoices.appendChild(skipBtn);
+        }
+      }
     }
 
     function renderInputField() {
@@ -1457,15 +1503,13 @@
 
       let t = now + 1500;
       for (const msg of wc.response) {
-        const text = L(msg.text) || '';
-        const len = text.length;
-        t += 800;
-        const typeTime = Math.max(1500, Math.min(len * 45, 4000));
+        const len = msgPaceLen(msg);
+        t += thinkPause(msg.delay);
+        const typeTime = typingDuration(len);
         state.timeline.push({ ts:t, type:'typing_start' });
         t += typeTime;
         state.timeline.push({ ts:t, type:'typing_end' });
         state.timeline.push({ ts:t, type:'msg', data:localizeMsg({...msg, type:'text'}) });
-        t += Math.max(1500, Math.min(len * 70, 6000));
       }
 
       // Block new questions until response finishes
@@ -1681,6 +1725,55 @@
       panel.classList.toggle('hidden');
       if (!panel.classList.contains('hidden')) updateAdminPanel();
     };
+
+    // ── Turbo toggle (keyboard P + UI button next to pencil) ─────
+    function compressTimelineForTurbo() {
+      // Collapse gaps between already-scheduled future events so NPC messages
+      // arrive ~TURBO_MSG_GAP ms apart. Does not touch past events.
+      if (!state.timeline || state.timeline.length === 0) return;
+      const now = Date.now();
+      let prev = now;
+      for (let i = state.timelineIdx; i < state.timeline.length; i++) {
+        const evt = state.timeline[i];
+        // For typing_end and msg we want small gap; typing_start immediately after prev.
+        let gap;
+        if (evt.type === 'typing_start') gap = 150;
+        else if (evt.type === 'typing_end') gap = TURBO_TYPING;
+        else gap = TURBO_MSG_GAP;
+        const target = prev + gap;
+        if (evt.ts > target) evt.ts = target;
+        prev = evt.ts;
+      }
+      if (state.waitUntil && state.waitUntil > now + TURBO_MSG_GAP) {
+        state.waitUntil = now + TURBO_MSG_GAP;
+      }
+      if (state.choiceAvailableAt && state.choiceAvailableAt > now + TURBO_MSG_GAP) {
+        state.choiceAvailableAt = now + TURBO_MSG_GAP;
+      }
+      if (state.inputAvailableAt && state.inputAvailableAt > now + TURBO_MSG_GAP) {
+        state.inputAvailableAt = now + TURBO_MSG_GAP;
+      }
+      save();
+      tick();
+    }
+
+    function setTurbo(on) {
+      turboMode = !!on;
+      const btn = $('turboToggle');
+      if (btn) btn.classList.toggle('active', turboMode);
+      if (turboMode) compressTimelineForTurbo();
+      updateBottomPanel();
+    }
+
+    $('turboToggle').onclick = () => setTurbo(!turboMode);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'p' && e.key !== 'P') return;
+      // Don't trigger while typing in an input / textarea / contenteditable
+      const tgt = e.target;
+      if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) return;
+      setTurbo(!turboMode);
+    });
 
     $('adminPrev').onclick = () => {
       const chain = buildNodeChain();

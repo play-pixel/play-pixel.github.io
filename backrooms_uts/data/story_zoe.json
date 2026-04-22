@@ -265,7 +265,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "i was texting my mom, my friend Nat, the work chat — for an hour", "ru": "я час писала маме, подруге Нэт, в рабочий чат" },
+          "text": { "en": "i was texting my mom, my friend Nat, the work chat. for an hour", "ru": "я час писала маме, подруге Нэт, в рабочий чат. целый час" },
           "delay": 6500
         },
         {
@@ -345,7 +345,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "if you are then i'm having a really bad night", "ru": "если бот — у меня сегодня вообще не вечер" },
+          "text": { "en": "if you are then i'm having a really bad night", "ru": "если ты бот, у меня сегодня вообще не вечер" },
           "delay": 6000
         }
       ],
@@ -410,8 +410,7 @@
         },
         {
           "text": { "en": "Tell her your name", "ru": "Назвать своё имя" },
-          "overrideText": { "en": "Not important. What happened?", "ru": "Не важно. Что случилось?" },
-          "next": "fc4_noname",
+          "next": "fc3_input_name",
           "tag": "give_name",
           "key": true
         },
@@ -539,7 +538,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "you're the only thing that works", "ru": "ты — единственное что работает" },
+          "text": { "en": "you're the only thing that works", "ru": "ты единственное что работает" },
           "delay": 5000
         }
       ],
@@ -593,6 +592,7 @@
         },
         {
           "text": { "en": "You fell? Do you need an ambulance?", "ru": "Ты упала? Тебе нужна скорая?" },
+          "overrideText": { "en": "Fell through? Like into a hole?", "ru": "Провалилась? Как в яму?" },
           "next": "fc5_help",
           "tag": "help",
           "key": true
@@ -685,7 +685,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "first thought: call 911. i respect that", "ru": "первая мысль — позвонить 911. уважаю" },
+          "text": { "en": "first thought: call 911. i respect that", "ru": "первая мысль: позвонить 911. уважаю" },
           "delay": 4000
         },
         {
@@ -787,33 +787,6 @@
           "next": "react_where",
           "tag": "where",
           "key": true
-        },
-        {
-          "text": { "en": "Are you scared?", "ru": "Тебе страшно?" },
-          "tag": "ask_fear",
-          "optional": true,
-          "response": [
-            {
-              "type": "text",
-              "text": { "en": "i'm terrified", "ru": "мне жутко" },
-              "delay": 2500
-            },
-            {
-              "type": "text",
-              "text": { "en": "it's quiet here. too quiet", "ru": "тут тихо. слишком тихо" },
-              "delay": 3500
-            },
-            {
-              "type": "text",
-              "text": { "en": "just the lamps buzzing. and this smell", "ru": "только лампы гудят. и этот запах" },
-              "delay": 4000
-            },
-            {
-              "type": "text",
-              "text": { "en": "smells like an old office that's been closed for ten years", "ru": "пахнет как в старом офисе который закрыли лет десять назад" },
-              "delay": 5000
-            }
-          ]
         },
         {
           "text": { "en": "Do you have anyone close? Who would look for you?", "ru": "У тебя есть кто-то близкий? Кто будет искать?" },
@@ -940,30 +913,30 @@
           "key": true
         },
         {
-          "text": { "en": "Where were you heading?", "ru": "Ты куда возвращалась?" },
+          "text": { "en": "Were you heading home when this happened?", "ru": "Ты шла домой когда это случилось?" },
           "tag": "ask_heading_home",
           "optional": true,
           "flag": "knows_home",
           "response": [
             {
               "type": "text",
-              "text": { "en": "home", "ru": "домой" },
-              "delay": 2500
-            },
-            {
-              "type": "text",
-              "text": { "en": "just got off shift", "ru": "только со смены" },
+              "text": { "en": "yeah. closing shift at the cafe ends at 11", "ru": "да. закрывающая смена в кафе кончается в 11" },
               "delay": 3000
             },
             {
               "type": "text",
-              "text": { "en": "i have a cat. Churro. my neighbor's supposed to feed him when i'm late", "ru": "у меня кот. Чурро. соседка должна была его покормить если я опоздаю" },
+              "text": { "en": "i usually take the flatbush train home. 20 minutes door to door", "ru": "обычно еду домой на метро с флэтбуш. 20 минут от двери до двери" },
               "delay": 5000
             },
             {
               "type": "text",
-              "text": { "en": "i don't know if she did", "ru": "не знаю покормила или нет" },
-              "delay": 4000
+              "text": { "en": "i've done it a thousand times", "ru": "я делала это тысячу раз" },
+              "delay": 3500
+            },
+            {
+              "type": "text",
+              "text": { "en": "my apartment's probably five stops from here. if here is even Brooklyn anymore", "ru": "мой дом наверное в пяти остановках отсюда. если это вообще ещё Бруклин" },
+              "delay": 6000
             }
           ]
         }
@@ -1020,8 +993,8 @@
         },
         {
           "type": "text",
-          "text": { "en": "they all look the same", "ru": "они все одинаковые" },
-          "delay": 3500
+          "text": { "en": "same layout but not the same. one room the carpet was wet in the middle. another had a broken light that kept clicking", "ru": "планировка похожа но не одинаковая. в одной комнате ковёр посередине был мокрый. в другой сломанная лампа щёлкала" },
+          "delay": 6000
         },
         {
           "type": "text",
@@ -1349,14 +1322,22 @@
           "delay": 1500
         },
         {
-          "type": "text",
-          "text": { "en": "checked left — loops back to where i started", "ru": "проверила налево — выходит туда же откуда пришла" },
-          "delay": 5000
+          "type": "status",
+          "text": { "en": "Zoe is checking the left corridor...", "ru": "Зои проверяет левый коридор..." }
         },
         {
           "type": "text",
-          "text": { "en": "right — same thing. same damn rooms", "ru": "направо — то же самое. те же комнаты" },
-          "delay": 5000
+          "text": { "en": "checked left. loops back to where i started", "ru": "проверила налево. выходит туда же откуда пришла" },
+          "delay": 12000
+        },
+        {
+          "type": "status",
+          "text": { "en": "Zoe is checking the right corridor...", "ru": "Зои проверяет правый коридор..." }
+        },
+        {
+          "type": "text",
+          "text": { "en": "right is the same. same damn rooms", "ru": "направо то же самое. те же комнаты" },
+          "delay": 12000
         },
         {
           "type": "text",
@@ -1364,9 +1345,13 @@
           "delay": 4500
         },
         {
+          "type": "status",
+          "text": { "en": "Zoe is heading back...", "ru": "Зои возвращается..." }
+        },
+        {
           "type": "text",
           "text": { "en": "going back to the fork", "ru": "возвращаюсь к развилке" },
-          "delay": 3500
+          "delay": 15000
         },
         {
           "type": "text",
@@ -1411,9 +1396,13 @@
           "delay": 1500
         },
         {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
           "type": "text",
           "text": { "en": "flashlight and a water bottle inside. half empty", "ru": "внутри фонарик и бутылка воды. полупустая" },
-          "delay": 5000
+          "delay": 0
         },
         {
           "type": "text",
@@ -1865,7 +1854,7 @@
           "default": true
         },
         {
-          "text": { "en": "Check the backpack — you had a flashlight", "ru": "Проверь рюкзак — у тебя был фонарик" },
+          "text": { "en": "Check the backpack. you had a flashlight", "ru": "Проверь рюкзак. у тебя был фонарик" },
           "next": "door_has_flashlight",
           "tag": "use_flashlight",
           "key": true,
@@ -1932,7 +1921,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "but when you look into that — your legs just stop", "ru": "но когда смотришь туда — ноги просто встают" },
+          "text": { "en": "but when you look into that, your legs just stop", "ru": "но когда смотришь туда, ноги просто встают" },
           "delay": 5500
         },
         {
@@ -1978,9 +1967,13 @@
           "delay": 5500
         },
         {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
           "type": "text",
           "text": { "en": "there's another hallway past the door", "ru": "за дверью ещё коридор" },
-          "delay": 5000
+          "delay": 0
         },
         {
           "type": "text",
@@ -2107,8 +2100,12 @@
           "delay": 4000
         },
         {
+          "type": "status",
+          "text": { "en": "Zoe is reading the notebook...", "ru": "Зои читает блокнот..." }
+        },
+        {
           "type": "typing",
-          "duration": 7000
+          "duration": 35000
         },
         {
           "type": "text",
@@ -2141,7 +2138,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "he talks about it like i talk to you. 'told K today that —' 'K said to try the —'", "ru": "он пишет про него как я с тобой. 'сказал K сегодня что...', 'K посоветовал попробовать...'" },
+          "text": { "en": "he talks about it like i talk to you. 'told K today that...' 'K said to try the...'", "ru": "он пишет про него как я с тобой. 'сказал K сегодня что...', 'K посоветовал попробовать...'" },
           "delay": 8000
         },
         {
@@ -2160,7 +2157,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "'K said if you help someone else you can leave. maybe it's both ways'", "ru": "'K сказал — если помочь другому, можно выйти. возможно это работает в обе стороны'" },
+          "text": { "en": "'K said if you help someone else you can leave. maybe it's both ways'", "ru": "'K сказал: если помочь другому, можно выйти. возможно это работает в обе стороны'" },
           "delay": 0
         },
         {
@@ -2200,9 +2197,13 @@
           "delay": 4000
         },
         {
+          "type": "typing",
+          "duration": 8000
+        },
+        {
           "type": "text",
           "text": { "en": "wax cold. but fresh. burned recently, not weeks ago", "ru": "воск холодный. но свежий. горела недавно, не неделю назад" },
-          "delay": 6500
+          "delay": 0
         },
         {
           "type": "text",
@@ -2235,7 +2236,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "on the back — 'Marco & June, 2024'", "ru": "на обороте — 'Марко и Джун, 2024'" },
+          "text": { "en": "on the back: 'Marco & June, 2024'", "ru": "на обороте: 'Марко и Джун, 2024'" },
           "delay": 6000
         },
         {
@@ -2299,7 +2300,7 @@
           "requires": "checked_stuff",
           "response": [
             { "type": "text", "text": { "en": "...yeah", "ru": "...да" }, "delay": 3000 },
-            { "type": "text", "text": { "en": "if i ever get out i want to find his kid", "ru": "если выберусь — хочу найти его ребёнка" }, "delay": 5500 },
+            { "type": "text", "text": { "en": "if i ever get out i want to find his kid", "ru": "если выберусь, хочу найти его ребёнка" }, "delay": 5500 },
             { "type": "text", "text": { "en": "tell her her dad existed", "ru": "сказать ей что папа существовал" }, "delay": 5000 }
           ]
         },
@@ -2513,9 +2514,13 @@
           "delay": 6000
         },
         {
+          "type": "typing",
+          "duration": 4000
+        },
+        {
           "type": "text",
           "text": { "en": "it works. water comes out. cold", "ru": "работает. вода идёт. холодная" },
-          "delay": 4500
+          "delay": 0
         },
         {
           "type": "text",
@@ -2555,9 +2560,13 @@
           "delay": 5000
         },
         {
+          "type": "typing",
+          "duration": 8000
+        },
+        {
           "type": "text",
           "text": { "en": "the sound stopped when i turned it off", "ru": "звук прекратился когда выключила" },
-          "delay": 4500
+          "delay": 0
         },
         {
           "type": "text",
@@ -2695,7 +2704,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "i didn't— did you say open it?", "ru": "я не— ты правда сказал открыть?" },
+          "text": { "en": "i didn't- did you say open it?", "ru": "я не- ты правда сказал открыть?" },
           "delay": 4500
         },
         {
@@ -2708,9 +2717,13 @@
           "delay": 0
         },
         {
+          "type": "typing",
+          "duration": 7000
+        },
+        {
           "type": "text",
           "text": { "en": "the light is different. warm. yellow-warm, not fluorescent-yellow", "ru": "свет другой. тёплый. тепло-жёлтый, не лампа-жёлтый" },
-          "delay": 7000
+          "delay": 0
         },
         {
           "type": "text",
@@ -2811,13 +2824,17 @@
         },
         {
           "type": "text",
-          "text": { "en": "flashlight inside. dead. family photo — faces blurred somehow. and a note", "ru": "внутри фонарик. сел. семейное фото — лица почему-то размытые. и записка" },
+          "text": { "en": "flashlight inside. dead. family photo, faces blurred somehow. and a note", "ru": "внутри фонарик. сел. семейное фото, лица почему-то размытые. и записка" },
           "delay": 8000
         },
         {
+          "type": "typing",
+          "duration": 7000
+        },
+        {
           "type": "text",
-          "text": { "en": "'Jake, if you find this — I went down. Wait for me.'", "ru": "'Джейк, если найдёшь это — я пошла вниз. Жди меня.'" },
-          "delay": 6000
+          "text": { "en": "'Jake, if you find this: I went down. Wait for me.'", "ru": "'Джейк, если найдёшь это: я пошла вниз. Жди меня.'" },
+          "delay": 0
         },
         {
           "type": "text",
@@ -2963,9 +2980,13 @@
           "delay": 4000
         },
         {
+          "type": "status",
+          "text": { "en": "Zoe is reading the wall...", "ru": "Зои читает надписи на стене..." }
+        },
+        {
           "type": "text",
           "text": { "en": "different handwriting. different languages. some with dates", "ru": "разный почерк. разные языки. с датами некоторые" },
-          "delay": 6500
+          "delay": 20000
         },
         {
           "type": "text",
@@ -3049,7 +3070,7 @@
           ]
         },
         {
-          "text": { "en": "The monitor — did you look closer?", "ru": "Монитор — ты смотрела ближе?" },
+          "text": { "en": "The monitor. did you look closer?", "ru": "Монитор. ты смотрела ближе?" },
           "tag": "wc_monitor",
           "response": [
             { "type": "text", "text": { "en": "yeah. one line. doesn't change. just flickering", "ru": "да. одна строчка. не меняется. просто мерцает" }, "delay": 5000 },
