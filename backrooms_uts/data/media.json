@@ -1,0 +1,94 @@
+{
+  "_doc": "Media catalog — honest description of what's ACTUALLY on each image (not what was prompted). Update every time a new image is added or an existing one is replaced. 'description' is the source of truth for matching images to scenario text.",
+  "media": {
+    "zoe_selfie_01.jpg": {
+      "description": "Zoe taking a selfie, slightly sad expression. Wearing a green apron (barista uniform). Background: wide opening/passageway between yellow Backrooms walls — already inside the liminal space.",
+      "used_in": ["fc3_selfie"],
+      "notes": "Zoe's selfie — main character face. Apron confirms barista backstory; yellow walls in background place the selfie already INSIDE Backrooms (not before she fell in)."
+    },
+    "act1_room_01.jpg": {
+      "description": "Very long Backrooms corridor with two rows of columns running inside the hallway (colonnade). Yellow walls, fluorescent ceiling, perspective deep to vanishing point.",
+      "used_in": ["first_photo"],
+      "notes": "First shot Zoe sends after realizing she's in Backrooms."
+    },
+    "act1_room_01_v.mp4": {
+      "description": "POV walk-forward through the same colonnaded corridor from act1_room_01.jpg — character moves down the hall between the two rows of columns.",
+      "used_in": ["first_photo"],
+      "notes": "Video version — motion/depth cue."
+    },
+    "act1_backpack_09_v.mp4": {
+      "description": "Video version of act1_backpack_09 — POV approach to the backpack at the end of the dark corridor.",
+      "used_in": ["path_dark"]
+    },
+    "act1_ceiling_02.jpg": {
+      "description": "Angled upward shot of ceiling — wall and a column visible in frame. Ceiling tiles damaged/patchy, construction sloppy and 'off'. Looks unnatural — not how humans would actually build a ceiling. Uncanny, wrong-looking.",
+      "used_in": ["after_photo"],
+      "notes": "Good for conveying 'this place is wrong' rather than literal photography. Unsettling, not pretty."
+    },
+    "act1_carpet_03.jpg": {
+      "description": "Carpet close-up from above. Character's shoe visible in frame — grounds the shot as Zoe's POV looking down at her own feet.",
+      "used_in": ["start_explore"],
+      "notes": "POV detail shot — shoe presence makes it feel personal, not abstract texture."
+    },
+    "act1_panorama_04.jpg": {
+      "description": "Wide panoramic shot of a large Backrooms hall. Thin/narrow columns spaced throughout. The room stretches far into the distance. Sense of scale and openness — vast empty space with repeating columns.",
+      "used_in": ["after_photo"],
+      "notes": "Panoramic composition — works for conveying the 'it goes on forever' feeling."
+    },
+    "act1_door_05.jpg": {
+      "description": "Closed door set in a Backrooms wall. A corridor extends off to the left of frame. The door looks grimy/smudged — dirty, worn, as if untouched for a long time or handled by something unclean.",
+      "used_in": ["start_explore"],
+      "notes": "Grimy door reads as 'not a normal office door' — hints something is wrong without being explicit."
+    },
+    "act1_fork_07.jpg": {
+      "description": "Wide shot of a Backrooms corridor splitting into two. Left branch — bright, yellow walls, working fluorescent lights, standard wallpaper. Right branch — dark, dim ceiling lights, carpet visible, faint scratches/writing barely visible on the far wall. Central wall/column divides the two paths. Clean fork composition, both options readable at a glance.",
+      "used_in": ["corridor_choice"]
+    },
+    "act1_writing_08.jpg": {
+      "description": "End-of-corridor wall illuminated by a flashlight beam (flashlight clearly the light source). Closed doors on both left and right walls. Scratched/written message on the center wall — reads as 'DON'T GO TOWARD THE LIGHT' (hard to read exactly, but matches the scenario line).",
+      "used_in": ["path_dark"],
+      "notes": "Writing is read AFTER Zoe finds the flashlight in the backpack. Light beam on the image is the flashlight — matches narrative order post-fix."
+    },
+    "act1_backpack_09.jpg": {
+      "description": "Dark narrow corridor viewed from player's POV. Far end is dimly lit by one working fluorescent panel, revealing a small black backpack sitting on the floor against the wall at the end of the hall. Everything else is near-black. Claustrophobic, depth cue pulls eye to the pack.",
+      "video": "act1_backpack_09_v.mp4",
+      "used_in": ["path_dark"]
+    },
+    "act1_deadend_10.jpg": {
+      "description": "T-junction in a Backrooms hallway. Wall straight ahead (wallpapered, not solid construction). Two openings — one to the left, one to the right — both leading into identical-looking corridors. NOT a literal dead-end; the hallway continues sideways. Pillars/columns frame the openings. Lights working overhead.",
+      "used_in": ["path_light"],
+      "notes": "Originally prompted as 'dead end wall'. Image actually shows T-junction. Scenario text rewritten to match (path_light now describes a loop, not a dead-end wall)."
+    },
+    "act1_wetprints_11.jpg": {
+      "description": "Vertical shot down a Backrooms corridor — yellow wallpapered walls, beige carpet. Chain of dark wet footprints on the carpet extending from camera into the depth of the hall. Even ambient overhead fluorescent light (no flashlight beam). Prints are clear, irregular, recent.",
+      "prompt": "Переделай. Камера направлена ВНИЗ на пол — главный объект это бежевый ковролин и мокрые тёмные следы ног на нём. Потолок почти не виден или в самом верху. Фон: жёлтые Backrooms-обои по сторонам. Цепочка мокрых следов уходит от камеры вперёд вглубь коридора. Следы обязательно видны, тёмно-мокрые пятна в форме ступней. Ровный свет, без фонарика.",
+      "used_in": ["wet_tracks"],
+      "notes": "Regenerated 2026-04-17 via Gemini to remove the flashlight beam. Prints lead AWAY from camera (deep into corridor). Narrative uses this as: Zoe went back to a spot she was just at — prints weren't there before. Someone was walking behind her."
+    },
+    "act1_wall_12.jpg": {
+      "description": "T-junction — hallway that can turn left or right. There could be dead-ends further down each branch, but the image itself doesn't read as 'solid wall blocking the way'. Could have been a proper doorway/opening originally, but viewer can't tell — looks like a normal T-split.",
+      "used_in": ["wall_photo"],
+      "notes": "⚠ Scenario text says 'solid wall where a passage used to be, I'M NOT CRAZY, there was a passage here I REMEMBER' — image does not support this. Options: (a) regenerate as actual solid-wall shot, (b) rewrite wall_photo as 'the layout changed — what was a straight corridor is now a T-junction' (space reshuffling, also creepy). Second option preferred — works with current image."
+    },
+    "act1_blur_13.jpg": {
+      "description": "Running through corridors. Heavy motion blur — hard to read anything specific. Impression of chaos/flight, not a clear environment shot.",
+      "used_in": ["act1_end_run"],
+      "notes": "Works exactly for the 'running' cliffhanger — illegibility IS the point. Reader feels the panic."
+    },
+    "act2_door_ajar_01.jpg": {
+      "description": "Vertical POV shot down a Backrooms hallway — yellow wallpapered walls, worn beige carpet. ONE door centered at the end of the hallway, ajar by ~20cm, pitch black inside (no details visible through the gap). A trail of dark wet barefoot prints on the carpet leading from the camera's position directly to the door. Fluorescent ceiling panels, even ambient light. No other doors or openings visible.",
+      "prompt": "Переделай. В кадре должна быть ТОЛЬКО ОДНА дверь — по центру, приоткрытая на 20 см, за щелью густая чернота. Никаких других дверей или проёмов в стенах — стены сплошные жёлтые обои с обеих сторон. На ковролине верни мокрые тёмные следы — цепочка следов идёт от нижнего края кадра прямо к щели двери, как будто кто-то прошёл туда. Сам ковролин немного потёртый, атмосфера Backrooms (не стерильно чисто, но и не грязно — просто старый облезлый ковролин). Жёлтые стены, флуоресцентные панели на потолке. Вертикальный формат.",
+      "used_in": ["cursed_door"],
+      "notes": "Generated 2026-04-17 via Gemini. Ties visually to act1_wetprints_11 — same wet prints now lead to a door. Barefoot prints (not shoes) — creepier."
+    },
+    "act1_bright_corridor_14.jpg": {
+      "description": "Narrow vertical-format corridor in Backrooms. Bright overhead fluorescent strip, yellow wallpapered walls, beige carpet. Corridor ends in a solid back wall — no visible branching. Well-lit, empty, clean.",
+      "used_in": ["path_light"],
+      "notes": "Used in path_light as the bright corridor Zoe walks through before hitting the T-junction."
+    }
+  },
+  "unused_assets": [
+    "Zoi_selfe1.png",
+    "Backroom-chat-icon-clean.jpg"
+  ]
+}

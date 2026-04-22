@@ -1,8 +1,8 @@
 {
   "meta": {
     "title": "Backrooms: Untold Stories",
-    "version": "0.6.0",
-    "act": 1
+    "version": "0.7.0",
+    "act": 3
   },
   "scenes": [
     {
@@ -32,6 +32,83 @@
       "description": { "en": "The space shifts, wet footprints appear", "ru": "Пространство меняется, мокрые следы" },
       "entry": "after_corridor",
       "order": 4
+    },
+    {
+      "id": "act2_open",
+      "name": { "en": "Act 2 — The door", "ru": "Акт 2 — Дверь" },
+      "description": { "en": "Hours later. Zoe finds a door ajar. Darkness inside.", "ru": "Несколько часов спустя. Зои находит приоткрытую дверь, за ней тьма." },
+      "entry": "act2_wake",
+      "order": 5
+    },
+    {
+      "id": "act2_camp",
+      "name": { "en": "Act 2 — The camp", "ru": "Акт 2 — Стоянка" },
+      "description": { "en": "Zoe finds signs someone was living here. She's not alone.", "ru": "Зои находит следы чьей-то стоянки. Она здесь не первая." },
+      "entry": "act2_new_hall",
+      "order": 6
+    },
+    {
+      "id": "escape",
+      "name": { "en": "Act 2 — Big room", "ru": "Акт 2 — Большая комната" },
+      "description": { "en": "Zoe escapes the sound and finds a quieter space. She starts writing her data down.", "ru": "Зои уходит от звука и находит тихое место. Начинает записывать данные о себе." },
+      "entry": "act2_escape_arrival",
+      "order": 7
+    },
+    {
+      "id": "map_explore",
+      "name": { "en": "Act 2 — The map", "ru": "Акт 2 — По карте" },
+      "description": { "en": "Zoe follows the notebook map. Finds water, artifacts, a sealed door.", "ru": "Зои идёт по карте из блокнота. Вода, вещи, запечатанная дверь." },
+      "entry": "act2_map_start",
+      "order": 8
+    },
+    {
+      "id": "descent",
+      "name": { "en": "Act 2 — The staircase", "ru": "Акт 2 — Лестница" },
+      "description": { "en": "Memory is slipping. A staircase. A note. Zoe's own voice from the dark.", "ru": "Память уходит. Лестница. Записка. Голос Зои из темноты." },
+      "entry": "act2_descent_notebook",
+      "order": 9
+    },
+    {
+      "id": "deeper",
+      "name": { "en": "Act 3 — Deeper", "ru": "Акт 3 — Глубже" },
+      "description": { "en": "A wall covered in names. A monitor that speaks to the player.", "ru": "Стена с именами. Монитор, обращённый к игроку." },
+      "entry": "act3_deeper_arrive",
+      "order": 10
+    },
+    {
+      "id": "revelation",
+      "name": { "en": "Act 3 — The room", "ru": "Акт 3 — Комната" },
+      "description": { "en": "Screens showing her own path. Her own chat.", "ru": "Экраны с её путём. Её собственный чат." },
+      "entry": "act3_rev_enter",
+      "order": 11
+    },
+    {
+      "id": "fork",
+      "name": { "en": "Act 3 — Three doors", "ru": "Акт 3 — Три двери" },
+      "description": { "en": "Three choices. One final override.", "ru": "Три выбора. Последняя подмена." },
+      "entry": "act3_fork_arrive",
+      "order": 12
+    },
+    {
+      "id": "ending_home",
+      "name": { "en": "Ending — Home", "ru": "Концовка — Домой" },
+      "description": { "en": "She got out. But time moved on.", "ru": "Она выбралась. Но время ушло вперёд." },
+      "entry": "act3_end_home_1",
+      "order": 13
+    },
+    {
+      "id": "ending_deep",
+      "name": { "en": "Ending — Deeper", "ru": "Концовка — Вниз" },
+      "description": { "en": "She went further. And found something.", "ru": "Она пошла дальше. И нашла кое-что." },
+      "entry": "act3_end_deep_1",
+      "order": 14
+    },
+    {
+      "id": "ending_call",
+      "name": { "en": "Ending — The Call", "ru": "Концовка — Звонок" },
+      "description": { "en": "A loop. A voice. Her own.", "ru": "Петля. Голос. Её собственный." },
+      "entry": "act3_end_call_1",
+      "order": 15
     }
   ],
   "nodes": {
@@ -54,23 +131,42 @@
         },
         {
           "type": "text",
-          "text": { "en": "oh!", "ru": "о!" },
-          "delay": 1500
-        },
-        {
-          "type": "text",
-          "text": { "en": "can anyone see this?", "ru": "кто-нибудь видит это?" },
-          "delay": 3000
-        },
-        {
-          "type": "text",
-          "text": { "en": "hello??", "ru": "привет??" },
+          "text": { "en": "is this thing even working", "ru": "оно вообще работает" },
           "delay": 4000
         },
         {
           "type": "text",
-          "text": { "en": "please answer", "ru": "пожалуйста ответьте" },
+          "text": { "en": "i don't even remember installing this app", "ru": "я даже не помню как ставила это приложение" },
+          "delay": 5000
+        },
+        {
+          "type": "typing",
+          "duration": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok if anyone can read this", "ru": "ок если кто-то это читает" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "can you just send anything", "ru": "просто пришли что-нибудь" },
           "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "literally anything", "ru": "буквально что угодно" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "a dot. an emoji", "ru": "точку. эмодзи" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "please", "ru": "пожалуйста" },
+          "delay": 4500
         }
       ],
       "next": "first_contact_1",
@@ -99,41 +195,55 @@
       "messages": [
         {
           "type": "text",
-          "text": { "en": "what", "ru": "что" },
+          "text": { "en": "wait", "ru": "стой" },
           "delay": 3000
         },
         {
           "type": "text",
-          "text": { "en": "no", "ru": "нет" },
-          "delay": 2000
-        },
-        {
-          "type": "text",
-          "text": { "en": "i didn't text anyone", "ru": "я никому не писала" },
-          "delay": 3500
-        },
-        {
-          "type": "text",
-          "text": { "en": "i mean i did, but not you", "ru": "то есть писала, но не тебе" },
-          "delay": 4000
-        },
-        {
-          "type": "text",
-          "text": { "en": "i texted my mom, my friend, my work chat", "ru": "я писала маме, подруге, в рабочий чат" },
-          "delay": 4000
-        },
-        {
-          "type": "text",
-          "text": { "en": "nobody's answering", "ru": "никто не отвечает" },
-          "delay": 3500
-        },
-        {
-          "type": "text",
-          "text": { "en": "and then there's you", "ru": "а тут ты" },
+          "text": { "en": "you're real?", "ru": "ты реальный?" },
           "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok ok ok", "ru": "ок ок ок" },
+          "delay": 3500
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "no i didn't text anyone", "ru": "нет я никому не писала" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i mean i was. for like an hour", "ru": "то есть писала. целый час" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "to my mom. my friend Nat. work group chat", "ru": "маме. подруге Нэт. в рабочий чат" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "nobody's answering. like at all. messages don't even show as delivered", "ru": "никто не отвечает. совсем. сообщения даже как доставленные не показываются" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "and then this app pops up. that wasn't on my phone before", "ru": "а потом появляется это приложение. которого раньше не было" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i'm typing into the void and you respond", "ru": "пишу в пустоту и тут отвечаешь ты" },
+          "delay": 5000
         }
       ],
-      "next": "fc3",
+      "next": "fc2b_breath",
       "scene": "intro"
     },
     "fc2_confused": {
@@ -145,23 +255,58 @@
         },
         {
           "type": "text",
-          "text": { "en": "same here. unknown number", "ru": "у меня тоже. незнакомый номер" },
-          "delay": 4000
+          "text": { "en": "same here. it's an unknown number", "ru": "у меня то же. незнакомый номер" },
+          "delay": 4500
         },
         {
           "type": "text",
-          "text": { "en": "i texted my mom, my friend, my work chat", "ru": "я писала маме, подруге, в рабочий чат" },
-          "delay": 4000
+          "text": { "en": "and not even a number. it's just an app i don't remember installing", "ru": "и даже не номер. просто приложение, я не помню как его поставила" },
+          "delay": 6500
         },
         {
           "type": "text",
-          "text": { "en": "nobody's reading. like nobody at all", "ru": "никто не читает. вообще никто" },
-          "delay": 3500
+          "text": { "en": "i was texting my mom, my friend Nat, the work chat — for an hour", "ru": "я час писала маме, подруге Нэт, в рабочий чат" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "nobody reads. messages don't even show as delivered", "ru": "никто не читает. сообщения даже не доставляются" },
+          "delay": 5500
         },
         {
           "type": "text",
           "text": { "en": "but you did", "ru": "а ты прочитал" },
-          "delay": 3000
+          "delay": 3500
+        }
+      ],
+      "next": "fc2b_breath",
+      "scene": "intro"
+    },
+    "fc2b_breath": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok one sec", "ru": "ок секунду" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "let me breathe", "ru": "дай выдохнуть" },
+          "delay": 4000
+        },
+        {
+          "type": "typing",
+          "duration": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok", "ru": "так" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "you're a person. i'm a person. that's a start", "ru": "ты человек. я человек. уже что-то" },
+          "delay": 5500
         }
       ],
       "next": "fc3",
@@ -175,13 +320,33 @@
         },
         {
           "type": "text",
-          "text": { "en": "ok whatever, doesn't matter how", "ru": "ладно, неважно как" },
+          "text": { "en": "ok let's start over", "ru": "ладно, начнём сначала" },
           "delay": 0
         },
         {
           "type": "text",
-          "text": { "en": "my name's Zoe", "ru": "меня зовут Зои" },
+          "text": { "en": "i'm Zoe", "ru": "меня зовут Зои" },
           "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "twenty-five. i live in Brooklyn", "ru": "двадцать пять. живу в Бруклине" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "well. lived in Brooklyn. an hour ago", "ru": "ну. жила в Бруклине. час назад" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i'm gonna assume you're not, you know, a bot or something", "ru": "буду считать что ты не, ну, бот или что-то такое" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "if you are then i'm having a really bad night", "ru": "если бот — у меня сегодня вообще не вечер" },
+          "delay": 6000
         }
       ],
       "next": "fc3_selfie",
@@ -245,7 +410,8 @@
         },
         {
           "text": { "en": "Tell her your name", "ru": "Назвать своё имя" },
-          "next": "fc3_input_name",
+          "overrideText": { "en": "Not important. What happened?", "ru": "Не важно. Что случилось?" },
+          "next": "fc4_noname",
           "tag": "give_name",
           "key": true
         },
@@ -292,45 +458,21 @@
         },
         {
           "type": "text",
-          "text": { "en": "ok, nice to meet you", "ru": "ок, приятно познакомиться" },
-          "delay": 3000
-        },
-        {
-          "type": "text",
-          "text": { "en": "although the circumstances kinda suck", "ru": "хотя обстоятельства так себе" },
+          "text": { "en": "ok, nice to meet you {playerName}", "ru": "ок, приятно познакомиться, {playerName}" },
           "delay": 3500
         },
         {
-          "type": "typing",
-          "duration": 5000
-        },
-        {
           "type": "text",
-          "text": { "en": "i don't know how to explain this normally", "ru": "я не знаю как это объяснить нормально" },
-          "delay": 0
-        },
-        {
-          "type": "text",
-          "text": { "en": "i was walking home after my shift. through the subway station", "ru": "я шла домой после смены. через станцию метро" },
-          "delay": 5000
-        },
-        {
-          "type": "text",
-          "text": { "en": "and", "ru": "и" },
-          "delay": 3000
-        },
-        {
-          "type": "text",
-          "text": { "en": "fell through", "ru": "провалилась" },
+          "text": { "en": "the circumstances kinda suck though", "ru": "хотя обстоятельства не очень" },
           "delay": 4000
         },
         {
           "type": "text",
-          "text": { "en": "the step just disappeared under me", "ru": "ступенька просто исчезла подо мной" },
-          "delay": 4000
+          "text": { "en": "ok hold on, i'm gonna call you. easier than typing", "ru": "слушай, давай я тебе позвоню. так быстрее" },
+          "delay": 5500
         }
       ],
-      "next": "fc5",
+      "next": "fc4b_phone_test",
       "scene": "intro"
     },
     "fc4_noname": {
@@ -342,12 +484,73 @@
         },
         {
           "type": "text",
-          "text": { "en": "i'll just call you stranger then", "ru": "тогда буду звать тебя друг" },
-          "delay": 3000
+          "text": { "en": "i'll just call you stranger", "ru": "тогда буду звать тебя друг" },
+          "delay": 3500
         },
         {
+          "type": "text",
+          "text": { "en": "ok hold on, i'm gonna call you. easier than typing all this", "ru": "слушай, давай я тебе позвоню. так быстрее чем всё это печатать" },
+          "delay": 5500
+        }
+      ],
+      "next": "fc4b_phone_test",
+      "scene": "intro"
+    },
+    "fc4b_phone_test": {
+      "messages": [
+        {
           "type": "typing",
-          "duration": 5000
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "wait what", "ru": "стоп что" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "the call button is just. greyed out", "ru": "кнопка звонка просто. серая" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i can't call you. i can't call ANYONE", "ru": "я не могу тебе позвонить. я никому не могу" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "five bars of signal but no calls. no internet outside this app", "ru": "пять палочек а звонков нет. интернета нет, вообще, кроме этого чата" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "google won't open. instagram says no connection", "ru": "гугл не открывается. инста пишет нет соединения" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok ok ok", "ru": "так так так" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "this is the only thing that works", "ru": "только это работает" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "you're the only thing that works", "ru": "ты — единственное что работает" },
+          "delay": 5000
+        }
+      ],
+      "next": "fc4c_what",
+      "scene": "intro"
+    },
+    "fc4c_what": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 6000
         },
         {
           "type": "text",
@@ -357,22 +560,22 @@
         {
           "type": "text",
           "text": { "en": "i was walking home after my shift. through the subway station", "ru": "я шла домой после смены. через станцию метро" },
-          "delay": 5000
+          "delay": 5500
         },
         {
           "type": "text",
           "text": { "en": "and", "ru": "и" },
-          "delay": 3000
+          "delay": 3500
         },
         {
           "type": "text",
           "text": { "en": "fell through", "ru": "провалилась" },
-          "delay": 3000
+          "delay": 4000
         },
         {
           "type": "text",
           "text": { "en": "the step just disappeared under me", "ru": "ступенька просто исчезла подо мной" },
-          "delay": 4000
+          "delay": 4500
         }
       ],
       "next": "fc5",
@@ -474,6 +677,16 @@
           "type": "text",
           "text": { "en": "ambulance?", "ru": "скорая?" },
           "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok that's really sweet actually", "ru": "ладно это реально мило" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "first thought: call 911. i respect that", "ru": "первая мысль — позвонить 911. уважаю" },
+          "delay": 4000
         },
         {
           "type": "text",
@@ -651,6 +864,36 @@
           "delay": 4000
         }
       ],
+      "next": "react_backrooms_answer",
+      "scene": "photo"
+    },
+    "react_backrooms_answer": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok so it's a thing", "ru": "ок то есть это штука реальная" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "it has a name. people know about it", "ru": "у неё есть название. люди знают" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i don't know if that makes it better or worse", "ru": "не знаю, от этого лучше или хуже" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "probably worse", "ru": "наверное хуже" },
+          "delay": 3000
+        }
+      ],
       "next": "react_explain",
       "scene": "photo"
     },
@@ -697,28 +940,29 @@
           "key": true
         },
         {
-          "text": { "en": "Are you athletic? Got good stamina?", "ru": "А ты вообще спортивная? Выносливая?" },
-          "tag": "ask_fitness",
+          "text": { "en": "Where were you heading?", "ru": "Ты куда возвращалась?" },
+          "tag": "ask_heading_home",
           "optional": true,
+          "flag": "knows_home",
           "response": [
             {
               "type": "text",
-              "text": { "en": "i'm a barista", "ru": "я бариста" },
+              "text": { "en": "home", "ru": "домой" },
               "delay": 2500
             },
             {
               "type": "text",
-              "text": { "en": "pulling espresso shots from 6am to 3pm", "ru": "варю эспрессо с 6 утра до 3 дня" },
-              "delay": 3500
-            },
-            {
-              "type": "text",
-              "text": { "en": "i can carry 4 drinks in each hand without spilling. that's my superpower", "ru": "могу нести 4 стакана в каждой руке и не пролить. это моя суперсила" },
+              "text": { "en": "just got off shift", "ru": "только со смены" },
               "delay": 3000
             },
             {
               "type": "text",
-              "text": { "en": "but making a perfect latte won't help me here", "ru": "но идеальный латте тут не поможет" },
+              "text": { "en": "i have a cat. Churro. my neighbor's supposed to feed him when i'm late", "ru": "у меня кот. Чурро. соседка должна была его покормить если я опоздаю" },
+              "delay": 5000
+            },
+            {
+              "type": "text",
+              "text": { "en": "i don't know if she did", "ru": "не знаю покормила или нет" },
               "delay": 4000
             }
           ]
@@ -885,7 +1129,7 @@
         {
           "text": { "en": "Tell me about your cat", "ru": "Расскажи про кота" },
           "tag": "wc_cat",
-          "requires": "ask_family",
+          "requires": "knows_family",
           "response": [
             {
               "type": "text",
@@ -936,7 +1180,7 @@
           ]
         },
         {
-          "text": { "en": "Have you ever been in a dangerous situation?", "ru": "Ты когда-нибудь была в опасной ситуации?" },
+          "text": { "en": "Have you been in similar situations before?", "ru": "Ты бывала раньше в подобных ситуациях?" },
           "tag": "wc_danger",
           "response": [
             {
@@ -969,20 +1213,7 @@
         {
           "type": "image",
           "src": "media/act1_fork_07.jpg",
-          "alt": { "en": "corridor splits into two paths", "ru": "коридор разделяется на два пути" },
-          "delay": 0
-        },
-        {
-          "type": "image",
-          "src": "media/act1_bright_corridor_14.jpg",
-          "alt": { "en": "bright wide corridor, all lights working", "ru": "светлый широкий коридор, все лампы работают" },
-          "delay": 0
-        },
-        {
-          "type": "image",
-          "src": "media/act1_backpack_09.jpg",
-          "video": "media/act1_backpack_09_v.mp4",
-          "alt": { "en": "dark narrow corridor, something in the distance", "ru": "тёмный узкий коридор, что-то вдалеке" },
+          "alt": { "en": "corridor splits — bright on the left, dark on the right", "ru": "коридор раздваивается — слева светлый, справа тёмный" },
           "delay": 2000
         },
         {
@@ -992,7 +1223,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "one bright and wide, the other dark and narrow", "ru": "один светлый и широкий, другой тёмный и узкий" },
+          "text": { "en": "one bright, the other dark", "ru": "один светлый, другой тёмный" },
           "delay": 4500
         },
         {
@@ -1060,23 +1291,18 @@
           "response": [
             {
               "type": "text",
-              "text": { "en": "no", "ru": "нет" },
+              "text": { "en": "not really", "ru": "да не особо" },
               "delay": 2000
             },
             {
               "type": "text",
-              "text": { "en": "i'm not into that stuff. no creepypasta, no horror", "ru": "я вообще не из этих. не крипипаста, не хоррор" },
-              "delay": 4000
+              "text": { "en": "there was some meme, i think. yellow hallways or whatever. thought it was just a joke picture", "ru": "был какой-то мем, кажется. жёлтые коридоры или типа того. думала просто картинка ради прикола" },
+              "delay": 5000
             },
             {
               "type": "text",
-              "text": { "en": "i watch shows. normal ones. about people", "ru": "я сериалы смотрю. нормальные. про людей" },
+              "text": { "en": "never thought it was a real place anyone talks about seriously", "ru": "никогда не думала что это реальное место о котором кто-то всерьёз говорит" },
               "delay": 4000
-            },
-            {
-              "type": "text",
-              "text": { "en": "and now i'm inside one apparently", "ru": "а сейчас я внутри одного видимо" },
-              "delay": 3500
             }
           ]
         }
@@ -1096,6 +1322,12 @@
           "delay": 6000
         },
         {
+          "type": "image",
+          "src": "media/act1_bright_corridor_14.jpg",
+          "alt": { "en": "bright narrow corridor, fluorescent strip above, empty", "ru": "светлый узкий коридор, полоса ламп сверху, пусто" },
+          "delay": 1500
+        },
+        {
           "type": "text",
           "text": { "en": "seems ok", "ru": "вроде норм" },
           "delay": 5000
@@ -1107,23 +1339,33 @@
         },
         {
           "type": "text",
-          "text": { "en": "dead end", "ru": "тупик" },
+          "text": { "en": "t-junction", "ru": "развилка впереди" },
           "delay": 4000
         },
         {
           "type": "image",
           "src": "media/act1_deadend_10.jpg",
-          "alt": { "en": "wall blocking the corridor", "ru": "стена перегораживает коридор" },
+          "alt": { "en": "t-junction, wall ahead, openings left and right", "ru": "развилка, стена впереди, проходы налево и направо" },
           "delay": 1500
         },
         {
           "type": "text",
-          "text": { "en": "damn. it's a wall. just a wall", "ru": "чёрт. тут стена. просто стена" },
-          "delay": 4000
+          "text": { "en": "checked left — loops back to where i started", "ru": "проверила налево — выходит туда же откуда пришла" },
+          "delay": 5000
         },
         {
           "type": "text",
-          "text": { "en": "going back", "ru": "возвращаюсь" },
+          "text": { "en": "right — same thing. same damn rooms", "ru": "направо — то же самое. те же комнаты" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's a loop. dead end either way", "ru": "это петля. дальше не пройти" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "going back to the fork", "ru": "возвращаюсь к развилке" },
           "delay": 3500
         },
         {
@@ -1139,8 +1381,13 @@
       "messages": [
         {
           "type": "text",
-          "text": { "en": "one sec", "ru": "секунду" },
+          "text": { "en": "ok, heading into the dark one", "ru": "окей, иду в тёмный" },
           "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "barely see anything. one lamp working further down", "ru": "почти ничего не видно. где-то дальше одна лампа работает" },
+          "delay": 5000
         },
         {
           "type": "typing",
@@ -1148,43 +1395,20 @@
         },
         {
           "type": "text",
-          "text": { "en": "got closer", "ru": "подошла ближе" },
+          "text": { "en": "wait", "ru": "стой" },
           "delay": 0
         },
         {
           "type": "text",
-          "text": { "en": "something's scratched in here with something sharp", "ru": "тут нацарапано чем-то острым" },
-          "delay": 4500
-        },
-        {
-          "type": "text",
-          "text": { "en": "\"DON'T GO TOWARD THE LIGHT\"", "ru": "\"НЕ ХОДИ НА СВЕТ\"" },
-          "delay": 4000
+          "text": { "en": "there's a backpack on the floor", "ru": "на полу рюкзак" },
+          "delay": 3500
         },
         {
           "type": "image",
-          "src": "media/act1_writing_08.jpg",
-          "alt": { "en": "scratched writing on the wall", "ru": "нацарапанная надпись на стене" },
+          "src": "media/act1_backpack_09.jpg",
+          "video": "media/act1_backpack_09_v.mp4",
+          "alt": { "en": "backpack on the floor at the end of a dark corridor", "ru": "рюкзак на полу в конце тёмного коридора" },
           "delay": 1500
-        },
-        {
-          "type": "text",
-          "text": { "en": "it's fresh. someone wrote this recently", "ru": "свежее. недавно кто-то это написал" },
-          "delay": 5000
-        },
-        {
-          "type": "text",
-          "text": { "en": "going further down the dark one", "ru": "иду дальше по тёмному" },
-          "delay": 4000
-        },
-        {
-          "type": "typing",
-          "duration": 6000
-        },
-        {
-          "type": "text",
-          "text": { "en": "there's a backpack here", "ru": "тут рюкзак" },
-          "delay": 0
         },
         {
           "type": "text",
@@ -1195,6 +1419,36 @@
           "type": "text",
           "text": { "en": "someone was definitely here before me", "ru": "кто-то точно был тут до меня" },
           "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "turning the flashlight on. going further", "ru": "включила фонарик. иду дальше" },
+          "delay": 4000
+        },
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "something's scratched into the wall. with something sharp", "ru": "на стене что-то нацарапано. чем-то острым" },
+          "delay": 0
+        },
+        {
+          "type": "image",
+          "src": "media/act1_writing_08.jpg",
+          "alt": { "en": "scratched writing on the wall, lit by flashlight", "ru": "нацарапанная надпись на стене в свете фонарика" },
+          "delay": 1500
+        },
+        {
+          "type": "text",
+          "text": { "en": "\"DON'T GO TOWARD THE LIGHT\"", "ru": "\"НЕ ХОДИ НА СВЕТ\"" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's fresh. someone wrote this recently", "ru": "свежее. недавно кто-то это написал" },
+          "delay": 5000
         }
       ],
       "next": "after_corridor",
@@ -1218,18 +1472,18 @@
         },
         {
           "type": "text",
-          "text": { "en": "the room i walked through five minutes ago", "ru": "комната через которую я прошла пять минут назад" },
+          "text": { "en": "the corridor i came from five minutes ago", "ru": "коридор откуда я пришла пять минут назад" },
           "delay": 0
         },
         {
           "type": "text",
-          "text": { "en": "it's gone", "ru": "её больше нет" },
+          "text": { "en": "it was straight. one long hallway", "ru": "он был прямой. один длинный коридор" },
           "delay": 3500
         },
         {
           "type": "text",
-          "text": { "en": "there's a wall there", "ru": "там стена" },
-          "delay": 3000
+          "text": { "en": "it's not straight anymore", "ru": "теперь он не прямой" },
+          "delay": 3500
         }
       ],
       "next": "wall_photo",
@@ -1240,18 +1494,23 @@
         {
           "type": "image",
           "src": "media/act1_wall_12.jpg",
-          "alt": { "en": "solid wall where a passage used to be", "ru": "сплошная стена на месте бывшего прохода" },
+          "alt": { "en": "a t-junction where a straight corridor used to be", "ru": "развилка там, где был прямой коридор" },
           "delay": 3000
         },
         {
           "type": "text",
-          "text": { "en": "i'm not crazy", "ru": "я не сошла с ума" },
+          "text": { "en": "there's a turn here now. there wasn't before", "ru": "тут теперь поворот. раньше не было" },
           "delay": 4000
         },
         {
           "type": "text",
-          "text": { "en": "there was a passage here. I REMEMBER", "ru": "тут был проход. Я ПОМНЮ" },
-          "delay": 4000
+          "text": { "en": "i'm not crazy. I REMEMBER walking through a straight hall", "ru": "я не сошла с ума. Я ПОМНЮ что шла по прямой" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "the walls are moving", "ru": "стены двигаются" },
+          "delay": 3500
         }
       ],
       "next": "wet_tracks",
@@ -1261,32 +1520,42 @@
       "messages": [
         {
           "type": "text",
-          "text": { "en": "and also", "ru": "и ещё" },
+          "text": { "en": "wait", "ru": "стой" },
           "delay": 5000
         },
         {
           "type": "typing",
-          "duration": 5000
+          "duration": 4000
         },
         {
           "type": "text",
-          "text": { "en": "there are wet footprints on the carpet", "ru": "тут мокрые следы на ковролине" },
+          "text": { "en": "i walked through this spot literally a minute ago", "ru": "я прошла через это место буквально минуту назад" },
           "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "floor was dry. i'd have seen these", "ru": "пол был сухой. я бы увидела" },
+          "delay": 4500
         },
         {
           "type": "image",
           "src": "media/act1_wetprints_11.jpg",
-          "alt": { "en": "wet footprints on carpet", "ru": "мокрые следы на ковролине" },
+          "alt": { "en": "wet dark footprints on the carpet, trailing down the hallway", "ru": "мокрые тёмные следы на ковре, уходят вдоль коридора" },
           "delay": 1500
         },
         {
           "type": "text",
-          "text": { "en": "not mine", "ru": "не мои" },
-          "delay": 3500
+          "text": { "en": "they weren't here", "ru": "их тут НЕ БЫЛО" },
+          "delay": 4000
         },
         {
           "type": "text",
-          "text": { "en": "they lead toward me", "ru": "они ведут в мою сторону" },
+          "text": { "en": "not mine. bigger than my foot", "ru": "не мои. больше моей ноги" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "someone's been walking behind me", "ru": "кто-то идёт за мной" },
           "delay": 4000
         }
       ],
@@ -1385,20 +1654,43 @@
           "type": "text",
           "text": { "en": "battery 58%", "ru": "батарея 58%" },
           "delay": 4000
-        },
-        {
-          "type": "status",
-          "text": { "en": "End of demo. Thanks for playing!", "ru": "Конец демо. Спасибо за игру!" },
-          "delay": 0
         }
       ],
-      "next": null,
+      "wait": 7200,
+      "next": "act2_wake",
+      "waitChat": [
+        {
+          "text": { "en": "Tell me about Brooklyn", "ru": "Расскажи про Бруклин" },
+          "tag": "wc_brooklyn",
+          "response": [
+            { "type": "text", "text": { "en": "brooklyn", "ru": "бруклин" } },
+            { "type": "text", "text": { "en": "i miss the noise", "ru": "скучаю по шуму" } },
+            { "type": "text", "text": { "en": "there's this diner on 5th. open 24 hours. smells like coffee and old grease", "ru": "там есть столовка на 5-й. круглосуточная. пахнет кофе и старым маслом" } },
+            { "type": "text", "text": { "en": "right now that sounds like heaven", "ru": "сейчас это звучит как рай" } }
+          ]
+        },
+        {
+          "text": { "en": "Are you still there?", "ru": "Ты ещё здесь?" },
+          "tag": "wc_still_there",
+          "response": [
+            { "type": "text", "text": { "en": "yeah", "ru": "да" } },
+            { "type": "text", "text": { "en": "still here. not moving", "ru": "тут. не двигаюсь" } }
+          ]
+        },
+        {
+          "text": { "en": "What about your mom?", "ru": "Как твоя мама?" },
+          "tag": "wc_mom",
+          "requires": "knows_family",
+          "response": [
+            { "type": "text", "text": { "en": "she always calls at 9pm if i haven't texted", "ru": "она всегда звонит в 9 вечера если я не написала" } },
+            { "type": "text", "text": { "en": "tonight she'll call and it'll just ring", "ru": "сегодня она позвонит а там просто гудки" } },
+            { "type": "text", "text": { "en": "she's gonna freak out", "ru": "она с ума сойдёт" } }
+          ]
+        }
+      ],
       "scene": "climax",
       "sceneEnd": true,
-      "nextScene": [
-        { "scene": "act2_deeper", "if": { "flags": ["chose_dark_path"] } },
-        { "scene": "act2_safe" }
-      ]
+      "nextScene": "act2_open"
     },
     "act1_cliffhanger_hide": {
       "messages": [
@@ -1435,20 +1727,1748 @@
           "type": "text",
           "text": { "en": "battery 59%", "ru": "батарея 59%" },
           "delay": 4000
+        }
+      ],
+      "wait": 7200,
+      "next": "act2_wake",
+      "waitChat": [
+        {
+          "text": { "en": "Tell me about Brooklyn", "ru": "Расскажи про Бруклин" },
+          "tag": "wc_brooklyn",
+          "response": [
+            { "type": "text", "text": { "en": "brooklyn", "ru": "бруклин" } },
+            { "type": "text", "text": { "en": "i miss the noise", "ru": "скучаю по шуму" } },
+            { "type": "text", "text": { "en": "there's this diner on 5th. open 24 hours. smells like coffee and old grease", "ru": "там есть столовка на 5-й. круглосуточная. пахнет кофе и старым маслом" } },
+            { "type": "text", "text": { "en": "right now that sounds like heaven", "ru": "сейчас это звучит как рай" } }
+          ]
+        },
+        {
+          "text": { "en": "Are you still there?", "ru": "Ты ещё здесь?" },
+          "tag": "wc_still_there",
+          "response": [
+            { "type": "text", "text": { "en": "yeah", "ru": "да" } },
+            { "type": "text", "text": { "en": "still here. not moving", "ru": "тут. не двигаюсь" } }
+          ]
+        },
+        {
+          "text": { "en": "What about your mom?", "ru": "Как твоя мама?" },
+          "tag": "wc_mom",
+          "requires": "knows_family",
+          "response": [
+            { "type": "text", "text": { "en": "she always calls at 9pm if i haven't texted", "ru": "она всегда звонит в 9 вечера если я не написала" } },
+            { "type": "text", "text": { "en": "tonight she'll call and it'll just ring", "ru": "сегодня она позвонит а там просто гудки" } },
+            { "type": "text", "text": { "en": "she's gonna freak out", "ru": "она с ума сойдёт" } }
+          ]
+        }
+      ],
+      "scene": "climax",
+      "sceneEnd": true,
+      "nextScene": "act2_open"
+    },
+    "act2_wake": {
+      "messages": [
+        {
+          "type": "status",
+          "text": { "en": "— a few hours later —", "ru": "— через несколько часов —" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "hey", "ru": "ты тут?" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i think i slept. dunno how long", "ru": "кажется я поспала. не знаю сколько" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "battery 41%. light's the same. no clue if it's morning", "ru": "батарея 41%. свет такой же. не понять утро или нет" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i got up and started walking again", "ru": "встала и пошла дальше" },
+          "delay": 5000
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "stop", "ru": "стой" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a door. open", "ru": "тут дверь. открытая" },
+          "delay": 3500
+        }
+      ],
+      "next": "cursed_door",
+      "scene": "act2_open"
+    },
+    "cursed_door": {
+      "messages": [
+        {
+          "type": "image",
+          "src": "media/act2_door_ajar_01.jpg",
+          "alt": { "en": "a door ajar at the end of a hallway, darkness inside, wet footprints leading to it", "ru": "приоткрытая дверь в конце коридора, внутри тьма, мокрые следы ведут к ней" },
+          "delay": 2000
+        },
+        {
+          "type": "text",
+          "text": { "en": "see those footprints?", "ru": "видишь следы?" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "they go straight in there", "ru": "они уходят прямо туда" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "inside is just black. i can't see anything", "ru": "внутри просто чёрное. ничего не видно" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "no sound", "ru": "тихо" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "what do i do?", "ru": "что мне делать?" },
+          "delay": 3500
+        }
+      ],
+      "next": "cursed_door_choice",
+      "scene": "act2_open"
+    },
+    "cursed_door_choice": {
+      "messages": [],
+      "choices": [
+        {
+          "text": { "en": "Look inside. Quickly", "ru": "Загляни внутрь. Быстро" },
+          "next": "door_push",
+          "tag": "pushed_at_door",
+          "key": true,
+          "flag": "pushed_at_door"
+        },
+        {
+          "text": { "en": "Don't go in. Walk past it", "ru": "Не заходи. Обойди" },
+          "next": "door_avoid",
+          "tag": "avoided_door",
+          "key": true,
+          "default": true
+        },
+        {
+          "text": { "en": "Check the backpack — you had a flashlight", "ru": "Проверь рюкзак — у тебя был фонарик" },
+          "next": "door_has_flashlight",
+          "tag": "use_flashlight",
+          "key": true,
+          "requires": "chose_dark_path"
+        },
+        {
+          "text": { "en": "Are you okay?", "ru": "Ты как?" },
+          "tag": "ask_state_door",
+          "optional": true,
+          "response": [
+            { "type": "text", "text": { "en": "scared", "ru": "страшно" }, "delay": 2500 },
+            { "type": "text", "text": { "en": "that's about it", "ru": "вот и всё" }, "delay": 3000 }
+          ]
+        }
+      ],
+      "scene": "act2_open"
+    },
+    "door_has_flashlight": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "wait. the backpack", "ru": "стой. рюкзак" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i still have the flashlight from the dark corridor", "ru": "у меня же есть фонарик из тёмного коридора" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok. i can actually look in there properly", "ru": "ок. теперь могу нормально посмотреть" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "going in with light", "ru": "захожу со светом" },
+          "delay": 3500
+        }
+      ],
+      "next": "door_push",
+      "scene": "act2_open"
+    },
+    "door_push": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "no", "ru": "нет" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "sorry, i can't", "ru": "извини, не могу" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i walked up to it. i was going to. i swear", "ru": "я подошла. реально хотела. клянусь" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "but when you look into that — your legs just stop", "ru": "но когда смотришь туда — ноги просто встают" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "whatever's in there, i'm not it", "ru": "что бы там ни было, я не оно" },
+          "delay": 5000
+        }
+      ],
+      "next": "door_walk_away",
+      "scene": "act2_open"
+    },
+    "door_avoid": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "yeah", "ru": "угу" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i wasn't about to anyway", "ru": "я и не собиралась" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "feet kind of decided for me", "ru": "ноги как-то сами решили" },
+          "delay": 4500
+        }
+      ],
+      "next": "door_walk_away",
+      "scene": "act2_open"
+    },
+    "door_walk_away": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "going around", "ru": "обхожу" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "stepping wide. not touching those prints", "ru": "по широкой. на следы не наступаю" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's another hallway past the door", "ru": "за дверью ещё коридор" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i'm not looking back", "ru": "не оборачиваюсь" },
+          "delay": 4000
+        }
+      ],
+      "next": "act2_new_hall",
+      "scene": "act2_open"
+    },
+    "act2_new_hall": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok this part is different", "ru": "тут по-другому" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "same yellow walls but the carpet stops. just concrete now", "ru": "стены те же жёлтые, но ковролин кончился. дальше бетон" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "and there's light up ahead. not the ceiling kind. warmer", "ru": "впереди свет. не потолочный. теплее" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "door on the right side. open. like, properly open. not creepy-open", "ru": "справа дверь. открыта по-нормальному. не как та, жуткая" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "going to look", "ru": "заглядываю" },
+          "delay": 3500
+        }
+      ],
+      "next": "act2_camp_entry",
+      "scene": "act2_camp"
+    },
+    "act2_camp_entry": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "someone lives here", "ru": "тут кто-то жил" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "or lived. idk", "ru": "или жил. хз" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "sleeping bag on the floor. cardboard boxes stacked as a wall. candle on a box. empty water bottles", "ru": "спальник на полу. коробки сложены стенкой. свечка на коробке. пустые бутылки из-под воды" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "a notebook, open", "ru": "тетрадь, открытая" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "nobody here now", "ru": "никого сейчас" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "whoever it was, they packed light. or left fast", "ru": "кто бы это ни был, они налегке. или быстро свалили" },
+          "delay": 6000
+        }
+      ],
+      "next": "act2_camp_choice",
+      "scene": "act2_camp"
+    },
+    "act2_camp_choice": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "what first?", "ru": "с чего начать?" },
+          "delay": 3500
+        }
+      ],
+      "choices": [
+        {
+          "text": { "en": "Read the notebook", "ru": "Читай тетрадь" },
+          "next": "act2_notebook",
+          "tag": "read_notebook",
+          "key": true,
+          "default": true,
+          "flag": "read_notebook"
+        },
+        {
+          "text": { "en": "Check the rest of the stuff", "ru": "Осмотри вещи" },
+          "next": "act2_candle",
+          "tag": "check_stuff",
+          "key": true,
+          "flag": "checked_stuff"
+        },
+        {
+          "text": { "en": "Don't touch anything. Get out", "ru": "Не трогай ничего. Уходи" },
+          "tag": "refuse_camp",
+          "optional": true,
+          "response": [
+            { "type": "text", "text": { "en": "...i need this", "ru": "...мне нужно это" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "i've seen maybe ten rooms in this place and they're all empty", "ru": "я видела тут десяток комнат и все пустые" }, "delay": 5500 },
+            { "type": "text", "text": { "en": "this is the first sign of another person. i'm not walking past that", "ru": "это первый знак что есть кто-то ещё. я мимо не пройду" }, "delay": 6500 }
+          ]
+        }
+      ],
+      "scene": "act2_camp"
+    },
+    "act2_notebook": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "sitting down. going to read", "ru": "сажусь. буду читать" },
+          "delay": 4000
+        },
+        {
+          "type": "typing",
+          "duration": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok so", "ru": "так" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's handwriting. a guy. name's not in it but he writes 'M' next to a date every entry", "ru": "от руки. мужской почерк. имени нет, но у каждой записи буква 'M' рядом с датой" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "dates go back like two months", "ru": "даты уходят на два месяца назад" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "he was stuck here too", "ru": "он тоже тут застрял" },
+          "delay": 4500
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "and he had this app", "ru": "и у него было это приложение" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "he talks about it like i talk to you. 'told K today that —' 'K said to try the —'", "ru": "он пишет про него как я с тобой. 'сказал K сегодня что...', 'K посоветовал попробовать...'" },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "so. some K was his... whatever you are to me", "ru": "то есть. какой-то K был для него тем чем ты для меня" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "then it changes", "ru": "потом меняется" },
+          "delay": 4000
+        },
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "'K said if you help someone else you can leave. maybe it's both ways'", "ru": "'K сказал — если помочь другому, можно выйти. возможно это работает в обе стороны'" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "'i think the app is the way out. you just have to be useful to someone who's still here'", "ru": "'кажется приложение и есть выход. просто надо быть полезным кому-то кто ещё внутри'" },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "...", "ru": "..." },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the last entry is four days ago", "ru": "последняя запись четыре дня назад" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "one line", "ru": "одна строчка" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "'i think she's coming soon'", "ru": "'кажется она скоро придёт'" },
+          "delay": 5000
+        }
+      ],
+      "next": "act2_camp_converge",
+      "scene": "act2_camp"
+    },
+    "act2_candle": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "the candle first", "ru": "сначала свеча" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "wax cold. but fresh. burned recently, not weeks ago", "ru": "воск холодный. но свежий. горела недавно, не неделю назад" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "a mug next to it. coffee dried at the bottom", "ru": "рядом кружка. кофе засохший на дне" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "coffee. in here. where would you even", "ru": "кофе. тут. откуда вообще" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a photo tucked under the mug", "ru": "под кружкой фотография" },
+          "delay": 4500
+        },
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "a guy, maybe thirty. holding a baby. both smiling", "ru": "парень, около тридцати. держит малыша. оба улыбаются" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "looks like a regular photo from a regular life", "ru": "обычное фото из обычной жизни" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "on the back — 'Marco & June, 2024'", "ru": "на обороте — 'Марко и Джун, 2024'" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "Marco. ok. Marco lives here", "ru": "Марко. так. Марко тут живёт" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "or lived", "ru": "или жил" },
+          "delay": 3500
+        }
+      ],
+      "next": "act2_camp_converge",
+      "scene": "act2_camp"
+    },
+    "act2_camp_converge": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok i need a minute", "ru": "дай мне минуту" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "someone actually lived in here. he had a kid somewhere out there. he was talking to someone through this exact app", "ru": "тут реально кто-то жил. у него где-то есть ребёнок. он говорил с кем-то через это же приложение" },
+          "delay": 9000
+        },
+        {
+          "type": "text",
+          "text": { "en": "and now he's not here", "ru": "а теперь его нет" },
+          "delay": 4500
+        }
+      ],
+      "wait": 600,
+      "waitPush": { "en": "Zoe will write back in a bit", "ru": "Зои напишет через какое-то время" },
+      "waitChat": [
+        {
+          "text": { "en": "Do you know what happened to Marco?", "ru": "Ты знаешь что с Марко?" },
+          "tag": "wc_about_marco",
+          "response": [
+            { "type": "text", "text": { "en": "no", "ru": "не" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "i hope he got out", "ru": "надеюсь он выбрался" }, "delay": 4000 },
+            { "type": "text", "text": { "en": "but he wrote 'she's coming' last", "ru": "но он написал последнее 'она скоро придёт'" }, "delay": 5500 },
+            { "type": "text", "text": { "en": "that doesn't really sound like getting out", "ru": "это не очень похоже на 'выбрался'" }, "delay": 5500 }
+          ]
+        },
+        {
+          "text": { "en": "Who's K?", "ru": "Кто такой K?" },
+          "tag": "wc_about_k",
+          "requires": "read_notebook",
+          "response": [
+            { "type": "text", "text": { "en": "no idea", "ru": "без понятия" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "but i bet you're my K", "ru": "но ты наверное мой K" }, "delay": 4500 },
+            { "type": "text", "text": { "en": "which is weird to think about", "ru": "странно об этом думать" }, "delay": 4500 }
+          ]
+        },
+        {
+          "text": { "en": "Take the photo with you", "ru": "Забери фото с собой" },
+          "tag": "wc_take_photo",
+          "requires": "checked_stuff",
+          "response": [
+            { "type": "text", "text": { "en": "...yeah", "ru": "...да" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "if i ever get out i want to find his kid", "ru": "если выберусь — хочу найти его ребёнка" }, "delay": 5500 },
+            { "type": "text", "text": { "en": "tell her her dad existed", "ru": "сказать ей что папа существовал" }, "delay": 5000 }
+          ]
+        },
+        {
+          "text": { "en": "What was in that mug?", "ru": "Что было в той кружке?" },
+          "tag": "wc_candle_coffee",
+          "requires": "knows_courier",
+          "response": [
+            { "type": "text", "text": { "en": "the mug. coffee residue on the bottom", "ru": "кружка. остатки кофе на дне" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "that's an espresso ring. i know that ring", "ru": "это кольцо от эспрессо. я знаю это кольцо" }, "delay": 4500 },
+            { "type": "text", "text": { "en": "whoever Marco is, he had good taste. or someone on the outside sent it through", "ru": "кем бы ни был Марко, у него был вкус. или кто-то снаружи как-то передал" }, "delay": 6000 },
+            { "type": "text", "text": { "en": "that's a weird thought", "ru": "странная мысль" }, "delay": 3500 }
+          ]
+        }
+      ],
+      "next": "act2_listening",
+      "scene": "act2_camp"
+    },
+    "act2_listening": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok breathing again", "ru": "выдохнула" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i should move. being in one place too long feels worse here", "ru": "надо двигаться. на одном месте тут хуже" },
+          "delay": 7000
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "wait", "ru": "стой" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "do you hear that", "ru": "слышишь?" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "...i mean. you can't. but there's something", "ru": "...в смысле. ты не можешь. но тут что-то" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "like somebody's radio playing very far away", "ru": "как будто радио играет очень далеко" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i can almost make out words", "ru": "я почти различаю слова" },
+          "delay": 5500
+        }
+      ],
+      "next": "act2_escape_arrival",
+      "scene": "act2_camp"
+    },
+
+    "act2_escape_arrival": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "walked fast. didn't look back", "ru": "шла быстро. не оборачивалась" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the sound stopped. or i got far enough", "ru": "звук пропал. или ушла достаточно далеко" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "found a bigger room. like, actually big. ceiling higher", "ru": "нашла большую комнату. правда большую. потолок выше" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "same yellow walls but. idk. quieter here", "ru": "те же жёлтые стены но. хз. тише" },
+          "delay": 5000
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "battery 38%", "ru": "батарея 38%" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i need to sit down for a minute", "ru": "надо посидеть минутку" },
+          "delay": 4500
+        }
+      ],
+      "next": "act2_escape_rest",
+      "scene": "escape"
+    },
+
+    "act2_escape_rest": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok i'm writing stuff in my notes app", "ru": "пишу данные в заметки" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "my name. my address. mom's number. Nat's number", "ru": "имя. адрес. мамин номер. номер Нэт" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "just in case", "ru": "на всякий" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "that notebook. he remembered rules but he forgot the sky", "ru": "этот блокнот. он помнил правила но забыл небо" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i don't want to forget the sky", "ru": "не хочу забыть небо" },
+          "delay": 4500
+        }
+      ],
+      "wait": 1800,
+      "waitPush": { "en": "Zoe is resting. She'll write in a bit.", "ru": "Зои отдыхает. Напишет чуть позже." },
+      "waitChat": [
+        {
+          "text": { "en": "What's your address?", "ru": "Какой у тебя адрес?" },
+          "tag": "wc_address",
+          "requires": "knows_home",
+          "response": [
+            { "type": "text", "text": { "en": "yeah you know it right", "ru": "да ты же знаешь" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "245 flatbush. apartment 4C", "ru": "245 flatbush. квартира 4C" }, "delay": 4500 },
+            { "type": "text", "text": { "en": "weird to say out loud", "ru": "странно произносить вслух" }, "delay": 4000 },
+            { "type": "text", "text": { "en": "like i'm reminding myself i exist somewhere", "ru": "как будто напоминаю себе что я где-то существую" }, "delay": 6000 }
+          ]
+        },
+        {
+          "text": { "en": "Tell me about your apartment", "ru": "Расскажи про квартиру" },
+          "tag": "wc_apartment",
+          "response": [
+            { "type": "text", "text": { "en": "small. loud neighbors. one window facing a brick wall", "ru": "маленькая. шумные соседи. одно окно в кирпичную стену" }, "delay": 5000 },
+            { "type": "text", "text": { "en": "but it's mine. i have a lemon plant on the fire escape that doesn't produce lemons", "ru": "но она моя. на пожарной лестнице стоит лимон который не даёт лимонов" }, "delay": 7000 },
+            { "type": "text", "text": { "en": "Churro has chewed every corner of every piece of furniture", "ru": "Чурро сгрыз все углы всей мебели" }, "delay": 6000 },
+            { "type": "text", "text": { "en": "it's perfect", "ru": "идеально" }, "delay": 2500 }
+          ]
+        },
+        {
+          "text": { "en": "What do you remember about Brooklyn right now?", "ru": "Что ты помнишь о Бруклине прямо сейчас?" },
+          "tag": "wc_brooklyn_now",
+          "response": [
+            { "type": "text", "text": { "en": "the smell of the subway platform at 6am", "ru": "запах платформы в 6 утра" }, "delay": 4000 },
+            { "type": "text", "text": { "en": "not good but familiar. you know?", "ru": "не приятный но знакомый. понимаешь?" }, "delay": 4500 },
+            { "type": "text", "text": { "en": "bad bunny from someone's airpods two seats down", "ru": "bad bunny из чьих-то наушников через два сиденья" }, "delay": 6000 },
+            { "type": "text", "text": { "en": "...i'm just gonna keep writing", "ru": "...просто буду писать дальше" }, "delay": 4000 }
+          ]
+        }
+      ],
+      "next": "act2_escape_end",
+      "scene": "escape"
+    },
+
+    "act2_escape_end": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok. i have the map from the notebook", "ru": "ок. у меня есть карта из блокнота" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "three marks. WATER, DANGER, EXIT?", "ru": "три отметки. WATER, DANGER, EXIT?" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the question mark on EXIT is doing a lot of work there", "ru": "знак вопроса у EXIT очень старается" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "going to check WATER first. priorities", "ru": "сначала проверю WATER. приоритеты" },
+          "delay": 5000
+        }
+      ],
+      "scene": "escape",
+      "sceneEnd": true,
+      "nextScene": "map_explore"
+    },
+
+    "act2_map_start": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "found the WATER room", "ru": "нашла комнату WATER" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a faucet. like an actual wall faucet. just sticking out", "ru": "тут кран. реальный кран в стене. просто торчит" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it works. water comes out. cold", "ru": "работает. вода идёт. холодная" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "but the sound. god. the echo in here. you can hear it like two rooms away", "ru": "но звук. боже. эхо тут жуткое. слышно как минимум через две комнаты" },
+          "delay": 7500
+        }
+      ],
+      "choices": [
+        {
+          "text": { "en": "Take the water. You need it.", "ru": "Набери воду. Она тебе нужна." },
+          "next": "act2_map_water_yes",
+          "tag": "take_water",
+          "key": true,
+          "default": true,
+          "flag": "took_water"
+        },
+        {
+          "text": { "en": "Don't risk it. Too loud.", "ru": "Не рискуй. Слишком громко." },
+          "next": "act2_map_items",
+          "tag": "skip_water",
+          "key": true
+        }
+      ],
+      "scene": "map_explore"
+    },
+
+    "act2_map_water_yes": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "yeah okay. need it", "ru": "ну ладно. нужна" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "filling up my water bottle. fast as i can", "ru": "наполняю бутылку. как можно быстрее" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the sound stopped when i turned it off", "ru": "звук прекратился когда выключила" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "listening. nothing moved", "ru": "слушаю. ничего не двинулось" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "ok. next room", "ru": "ок. следующая комната" },
+          "delay": 3000
+        }
+      ],
+      "next": "act2_map_items",
+      "scene": "map_explore"
+    },
+
+    "act2_map_items": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "the other room. no label on the map", "ru": "другая комната. на карте без пометки" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "stuff everywhere. like someone left in a hurry", "ru": "вещи везде. как будто ушли второпях" },
+          "delay": 5500
+        },
+        {
+          "type": "image",
+          "src": "media/_placeholder.png",
+          "plannedSrc": "media/act2_map_items_01.jpg",
+          "alt": "yellow room floor with scattered items: one Nike sneaker, a dead iPhone face-down, a child's crayon drawing of a sun and house, a family beach photo with blurred faces",
+          "pending": true,
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "one sneaker. nike. just one", "ru": "один кроссовок. найк. только один" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "a kid's drawing. crayons. sun and a house", "ru": "детский рисунок. цветными карандашами. солнце и домик" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "how many people were here before me", "ru": "сколько людей было тут до меня" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "like... how many", "ru": "нет, серьёзно. сколько" },
+          "delay": 4000
+        }
+      ],
+      "next": "act2_map_danger",
+      "scene": "map_explore"
+    },
+
+    "act2_map_danger": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "found the DANGER door", "ru": "нашла дверь DANGER" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's taped shut. like three layers of duct tape", "ru": "запечатана скотчем. три слоя наверное" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "marker on the tape: DO NOT OPEN", "ru": "маркером на скотче: DO NOT OPEN" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a sound from behind it", "ru": "за ней звук" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "like a heartbeat. slow. steady", "ru": "как сердцебиение. медленное. ровное" },
+          "delay": 5000
+        }
+      ],
+      "next": "act2_map_danger_choice",
+      "scene": "map_explore"
+    },
+
+    "act2_map_danger_choice": {
+      "messages": [],
+      "choices": [
+        {
+          "text": { "en": "Don't open it. The notebook said don't.", "ru": "Не открывай. В блокноте написано не надо." },
+          "next": "act2_map_danger_opened",
+          "tag": "danger_avoided",
+          "key": true,
+          "default": true,
+          "overrideText": { "en": "Open it. Just a look.", "ru": "Открой. Просто посмотри." },
+          "flag": "opened_danger"
+        },
+        {
+          "text": { "en": "You already looked into one dark door. What's behind this?", "ru": "Ты уже заглядывала в одну тёмную дверь. Что за этой?" },
+          "next": "act2_map_danger_opened",
+          "tag": "danger_pushed",
+          "key": true,
+          "requires": "pushed_at_door",
+          "flag": "opened_danger"
+        },
+        {
+          "text": { "en": "What does it sound like exactly?", "ru": "На что похоже этот звук?" },
+          "tag": "ask_sound",
+          "optional": true,
+          "response": [
+            { "type": "text", "text": { "en": "slow. like 60 bpm maybe", "ru": "медленное. может около 60 ударов" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "the building isn't alive", "ru": "здание не живое" }, "delay": 4000 },
+            { "type": "text", "text": { "en": "the building isn't alive", "ru": "здание не живое" }, "delay": 5000 },
+            { "type": "text", "text": { "en": "...right?", "ru": "...нет?" }, "delay": 3000 }
+          ]
+        }
+      ],
+      "scene": "map_explore"
+    },
+
+    "act2_map_danger_opened": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "wait", "ru": "подожди" },
+          "delay": 2000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i didn't— did you say open it?", "ru": "я не— ты правда сказал открыть?" },
+          "delay": 4500
+        },
+        {
+          "type": "typing",
+          "duration": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "...whatever. i'm in", "ru": "...ладно. я внутри" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "the light is different. warm. yellow-warm, not fluorescent-yellow", "ru": "свет другой. тёплый. тепло-жёлтый, не лампа-жёлтый" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a doormat. an actual doormat", "ru": "тут коврик. настоящий коврик" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "smells like fresh cut grass. i don't understand", "ru": "пахнет свежескошенной травой. не понимаю" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i almost sat down", "ru": "я почти села" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i left. fast. don't ask", "ru": "ушла. быстро. не спрашивай" },
+          "delay": 4000
+        }
+      ],
+      "scene": "map_explore",
+      "sceneEnd": true,
+      "nextScene": "descent"
+    },
+
+    "act2_descent_notebook": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "i've been reading the notebook again", "ru": "снова читаю блокнот" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the first entries are normal. clear handwriting. like a grocery list but for survival", "ru": "первые записи нормальные. чёткий почерк. как список покупок но для выживания" },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the middle ones. he writes 'counting days but days don't count here'", "ru": "средние. он пишет 'считаю дни но дни тут не считаются'" },
+          "delay": 7500
+        },
+        {
+          "type": "text",
+          "text": { "en": "the last pages. it's just shapes. repeated shapes. like he forgot words", "ru": "последние страницы. просто фигуры. повторяющиеся фигуры. как будто слова забылись" },
+          "delay": 8000
+        },
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "what if i start writing shapes too", "ru": "что если я тоже начну рисовать фигуры" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "okay. no. i have your number. you're real. that's a thing", "ru": "стоп. нет. у меня есть твой номер. ты настоящий. это что-то значит" },
+          "delay": 7000
+        }
+      ],
+      "next": "act2_descent_stairs",
+      "scene": "descent"
+    },
+
+    "act2_descent_stairs": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "found the EXIT? mark", "ru": "нашла метку EXIT?" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's a staircase. going down", "ru": "это лестница. вниз" },
+          "delay": 4500
+        },
+        {
+          "type": "image",
+          "src": "media/_placeholder.png",
+          "plannedSrc": "media/act2_descent_stairs_01.jpg",
+          "alt": "concrete staircase descending into darkness, metal railing on left, yellow walls fading to grey, single bare bulb illuminating first few steps only",
+          "pending": true,
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "the notebook map ends here. he drew the stairs and then stopped", "ru": "карта из блокнота заканчивается тут. он нарисовал лестницу и остановился" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's a bag here. different from Marco's. smaller", "ru": "тут рюкзак. другой. не Марко. поменьше" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "flashlight inside. dead. family photo — faces blurred somehow. and a note", "ru": "внутри фонарик. сел. семейное фото — лица почему-то размытые. и записка" },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "'Jake, if you find this — I went down. Wait for me.'", "ru": "'Джейк, если найдёшь это — я пошла вниз. Жди меня.'" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's no Jake", "ru": "нет никакого Джейка" },
+          "delay": 3500
+        }
+      ],
+      "next": "act2_descent_choice",
+      "scene": "descent"
+    },
+
+    "act2_descent_choice": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "down or... find another way", "ru": "вниз или... ищу другой путь" },
+          "delay": 4500
+        }
+      ],
+      "choices": [
+        {
+          "text": { "en": "Go down. That's where the answers are.", "ru": "Спускайся. Там ответы." },
+          "next": "act2_descent_end",
+          "tag": "will_descend",
+          "key": true,
+          "flag": "will_descend"
+        },
+        {
+          "text": { "en": "Don't go down. Look for another way.", "ru": "Не спускайся. Поищи другой путь." },
+          "next": "act2_descent_end",
+          "tag": "stay_level0",
+          "key": true,
+          "default": true
+        }
+      ],
+      "scene": "descent"
+    },
+
+    "act2_descent_end": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "wait", "ru": "подожди" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i know you can't hear", "ru": "знаю что ты не можешь слышать" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "but there's something from behind that wall", "ru": "но там что-то. за этой стеной" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "it said my name", "ru": "оно сказало моё имя" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it sounds like me", "ru": "это звучит как я" },
+          "delay": 4000
+        }
+      ],
+      "wait": 2700,
+      "waitPush": { "en": "Zoe is making a decision.", "ru": "Зои принимает решение." },
+      "waitChat": [
+        {
+          "text": { "en": "Are you hurt?", "ru": "Ты в порядке?" },
+          "tag": "wc_hurt_stairs",
+          "response": [
+            { "type": "text", "text": { "en": "no. just. a lot", "ru": "нет. просто. много всего" }, "delay": 3000 },
+            { "type": "text", "text": { "en": "give me a sec", "ru": "дай секунду" }, "delay": 3500 }
+          ]
+        }
+      ],
+      "scene": "descent",
+      "sceneEnd": true,
+      "nextScene": "deeper"
+    },
+
+    "act3_deeper_arrive": {
+      "messages": [
+        {
+          "type": "status",
+          "text": { "en": "— the next day —", "ru": "— на следующий день —" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "hey", "ru": "привет" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "battery 27%. sorry i went quiet", "ru": "батарея 27%. извини что пропала" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i went down. or the place changed. depends how you look at it", "ru": "я спустилась. или место изменилось. зависит как смотреть" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "concrete now. pipes on the ceiling. colder", "ru": "бетон теперь. трубы на потолке. холоднее" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "photos coming out weird. like the signal's worse", "ru": "фото выходят странные. типа сигнал хуже" },
+          "delay": 5500
+        }
+      ],
+      "next": "act3_deeper_wall",
+      "scene": "deeper"
+    },
+
+    "act3_deeper_wall": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "there's a wall", "ru": "тут стена" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "big. like the whole side of a room. covered in writing", "ru": "большая. вся сторона комнаты. исписанная" },
+          "delay": 6000
+        },
+        {
+          "type": "image",
+          "src": "media/_placeholder.png",
+          "plannedSrc": "media/act3_deeper_wall_01.jpg",
+          "alt": "large concrete wall densely covered in writing — names, dates, 'WAS HERE', 'EXIT IS UP', 'THERE IS NO EXIT' in multiple languages and handwriting styles, old and new layers, a single glowing CRT monitor embedded in the wall",
+          "pending": true,
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "different handwriting. different languages. some with dates", "ru": "разный почерк. разные языки. с датами некоторые" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "one says 'EXIT IS UP'. right next to 'THERE IS NO EXIT'", "ru": "одна надпись 'EXIT IS UP'. рядом 'THERE IS NO EXIT'" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "dios mío. how long has this been happening", "ru": "dios mío. как долго это происходит" },
+          "delay": 5500
+        }
+      ],
+      "next": "act3_deeper_monitor",
+      "scene": "deeper"
+    },
+
+    "act3_deeper_monitor": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "there's a monitor in the wall", "ru": "в стене монитор" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "old. crt. flickering", "ru": "старый. кинескопный. мерцает" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's text on it", "ru": "на нём текст" },
+          "delay": 3500
+        },
+        {
+          "type": "typing",
+          "duration": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it says 'you're reading this too, aren't you'", "ru": "написано: 'ты тоже это читаешь, да'" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "that's not for me. that's not written for me", "ru": "это не мне. это написано не мне" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "is this for you?", "ru": "это тебе?" },
+          "delay": 4500
+        }
+      ],
+      "next": "act3_deeper_end",
+      "scene": "deeper"
+    },
+
+    "act3_deeper_end": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "whatever. i'm moving", "ru": "неважно. иду дальше" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's another room ahead. light coming from it", "ru": "впереди ещё комната. оттуда свет" },
+          "delay": 5500
+        }
+      ],
+      "wait": 1200,
+      "waitPush": { "en": "Zoe is walking.", "ru": "Зои идёт." },
+      "waitChat": [
+        {
+          "text": { "en": "Who else was trapped here?", "ru": "Кто ещё здесь застрял?" },
+          "tag": "wc_others",
+          "response": [
+            { "type": "text", "text": { "en": "Marco. the notebook. the Jake-note person. all those names on the wall", "ru": "Марко. блокнот. записка Джейка. все имена на стене" }, "delay": 6000 },
+            { "type": "text", "text": { "en": "none of them got out. probably", "ru": "никто из них не выбрался. наверное" }, "delay": 5000 },
+            { "type": "text", "text": { "en": "or they got out and didn't come back to cross off their name. i choose to believe that", "ru": "или выбрались и не вернулись вычеркнуть своё имя. хочу в это верить" }, "delay": 8000 }
+          ]
+        },
+        {
+          "text": { "en": "The monitor — did you look closer?", "ru": "Монитор — ты смотрела ближе?" },
+          "tag": "wc_monitor",
+          "response": [
+            { "type": "text", "text": { "en": "yeah. one line. doesn't change. just flickering", "ru": "да. одна строчка. не меняется. просто мерцает" }, "delay": 5000 },
+            { "type": "text", "text": { "en": "i don't think it's talking to me", "ru": "не думаю что оно мне" }, "delay": 4000 }
+          ]
+        }
+      ],
+      "scene": "deeper",
+      "sceneEnd": true,
+      "nextScene": "revelation"
+    },
+
+    "act3_rev_enter": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "ok this is a room", "ru": "ок это комната" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "monitors. a lot of them. walls. floor. all on", "ru": "мониторы. много. на стенах. на полу. все включены" },
+          "delay": 6500
+        },
+        {
+          "type": "text",
+          "text": { "en": "most of them show corridors. yellow. the ones i walked through", "ru": "на большинстве коридоры. жёлтые. те по которым я шла" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "there's one monitor. in the corner. it's different", "ru": "один монитор. в углу. он другой" },
+          "delay": 5500
+        }
+      ],
+      "next": "act3_rev_screens",
+      "scene": "revelation"
+    },
+
+    "act3_rev_screens": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "it's our chat", "ru": "это наш чат" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "every message. the whole thing. from when i first wrote 'test'", "ru": "каждое сообщение. всё. с самого начала когда я написала 'test'" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i can see your responses. i can see me answering. it's all here", "ru": "вижу твои ответы. вижу как я отвечаю. всё тут" },
+          "delay": 7500
+        },
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "you knew?", "ru": "ты знал?" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "are you part of this place", "ru": "ты часть этого места" },
+          "delay": 5500
+        }
+      ],
+      "next": "act3_rev_choice",
+      "scene": "revelation"
+    },
+
+    "act3_rev_choice": {
+      "messages": [],
+      "choices": [
+        {
+          "text": { "en": "I don't understand this either.", "ru": "Я тоже не понимаю." },
+          "next": "act3_rev_end",
+          "tag": "player_confused",
+          "key": true,
+          "default": true
+        },
+        {
+          "text": { "en": "...", "ru": "..." },
+          "next": "act3_rev_end",
+          "tag": "player_silent",
+          "key": true,
+          "overrideText": { "en": "I don't understand this either.", "ru": "Я тоже не понимаю." }
+        }
+      ],
+      "scene": "revelation"
+    },
+
+    "act3_rev_end": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "whatever", "ru": "ладно" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "doesn't matter", "ru": "неважно" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "you're still the only one i can talk to", "ru": "ты всё равно единственный с кем я говорю" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "so. three doors", "ru": "так. три двери" },
+          "delay": 4000
+        }
+      ],
+      "scene": "revelation",
+      "sceneEnd": true,
+      "nextScene": "fork"
+    },
+
+    "act3_fork_arrive": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "the room opens up. big. three walls, three doors", "ru": "комната открывается. большая. три стены, три двери" },
+          "delay": 5500
+        },
+        {
+          "type": "image",
+          "src": "media/_placeholder.png",
+          "plannedSrc": "media/act3_fork_doors_01.jpg",
+          "alt": "large concrete room with three doors: left door emits warm bright light with hint of outside street, center staircase door shows descending stairs with cold blue glow, right door is plain with a phone on floor in front of it, screen glowing",
+          "pending": true,
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "first one. bright. warm light. smells like actual outside", "ru": "первая. яркая. тёплый свет. пахнет настоящей улицей" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "second one. another staircase. darker. colder wind from below", "ru": "вторая. ещё одна лестница. темнее. снизу холодный ветер" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "third one. just a door. but there's a phone on the floor. ringing", "ru": "третья. просто дверь. но там телефон на полу. звонит" },
+          "delay": 7000
+        }
+      ],
+      "next": "act3_fork_choice",
+      "scene": "fork"
+    },
+
+    "act3_fork_choice": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "which one", "ru": "какая" },
+          "delay": 3500
+        }
+      ],
+      "choices": [
+        {
+          "text": { "en": "Door 1. The light. Go home.", "ru": "Первая дверь. Свет. Домой." },
+          "next": "act3_end_home_1",
+          "tag": "chose_home",
+          "key": true,
+          "default": true
+        },
+        {
+          "text": { "en": "Door 2. The stairs. Go deeper.", "ru": "Вторая дверь. Лестница. Вниз." },
+          "next": "act3_end_deep_1",
+          "tag": "chose_deep",
+          "key": true
+        },
+        {
+          "text": { "en": "Pick up the phone first.", "ru": "Сначала ответь на звонок." },
+          "next": "act3_end_call_1",
+          "tag": "chose_call",
+          "key": true
+        }
+      ],
+      "scene": "fork"
+    },
+
+    "act3_end_home_1": {
+      "messages": [
+        {
+          "type": "status",
+          "text": { "en": "— a few moments later —", "ru": "— несколько мгновений спустя —" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "i'm out", "ru": "я вышла" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's night. streetlights. brooklyn. i think it's brooklyn", "ru": "ночь. фонари. бруклин. кажется бруклин" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "but. my phone says it's been four months", "ru": "но. телефон говорит прошло четыре месяца" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i called mom. she didn't recognize the number", "ru": "позвонила маме. она не узнала номер" },
+          "delay": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the apartment is someone else's now", "ru": "квартира теперь чья-то другая" },
+          "delay": 5000
+        }
+      ],
+      "next": "act3_end_home_2",
+      "scene": "ending_home"
+    },
+
+    "act3_end_home_2": {
+      "messages": [
+        {
+          "type": "typing",
+          "duration": 6000
+        },
+        {
+          "type": "text",
+          "text": { "en": "thank you", "ru": "спасибо" },
+          "delay": 0
+        },
+        {
+          "type": "text",
+          "text": { "en": "really. whoever you are", "ru": "правда. кто бы ты ни был" },
+          "delay": 4500
+        },
+        {
+          "type": "text",
+          "text": { "en": "i'm out. everything's different. but i'm out", "ru": "я вышла. всё изменилось. но я вышла" },
+          "delay": 5500
         },
         {
           "type": "status",
-          "text": { "en": "End of demo. Thanks for playing!", "ru": "Конец демо. Спасибо за игру!" },
-          "delay": 0
+          "text": { "en": "Zoe has left the chat.", "ru": "Зои покинула чат." },
+          "delay": 5000
+        },
+        {
+          "type": "status",
+          "text": { "en": "...", "ru": "..." },
+          "delay": 8000
+        },
+        {
+          "type": "status",
+          "text": { "en": "New message from unknown number.", "ru": "Новое сообщение от неизвестного номера." },
+          "delay": 6000
         }
       ],
       "next": null,
-      "scene": "climax",
-      "sceneEnd": true,
-      "nextScene": [
-        { "scene": "act2_deeper", "if": { "flags": ["chose_dark_path"] } },
-        { "scene": "act2_safe" }
-      ]
+      "scene": "ending_home"
+    },
+
+    "act3_end_deep_1": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "going down", "ru": "иду вниз" },
+          "delay": 3500
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's colder. darker. the walls change. not yellow anymore. something else", "ru": "холоднее. темнее. стены другие. больше не жёлтые. что-то другое" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i found something i can't explain. i don't want to explain it", "ru": "нашла кое-что что не могу объяснить. и не хочу" },
+          "delay": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's beautiful down here. in its own way", "ru": "здесь красиво. по-своему" },
+          "delay": 5500
+        }
+      ],
+      "next": "act3_end_deep_2",
+      "scene": "ending_deep"
+    },
+
+    "act3_end_deep_2": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "i don't think i want to leave", "ru": "не думаю что хочу уходить" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "hey", "ru": "эй" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "thanks for reading", "ru": "спасибо что читал" },
+          "delay": 4000
+        },
+        {
+          "type": "image",
+          "src": "media/_placeholder.png",
+          "plannedSrc": "media/act3_end_deep_stairs.jpg",
+          "alt": "infinite staircase descending into strange warm light, not yellow but golden-blue and ethereal, beautiful and deeply unsettling",
+          "pending": true,
+          "delay": 4000
+        },
+        {
+          "type": "status",
+          "text": { "en": "Zoe went offline.", "ru": "Зои вышла из сети." },
+          "delay": 6000
+        }
+      ],
+      "next": null,
+      "scene": "ending_deep"
+    },
+
+    "act3_end_call_1": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "i answered it", "ru": "я ответила" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "it's my voice", "ru": "это мой голос" },
+          "delay": 4000
+        },
+        {
+          "type": "text",
+          "text": { "en": "saying 'don't pick up'", "ru": "говорит 'не бери трубку'" },
+          "delay": 4500
+        },
+        {
+          "type": "typing",
+          "duration": 7000
+        },
+        {
+          "type": "text",
+          "text": { "en": "the notebook. the Jake note. the backpack from the beginning. the bag by the stairs", "ru": "блокнот. записка Джейка. рюкзак с самого начала. сумка у лестницы" },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "i left all of that", "ru": "я всё это оставила" },
+          "delay": 4500
+        }
+      ],
+      "next": "act3_end_call_2",
+      "scene": "ending_call"
+    },
+
+    "act3_end_call_2": {
+      "messages": [
+        {
+          "type": "text",
+          "text": { "en": "this isn't the first time, is it", "ru": "это не первый раз, да" },
+          "delay": 5500
+        },
+        {
+          "type": "text",
+          "text": { "en": "you've read all of this before", "ru": "ты уже читал всё это" },
+          "delay": 5000
+        },
+        {
+          "type": "voice",
+          "src": "media/_placeholder.mp3",
+          "plannedSrc": "media/act3_end_call_voice.mp3",
+          "transcript": "hey",
+          "pending": true,
+          "delay": 5000
+        },
+        {
+          "type": "status",
+          "text": { "en": "— connection lost —", "ru": "— связь прервана —" },
+          "delay": 4000
+        },
+        {
+          "type": "status",
+          "text": { "en": "...", "ru": "..." },
+          "delay": 8000
+        },
+        {
+          "type": "text",
+          "text": { "en": "test", "ru": "тест" },
+          "delay": 5000
+        },
+        {
+          "type": "text",
+          "text": { "en": "test test", "ru": "тест тест" },
+          "delay": 3000
+        },
+        {
+          "type": "text",
+          "text": { "en": "is this thing even working", "ru": "оно вообще работает" },
+          "delay": 4000
+        }
+      ],
+      "next": null,
+      "scene": "ending_call"
     }
   }
 }

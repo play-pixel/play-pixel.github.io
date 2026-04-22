@@ -169,6 +169,7 @@
     /* Image */
     .msg-row.npc .msg-bubble.img-msg { padding:3px; }
     .img-ph { width:200px; max-width:100%; aspect-ratio:4/3; border-radius:calc(var(--radius) - 2px); background:var(--input-bg); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px; text-align:center; padding:16px; line-height:1.5; }
+    .img-ph-pending { border:1px dashed var(--text-muted); background:transparent; color:var(--text-dim); font-style:italic; }
     .video-wrap { position:relative; display:inline-block; cursor:pointer; }
     .video-wrap .play-btn { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border-radius:50%; background:rgba(0,0,0,.55); border:none; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center; pointer-events:none; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
     .video-wrap:active .play-btn { background:rgba(0,0,0,.7); }
@@ -441,6 +442,12 @@
       return text;
     }
 
+    const AVATAR_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:62%;height:62%;opacity:.85"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>`;
+    function avatarHTML(meta) {
+      if (meta && meta.avatarImg) return `<img src="${meta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      return AVATAR_SVG;
+    }
+
     let scenario = null; // alias for activeScenario, set on story activation
     let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true, notifications: true };
     function vibrate(ms) { if (prefs.vibration && navigator.vibrate) navigator.vibrate(ms); }
@@ -503,11 +510,7 @@
       if (hdrName && meta) hdrName.textContent = L(meta.name);
       const hdrAv = $('chatHdrAv');
       if (hdrAv && meta) {
-        if (meta.avatarImg) {
-          hdrAv.innerHTML = `<img src="${meta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else {
-          hdrAv.textContent = meta.avatar || '?';
-        }
+        hdrAv.innerHTML = avatarHTML(meta);
       }
     }
 
@@ -721,9 +724,7 @@
         } else {
           const grad = meta.avatarGradient ? `background:linear-gradient(135deg,${meta.avatarGradient[0]},${meta.avatarGradient[1]})` : '';
           const timeStr = lastMsg && lastMsg._ts ? fmtTime(lastMsg._ts) : '';
-          const avInner = meta.avatarImg
-            ? `<img src="${meta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
-            : (meta.avatar || '?');
+          const avInner = avatarHTML(meta);
           item.innerHTML = `
             <div class="ct-avatar" style="${grad};color:#fff;font-weight:600;">${avInner}</div>
             <div class="ct-info"><div class="ct-name">${L(meta.name)}</div><div class="ct-preview">${preview}</div></div>
@@ -1056,9 +1057,9 @@
         const ha = $('chatHdrAv');
         if (ha) {
           if (curMeta.avatarImg) {
-            if (!ha.querySelector('img')) ha.innerHTML = `<img src="${curMeta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-          } else {
-            ha.textContent = curMeta.avatar || '?';
+            if (!ha.querySelector('img')) ha.innerHTML = avatarHTML(curMeta);
+          } else if (!ha.querySelector('svg')) {
+            ha.innerHTML = avatarHTML(curMeta);
           }
         }
       }
@@ -1141,11 +1142,7 @@
         const av = document.createElement('div');
         av.className = 'msg-avatar';
         const stMeta = storiesMeta.find(s => s.id === state.activeStory);
-        if (stMeta && stMeta.avatarImg) {
-          av.innerHTML = `<img src="${stMeta.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else {
-          av.textContent = stMeta ? stMeta.avatar : '?';
-        }
+        av.innerHTML = avatarHTML(stMeta);
         row.appendChild(av);
       }
 
@@ -1170,7 +1167,12 @@
         bubble.appendChild(meta);
       } else if (msg.type === 'image') {
         bubble.className = 'msg-bubble img-msg';
-        if (msg.src) {
+        if (msg.pending) {
+          const ph = document.createElement('div');
+          ph.className = 'img-ph img-ph-pending';
+          ph.textContent = '[image pending] ' + (L(msg.alt) || '');
+          bubble.appendChild(ph);
+        } else if (msg.src) {
           const img = document.createElement('img');
           img.src = msg.src;
           img.alt = L(msg.alt) || '';
@@ -1215,17 +1217,17 @@
         dur.className = 'v-dur';
         dur.textContent = '0:'+String(msg.duration||4).padStart(2,'0');
         bubble.appendChild(btn); bubble.appendChild(wave); bubble.appendChild(dur);
+        // Audio files not yet recorded — show transcript inline as a placeholder.
+        // TODO: when audio is added, switch to click-to-reveal and wire btn to play().
         if (msg.transcript) {
-          btn.onclick = () => {
-            let t = bubble.querySelector('.vt');
-            if (t) { t.remove(); return; }
-            t = document.createElement('div');
-            t.className = 'vt';
-            t.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
-            t.textContent = '\u201c'+L(msg.transcript)+'\u201d';
-            bubble.style.flexWrap = 'wrap';
-            bubble.appendChild(t);
-          };
+          const t = document.createElement('div');
+          t.className = 'vt';
+          t.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
+          t.textContent = '\u201c'+L(msg.transcript)+'\u201d';
+          bubble.style.flexWrap = 'wrap';
+          bubble.appendChild(t);
+          btn.style.opacity = '0.5';
+          btn.title = 'voice placeholder';
         }
       }
 
@@ -1275,11 +1277,7 @@
         const av = document.createElement('div');
         const stMeta2 = storiesMeta.find(s => s.id === state.activeStory);
         av.className = 'msg-avatar';
-        if (stMeta2 && stMeta2.avatarImg) {
-          av.innerHTML = `<img src="${stMeta2.avatarImg}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-        } else {
-          av.textContent = stMeta2 ? stMeta2.avatar : '?';
-        }
+        av.innerHTML = avatarHTML(stMeta2);
         const dots = document.createElement('div');
         dots.className = 'typing-dots';
         dots.innerHTML = '<span></span><span></span><span></span>';

@@ -17,6 +17,39 @@
     .topbar .spacer { flex:1; }
     .topbar .info { font-size:11px; color:var(--dim); }
 
+    /* Preview modal */
+    .prev-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100; align-items:center; justify-content:center; }
+    .prev-backdrop.open { display:flex; }
+    .prev-phone { width:380px; max-height:85vh; background:#ece5dd; border-radius:18px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.5); color:#111; }
+    .prev-hdr { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#3b82f6; color:#fff; flex-shrink:0; }
+    .prev-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; background-size:cover; background-position:center; flex-shrink:0; }
+    .prev-title { flex:1; min-width:0; }
+    .prev-name { font-weight:600; font-size:14px; }
+    .prev-sub { font-size:11px; opacity:.85; font-family:monospace; }
+    .prev-hdr select { padding:2px 6px; font-size:11px; border-radius:4px; border:none; background:rgba(255,255,255,.25); color:#fff; }
+    .prev-hdr select option { color:#111; }
+    .prev-x { width:28px; height:28px; border:none; background:rgba(255,255,255,.15); color:#fff; border-radius:50%; cursor:pointer; font-size:14px; }
+    .prev-chat { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:6px; background:#ece5dd; }
+    .prev-msg { max-width:78%; padding:8px 11px; border-radius:14px; font-size:13px; line-height:1.4; word-wrap:break-word; position:relative; }
+    .prev-msg.npc { background:#fff; align-self:flex-start; border-bottom-left-radius:4px; }
+    .prev-msg.player { background:#dcf8c6; align-self:flex-end; border-bottom-right-radius:4px; }
+    .prev-msg.status { align-self:center; background:transparent; color:#555; font-style:italic; font-size:11px; text-align:center; max-width:90%; }
+    .prev-msg.typing { background:#fff; align-self:flex-start; color:#888; font-style:italic; font-size:11px; padding:6px 10px; }
+    .prev-img { max-width:78%; align-self:flex-start; border-radius:14px; overflow:hidden; background:#fff; }
+    .prev-img img { width:100%; display:block; }
+    .prev-img .prev-caption { padding:6px 10px; font-size:11px; color:#555; font-style:italic; }
+    .prev-voice { max-width:78%; align-self:flex-start; background:#fff; border-radius:14px; padding:10px 12px; font-size:12px; }
+    .prev-voice .vv { font-weight:600; color:#3b82f6; font-size:11px; margin-bottom:2px; }
+    .prev-bottom { padding:10px 12px; background:#f4eee4; border-top:1px solid rgba(0,0,0,.08); display:flex; flex-direction:column; gap:6px; flex-shrink:0; max-height:40vh; overflow-y:auto; }
+    .prev-choice { padding:8px 12px; border-radius:8px; border:1px solid #3b82f6; background:#3b82f6; color:#fff; font-size:12px; text-align:left; cursor:default; }
+    .prev-choice.opt { background:#fff; color:#3b82f6; }
+    .prev-choice.def::before { content:'⭐ '; }
+    .prev-choice .tag { opacity:.7; font-size:10px; margin-left:6px; font-family:monospace; }
+    .prev-wait { padding:8px; background:rgba(167,139,250,.15); border:1px dashed #a78bfa; border-radius:8px; font-size:12px; color:#5b2a8a; text-align:center; }
+    .prev-meta { padding:6px 10px; background:rgba(91,156,245,.08); border-left:3px solid #3b82f6; font-size:11px; color:#333; border-radius:0 6px 6px 0; margin-bottom:4px; }
+    .prev-warn { padding:6px 10px; background:#fef3c7; border-left:3px solid #f59e0b; font-size:11px; color:#78350f; border-radius:0 6px 6px 0; margin:4px 0; }
+    .prev-end { padding:10px; background:rgba(59,130,246,.1); border:2px dashed #3b82f6; border-radius:8px; font-size:12px; color:#1e40af; }
+
     .main { display:flex; flex:1; overflow:hidden; }
 
     /* View tabs */
@@ -119,8 +152,28 @@
     <div class="spacer"></div>
     <div class="info" id="stats">—</div>
     <button onclick="doLoad(true)" title="Загрузить с сервера (сбросить локальные изменения)">Сброс</button>
+    <button onclick="openPreview()" title="Показать выбранную ноду как в игре">Превью</button>
     <button onclick="doExport()">Скачать</button>
     <button onclick="doCopy()" class="primary">Копировать</button>
+  </div>
+  <!-- Preview modal -->
+  <div id="prevBackdrop" class="prev-backdrop" onclick="closePreview(event)">
+    <div class="prev-phone" onclick="event.stopPropagation()">
+      <div class="prev-hdr">
+        <div class="prev-avatar" id="prevAvatar">Z</div>
+        <div class="prev-title">
+          <div class="prev-name" id="prevName">—</div>
+          <div class="prev-sub" id="prevSub">node</div>
+        </div>
+        <select id="prevLang" onchange="renderPreview()" title="Язык">
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+        </select>
+        <button class="prev-x" onclick="closePreview()">✕</button>
+      </div>
+      <div class="prev-chat" id="prevChat"></div>
+      <div class="prev-bottom" id="prevBottom"></div>
+    </div>
   </div>
   <div class="main">
     <div class="sidebar" id="sidebar">
@@ -158,9 +211,11 @@
     editor.start();
 
     // ── Load stories ────────────
+    let storiesIndex = null;
     async function init() {
       const resp = await fetch('./data/stories.json');
       const data = await resp.json();
+      storiesIndex = data;
       const sel = document.getElementById('storySelect');
       data.stories.forEach(s => {
         if (s.scenario) {
@@ -171,6 +226,10 @@
         }
       });
       if (data.stories[0]?.scenario) { sel.value = data.stories[0].scenario; await doLoad(); }
+    }
+    function currentStoryMeta() {
+      const path = document.getElementById('storySelect').value;
+      return storiesIndex?.stories?.find(s => s.scenario === path) || null;
     }
 
     async function doLoad(forceServer) {
@@ -1040,6 +1099,121 @@
       const ch = ids.filter(n => scenario.nodes[n].choices).length;
       const w = ids.filter(n => scenario.nodes[n].wait).length;
       document.getElementById('stats').textContent = `${ids.length} нод | ${msgs} сообщ. | ${ch} выборов | ${w} пауз`;
+    }
+
+    // ── Preview ────────────
+    function L(val, lang) {
+      if (!val) return '';
+      if (typeof val === 'string') return val;
+      return val[lang] || val.en || val.ru || '';
+    }
+    function escHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function openPreview() {
+      if (!selectedScenarioNode || !scenario?.nodes[selectedScenarioNode]) {
+        alert('Сначала выбери ноду в списке слева');
+        return;
+      }
+      document.getElementById('prevBackdrop').classList.add('open');
+      renderPreview();
+    }
+    function closePreview(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('prevBackdrop').classList.remove('open');
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closePreview();
+    });
+    function renderPreview() {
+      const id = selectedScenarioNode;
+      const node = scenario?.nodes[id];
+      if (!node) return;
+      const lang = document.getElementById('prevLang').value || 'ru';
+      const meta = currentStoryMeta();
+
+      // Header
+      const av = document.getElementById('prevAvatar');
+      if (meta?.avatarImg) { av.style.backgroundImage = `url(${meta.avatarImg})`; av.textContent = ''; }
+      else if (meta?.avatarGradient) { av.style.background = `linear-gradient(135deg, ${meta.avatarGradient.join(', ')})`; av.textContent = meta.avatar || '?'; av.style.backgroundImage = ''; }
+      else { av.textContent = meta?.avatar || '?'; }
+      document.getElementById('prevName').textContent = L(meta?.name, lang) || 'Unknown';
+      document.getElementById('prevSub').textContent = `${id} · scene:${node.scene || '—'}`;
+
+      const chat = document.getElementById('prevChat');
+      const bottom = document.getElementById('prevBottom');
+      chat.innerHTML = '';
+      bottom.innerHTML = '';
+
+      // Special node types
+      if (node.type === 'scene_start') {
+        chat.innerHTML = `<div class="prev-meta">▶ START сцены <b>${escHtml(node.scene||'')}</b> → ${escHtml(node.next||'?')}</div>`;
+        return;
+      }
+      if (node.type === 'scene_end') {
+        chat.innerHTML = `<div class="prev-meta">■ END сцены <b>${escHtml(node.scene||'')}</b></div>`;
+        const tr = node.transitions || [];
+        for (const t of tr) {
+          chat.innerHTML += `<div class="prev-meta">if choice <code>${escHtml(t.choiceTag||'?')}</code> → ${escHtml(t.nextScene||'?')}</div>`;
+        }
+        if (node.defaultNextScene) chat.innerHTML += `<div class="prev-meta">default → ${escHtml(node.defaultNextScene)}</div>`;
+        return;
+      }
+
+      // Render messages
+      const msgs = node.messages || [];
+      if (msgs.length === 0) {
+        chat.innerHTML = '<div class="prev-meta">Сообщений нет</div>';
+      }
+      for (const m of msgs) {
+        renderPreviewMsg(chat, m, lang);
+      }
+
+      // Bottom panel
+      if (node.choices && node.choices.length) {
+        const key = node.choices.filter(c => c.key || (!c.optional && c.next));
+        const opt = node.choices.filter(c => c.optional);
+        for (const c of key) {
+          const cls = 'prev-choice' + (c.default ? ' def' : '');
+          bottom.innerHTML += `<div class="${cls}">${escHtml(L(c.text, lang))}<span class="tag">${escHtml(c.tag||'')} → ${escHtml(c.next||'?')}</span></div>`;
+        }
+        for (const c of opt) {
+          const req = c.requires ? ` [нужен: ${escHtml(c.requires)}]` : '';
+          bottom.innerHTML += `<div class="prev-choice opt">${escHtml(L(c.text, lang))}<span class="tag">${escHtml(c.tag||'')}${req}</span></div>`;
+        }
+      }
+      if (node.wait) {
+        const min = Math.round(node.wait / 60);
+        bottom.innerHTML += `<div class="prev-wait">⏳ Ожидание ${node.wait}s (~${min} мин) → ${escHtml(node.next||'?')}</div>`;
+        if (node.waitChat?.length) {
+          bottom.innerHTML += `<div style="font-size:10px;color:#888;margin-top:4px;">Wait-chat вопросов: ${node.waitChat.length}</div>`;
+        }
+      }
+      if (node.next && !node.choices && !node.wait) {
+        bottom.innerHTML += `<div class="prev-meta" style="margin:0;">→ next: <code>${escHtml(node.next)}</code></div>`;
+      }
+      if (!node.next && !node.choices && !node.wait && !node.type) {
+        bottom.innerHTML += `<div class="prev-end">Конец ветки (нет next)</div>`;
+      }
+    }
+    function renderPreviewMsg(chat, m, lang) {
+      if (m.type === 'status') {
+        chat.innerHTML += `<div class="prev-msg status">${escHtml(L(m.text, lang))}</div>`;
+      } else if (m.type === 'typing') {
+        chat.innerHTML += `<div class="prev-msg typing">печатает… (${m.duration||0}ms)</div>`;
+      } else if (m.type === 'image') {
+        const src = m.src ? (m.src.startsWith('http') ? m.src : m.src) : '';
+        const alt = escHtml(L(m.alt, lang) || 'image');
+        const html = src
+          ? `<div class="prev-img"><img src="${escHtml(src)}" alt="${alt}" onerror="this.parentElement.innerHTML='<div style=padding:40px;text-align:center;color:#c00;font-size:12px;>🖼 не найдено: ${escHtml(src)}</div>'"><div class="prev-caption">${alt}</div></div>`
+          : `<div class="prev-warn">image без src</div>`;
+        chat.innerHTML += html;
+      } else if (m.type === 'voice') {
+        chat.innerHTML += `<div class="prev-voice"><div class="vv">🎤 voice · ${m.duration||'?'}s</div>"${escHtml(L(m.transcript, lang))}"</div>`;
+      } else if (m.type === 'update_profile') {
+        const nm = L(m.name, lang) || '—';
+        chat.innerHTML += `<div class="prev-meta">🪪 update_profile → name: <b>${escHtml(nm)}</b>${m.avatarImg?` · avatar: ${escHtml(m.avatarImg)}`:''}</div>`;
+      } else {
+        chat.innerHTML += `<div class="prev-msg npc">${escHtml(L(m.text, lang))}</div>`;
+      }
     }
 
     init();
