@@ -260,6 +260,39 @@
     .lightbox img.grabbing { cursor:grabbing; }
     .lightbox-close { position:absolute; top:12px; right:12px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:22px; line-height:40px; text-align:center; cursor:pointer; z-index:10000; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
     .lightbox-close:active { background:rgba(255,255,255,.3); }
+
+    /* Glitch Effects */
+    @keyframes glitch-flicker {
+      0% { opacity: 1; filter: contrast(1) brightness(1); }
+      10% { opacity: 0.8; filter: contrast(1.2) brightness(1.2); }
+      15% { opacity: 1; filter: contrast(1) brightness(1); }
+      30% { opacity: 0.9; filter: contrast(1.1) brightness(1.1); }
+      35% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    .glitch-flicker { animation: glitch-flicker 0.2s ease infinite; }
+
+    @keyframes glitch-shake {
+      0% { transform: translate(0); }
+      20% { transform: translate(-2px, 2px); }
+      40% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      80% { transform: translate(2px, -2px); }
+      100% { transform: translate(0); }
+    }
+    .glitch-shake { animation: glitch-shake 0.15s ease infinite; }
+
+    @keyframes glitch-avatar-rgb {
+      0% { filter: none; transform: scale(1); }
+      20% { filter: drop-shadow(2px 0 0 rgba(255,0,0,0.5)) drop-shadow(-2px 0 0 rgba(0,255,255,0.5)); transform: scale(1.05); }
+      40% { filter: drop-shadow(-1px 0 0 rgba(255,0,0,0.5)) drop-shadow(1px 0 0 rgba(0,255,255,0.5)); transform: scale(0.98); }
+      60% { filter: drop-shadow(3px 0 0 rgba(255,0,0,0.5)) drop-shadow(-3px 0 0 rgba(0,255,255,0.5)); transform: scale(1.02); }
+      100% { filter: none; transform: scale(1); }
+    }
+    .glitch-avatar { animation: glitch-avatar-rgb 0.25s ease infinite; }
+
+    .glitch-active .msg-bubble { border-style: double !important; }
+    .glitch-active .chat-area { filter: sepia(0.2) saturate(1.2); }
   </style>
 </head>
 <body data-theme="light">
@@ -931,11 +964,18 @@
         state.timelineIdx++;
         changed = true;
         if (evt.type === 'msg') {
-          state.history.push({ ...evt.data, _ts: evt.ts });
-          if (evt.data.type !== 'status') {
+          const msg = evt.data;
+          // Auto-glitch on caps (screaming) or specific node flag
+          const rawText = (msg.text && msg.text.en) ? msg.text.en : '';
+          const isScreaming = /[A-Z]{4,}/.test(rawText);
+          if (msg.glitch || isScreaming) {
+            triggerGlitch(msg.glitch === 'high' ? 'high' : 'low', 500);
+          }
+          state.history.push({ ...msg, _ts: evt.ts });
+          if (msg.type !== 'status') {
             lastNpcMsgAt = Date.now();
             vibrate(15);
-            if (evt.data.type === 'text' && evt.data.text) notifyMsg(L(evt.data.text), state.timelineIdx);
+            if (msg.type === 'text' && msg.text) notifyMsg(L(msg.text), state.timelineIdx);
           }
           updateChecksToRead();
         } else if (evt.type === 'update_profile') {
@@ -987,12 +1027,18 @@
       const now = Date.now();
       if (state.choiceAvailableAt && now < state.choiceAvailableAt) return;
       const ch = node.choices[choiceIdx];
+
+      // Glitch effect on Choice Override
+      const isOverride = !!ch.overrideText;
+      const textToSend = isOverride ? ch.overrideText : ch.text;
+      if (isOverride) triggerGlitch('high', 600);
+
       // If target is an input-node, skip pushing the button label as a player message.
       // The player's typed text will be pushed by submitInput() instead.
       const target = scenario.nodes[ch.next];
       const isInputTarget = !!(target && target.input);
       if (!isInputTarget) {
-        state.history.push({ type:'player', text:ch.text, checks:1, _ts:now });
+        state.history.push({ type:'player', text:textToSend, checks:1, _ts:now });
       }
       vibrate(30);
       state.choices.push(ch.tag);
