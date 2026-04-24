@@ -2233,22 +2233,3 @@
   </script>
 </body>
 </html>
-ipt>
-</body>
-</html>
-nst closeVLb = () => { vVid.pause(); vVid.src = ''; vLb.classList.remove('active'); };
-      document.getElementById('videoLb-close').addEventListener('click', closeVLb);
-      vLb.addEventListener('click', e => { if (e.target === vLb) closeVLb(); });
-      document.addEventListener('keydown', e => { if (e.key === 'Escape' && vLb.classList.contains('active')) closeVLb(); });
-    })();
-
-    // === PWA Service Worker ===
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(reg => {
-        // Check for updates every 5 minutes
-        setInterval(() => reg.update(), 5 * 60 * 1000);
-      });
-    }
-  </script>
-</body>
-</html>
