@@ -987,6 +987,14 @@
     "start_explore": {
       "messages": [
         {
+          "type": "status",
+          "text": { "en": "Zoe is walking through the corridors...", "ru": "Зои идёт по коридорам..." }
+        },
+        {
+          "type": "typing",
+          "duration": 15000
+        },
+        {
           "type": "text",
           "text": { "en": "i walked through maybe 5 or 6 rooms looking for an exit", "ru": "я прошла наверное 5 или 6 комнат пока искала выход" },
           "delay": 5000
@@ -1544,7 +1552,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "someone's been walking behind me", "ru": "кто-то идёт за мной" },
+          "text": { "en": "dios... someone's been walking behind me", "ru": "dios... кто-то идёт за мной" },
           "delay": 4000
         }
       ],
@@ -2464,7 +2472,7 @@
           "response": [
             { "type": "text", "text": { "en": "the smell of the subway platform at 6am", "ru": "запах платформы в 6 утра" }, "delay": 4000 },
             { "type": "text", "text": { "en": "not good but familiar. you know?", "ru": "не приятный но знакомый. понимаешь?" }, "delay": 4500 },
-            { "type": "text", "text": { "en": "bad bunny from someone's airpods two seats down", "ru": "bad bunny из чьих-то наушников через два сиденья" }, "delay": 6000 },
+            { "type": "text", "text": { "en": "bad bunny from someone's airpods 2 seats down", "ru": "bad bunny из чьих-то наушников через 2 сиденья" }, "delay": 6000 },
             { "type": "text", "text": { "en": "...i'm just gonna keep writing", "ru": "...просто буду писать дальше" }, "delay": 4000 }
           ]
         }
