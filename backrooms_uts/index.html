@@ -66,76 +66,89 @@
     /* ── Start Screen ──────── */
     #startScreen { 
       align-items:center; justify-content:center; gap:0; padding:32px; text-align:center; 
-      background:#08080c; color:#e0e0e8; overflow:hidden; position:relative; 
+      background:#050508; color:#e0e0e8; overflow:hidden; position:relative; 
     }
     
-    /* CRT Scanline Overlay */
+    /* CRT Scanline Overlay - More intense */
     #startScreen::after {
       content: " ";
       position: absolute; inset: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-      background-size: 100% 4px, 3px 100%;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.1), rgba(0, 255, 0, 0.05), rgba(0, 0, 255, 0.1));
+      background-size: 100% 3px, 3px 100%;
       pointer-events: none;
       z-index: 2;
+      animation: screen-flicker 0.15s infinite;
+    }
+
+    @keyframes screen-flicker {
+      0% { opacity: 0.97; }
+      50% { opacity: 1; }
+      100% { opacity: 0.98; }
     }
 
     /* Ambient Glow */
     #startScreen::before { 
       content:''; position:absolute; inset:0; 
-      background: radial-gradient(circle at center, rgba(59,130,246,0.05) 0%, transparent 70%);
+      background: radial-gradient(circle at center, rgba(59,130,246,0.08) 0%, transparent 80%);
       pointer-events:none; 
     }
 
     .start-logo { 
-      font-size:12px; letter-spacing:12px; text-transform:uppercase; color:#44445a; 
-      margin-bottom:8px; opacity: 0.8;
+      font-size:18px; letter-spacing:18px; text-transform:uppercase; color:#555570; 
+      margin-bottom:12px; opacity: 0.7; font-weight: 200;
     }
 
     @keyframes text-glitch {
       0% { transform: translate(0); text-shadow: none; }
-      95% { transform: translate(0); text-shadow: none; }
-      96% { transform: translate(-1px, 1px); text-shadow: 1px 0 red, -1px 0 cyan; }
-      97% { transform: translate(1px, -1px); text-shadow: -1px 0 red, 1px 0 cyan; }
-      98% { transform: translate(0); text-shadow: none; }
+      20% { transform: translate(-2px, 1px); text-shadow: 2px 0 red, -2px 0 cyan; }
+      22% { transform: translate(2px, -1px); text-shadow: -2px 0 red, 2px 0 cyan; }
+      25% { transform: translate(0); text-shadow: none; }
+      92% { transform: translate(0); text-shadow: none; }
+      93% { transform: translate(-3px, 2px); text-shadow: 3px 0 red, -3px 0 cyan; }
+      95% { transform: translate(3px, -2px); text-shadow: -3px 0 red, 3px 0 cyan; }
+      100% { transform: translate(0); text-shadow: none; }
     }
 
     .start-title { 
-      font-size:42px; font-weight:300; letter-spacing:4px; line-height:1.1; color:#fff; 
-      animation: text-glitch 5s infinite;
+      font-size:72px; font-weight:800; letter-spacing:8px; line-height:0.9; color:#fff; 
+      animation: text-glitch 3s infinite;
+      text-transform: uppercase;
     }
     .start-title span { 
-      display:block; font-size:10px; font-weight:400; color:#50506a; 
-      letter-spacing:6px; margin-top:12px; text-transform:uppercase; 
+      display:block; font-size:14px; font-weight:400; color:#606080; 
+      letter-spacing:8px; margin-top:20px; text-transform:uppercase; 
     }
 
     .start-divider { 
-      width:60px; height:1px; 
-      background:linear-gradient(90deg,transparent,#444,transparent); 
-      margin:32px auto; 
+      width:120px; height:2px; 
+      background:linear-gradient(90deg,transparent,#555,transparent); 
+      margin:48px auto; 
     }
 
     .start-sub { 
-      color:#707085; font-size:13px; line-height:1.8; max-width:300px; 
+      color:#808095; font-size:15px; line-height:1.6; max-width:340px; 
       font-family:'Courier New', monospace; letter-spacing:1px;
       min-height: 80px;
     }
 
     .start-btn { 
-      padding:16px 64px; border:1px solid rgba(59,130,246,0.3); border-radius:2px; 
-      background: rgba(59,130,246,0.1); color:#fff; font-size:14px; 
-      text-transform: uppercase; letter-spacing: 3px;
-      font-weight:400; cursor:pointer; margin-top:40px; 
+      padding:20px 80px; border:2px solid rgba(59,130,246,0.4); border-radius:4px; 
+      background: rgba(59,130,246,0.15); color:#fff; font-size:16px; 
+      text-transform: uppercase; letter-spacing: 5px;
+      font-weight:600; cursor:pointer; margin-top:50px; 
       transition: all 0.3s;
       position: relative; z-index: 5;
+      backdrop-filter: blur(2px);
     }
     .start-btn:hover {
-      background: rgba(59,130,246,0.2);
-      border-color: rgba(59,130,246,0.6);
-      box-shadow: 0 0 20px rgba(59,130,246,0.2);
+      background: rgba(59,130,246,0.3);
+      border-color: rgba(59,130,246,1);
+      box-shadow: 0 0 30px rgba(59,130,246,0.4);
+      transform: translateY(-2px);
     }
-    .start-btn:active { opacity:.7; transform:scale(0.98); }
+    .start-btn:active { opacity:.7; transform:scale(0.95); }
 
-    .start-version { position:absolute; bottom:20px; font-size:9px; color:#2a2a36; letter-spacing:3px; z-index: 5; }
+    .start-version { position:absolute; bottom:24px; font-size:10px; color:#3a3a4a; letter-spacing:4px; z-index: 5; }
 
     /* ── Contacts Screen ─────── */
     .contacts-hdr { padding:12px 16px 0; background:var(--header-bg); }
