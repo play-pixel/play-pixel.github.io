@@ -156,13 +156,14 @@
     <div class="panel center-controls">
       <button class="action" id="autoBattle">Авто-битва</button>
       <button class="ghost" id="clearArena">Сброс</button>
+      <button class="ghost" id="toggleSettings">Настройки физики</button>
     </div>
     <div class="panel">
       <div class="team-title"><span><i class="dot blue"></i>Синие</span><span id="blueCount">0</span></div>
       <div class="buttons blue-btn" id="blueButtons"></div>
     </div>
   </div>
-  <div class="panel settings">
+  <div class="panel settings" id="settingsPanel" hidden>
     <div class="settings-title">
       <span>Настройки физики</span>
       <button class="ghost" id="resetSettings">Сброс</button>
@@ -325,6 +326,8 @@
         const r = rockets[i];
         r.life -= dt;
         r.elapsed += dt;
+        const px = r.x;
+        const py = r.y;
         r.x += r.vx * dt;
         r.y += r.vy * dt;
         r.vy += (r.gravity != null ? r.gravity : 240) * dt;
@@ -340,16 +343,28 @@
         let hit = false;
         if (r.y >= floorY || r.x < 0 || r.x > W) hit = true;
         if (!hit) {
-          const friendlyArmed = r.elapsed >= .2;
-          const hitR = r.hitRadius != null ? r.hitRadius : 22;
+          const hitR = r.hitRadius != null ? r.hitRadius : 28;
           const hitR2 = hitR * hitR;
+          const sx = r.x - px;
+          const sy = r.y - py;
+          const segLen2 = sx * sx + sy * sy;
           for (const f of fighters) {
             if (f.dead || f.id === r.ownerId) continue;
-            if (!friendlyArmed && f.teamName === r.ownerTeam) continue;
+            if (f.teamName === r.ownerTeam) continue;
             for (const b of f.allBodies) {
-              if ((b.position.x - r.x) ** 2 + (b.position.y - r.y) ** 2 < hitR2) {
-                hit = true; break;
+              const bx = b.position.x;
+              const by = b.position.y;
+              let d2;
+              if (segLen2 > 1e-6) {
+                let t = ((bx - px) * sx + (by - py) * sy) / segLen2;
+                if (t < 0) t = 0; else if (t > 1) t = 1;
+                const cx = px + sx * t;
+                const cy = py + sy * t;
+                d2 = (bx - cx) ** 2 + (by - cy) ** 2;
+              } else {
+                d2 = (bx - r.x) ** 2 + (by - r.y) ** 2;
               }
+              if (d2 < hitR2) { hit = true; break; }
             }
             if (hit) break;
           }
@@ -3239,6 +3254,11 @@
       }
       document.getElementById('autoBattle').addEventListener('click', autoBattle);
       document.getElementById('clearArena').addEventListener('click', clearArena);
+      const settingsPanel = document.getElementById('settingsPanel');
+      const toggleBtn = document.getElementById('toggleSettings');
+      toggleBtn.addEventListener('click', () => {
+        settingsPanel.hidden = !settingsPanel.hidden;
+      });
       buildSettings();
     }
 
