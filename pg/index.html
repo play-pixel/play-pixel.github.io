@@ -1,0 +1,3428 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ragdoll Arena 2D</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f6f8fb;
+      background: #131720;
+    }
+    canvas { display: block; width: 100vw; height: 100vh; background: #171c25; touch-action: none; }
+    canvas.dragging { cursor: grabbing; }
+    .hud {
+      position: fixed;
+      inset: 14px 14px auto 14px;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto minmax(260px, 1fr);
+      gap: 12px;
+      align-items: start;
+      pointer-events: none;
+    }
+    .panel {
+      pointer-events: auto;
+      background: rgba(22, 27, 37, .82);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 8px;
+      backdrop-filter: blur(14px);
+      padding: 10px;
+      box-shadow: 0 16px 44px rgba(0,0,0,.24);
+    }
+    .team-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 7px; }
+    .dot.red { background: #ff4d59; }
+    .dot.blue { background: #4aa3ff; }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+    }
+    button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 7px;
+      color: #f7fbff;
+      background: rgba(255,255,255,.1);
+      font: 700 12px/1.1 inherit;
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease, filter .12s ease;
+    }
+    button:hover { transform: translateY(-1px); background: rgba(255,255,255,.16); }
+    button:active { transform: translateY(0); filter: brightness(.92); }
+    .red-btn button { background: rgba(255, 77, 89, .22); }
+    .blue-btn button { background: rgba(74, 163, 255, .22); }
+    .center-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+    .action {
+      min-width: 116px;
+      background: #f2c84b;
+      color: #191a1d;
+    }
+    .ghost {
+      min-width: 74px;
+      background: rgba(255,255,255,.12);
+      color: #eef3fb;
+    }
+    .score {
+      position: fixed;
+      left: 50%;
+      bottom: 17px;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: rgba(246,248,251,.82);
+      background: rgba(18,22,31,.72);
+      border: 1px solid rgba(255,255,255,.1);
+      font-size: 12px;
+      pointer-events: none;
+    }
+    .settings {
+      position: fixed;
+      right: 14px;
+      top: 110px;
+      width: min(330px, calc(100vw - 28px));
+      display: grid;
+      gap: 8px;
+    }
+    .settings-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 2px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+    .setting-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 42px;
+      gap: 8px;
+      align-items: center;
+      color: rgba(246,248,251,.88);
+      font-size: 12px;
+      font-weight: 680;
+    }
+    .setting-row input {
+      width: 100%;
+      accent-color: #f2c84b;
+    }
+    .setting-row output {
+      color: rgba(246,248,251,.72);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    @media (max-width: 900px) {
+      .hud {
+        grid-template-columns: 1fr;
+        inset: 10px;
+      }
+      .center-controls { order: -1; }
+      .buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      button { min-height: 34px; font-size: 11px; }
+      .settings {
+        left: 10px;
+        right: 10px;
+        top: 118px;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="arena"></canvas>
+  <div class="hud">
+    <div class="panel">
+      <div class="team-title"><span><i class="dot red"></i>Красные</span><span id="redCount">0</span></div>
+      <div class="buttons red-btn" id="redButtons"></div>
+    </div>
+    <div class="panel center-controls">
+      <button class="action" id="autoBattle">Авто-битва</button>
+      <button class="ghost" id="clearArena">Сброс</button>
+    </div>
+    <div class="panel">
+      <div class="team-title"><span><i class="dot blue"></i>Синие</span><span id="blueCount">0</span></div>
+      <div class="buttons blue-btn" id="blueButtons"></div>
+    </div>
+  </div>
+  <div class="panel settings">
+    <div class="settings-title">
+      <span>Настройки физики</span>
+      <button class="ghost" id="resetSettings">Сброс</button>
+    </div>
+    <label class="setting-row">
+      <span>Суставы</span>
+      <input id="jointTune" type="range" min="0.8" max="3.2" step="0.05" value="2.2">
+      <output id="jointTuneValue">2.20</output>
+    </label>
+    <label class="setting-row">
+      <span>Мышцы</span>
+      <input id="muscleTune" type="range" min="0.8" max="3.8" step="0.05" value="2.6">
+      <output id="muscleTuneValue">2.60</output>
+    </label>
+    <label class="setting-row">
+      <span>Ноги</span>
+      <input id="legTune" type="range" min="0.8" max="4.2" step="0.05" value="3">
+      <output id="legTuneValue">3.00</output>
+    </label>
+    <label class="setting-row">
+      <span>Стабильн.</span>
+      <input id="stabilityTune" type="range" min="0.6" max="4.5" step="0.05" value="3">
+      <output id="stabilityTuneValue">3.00</output>
+    </label>
+    <label class="setting-row">
+      <span>Поддержка</span>
+      <input id="supportTune" type="range" min="0" max="3.6" step="0.05" value="2.5">
+      <output id="supportTuneValue">2.50</output>
+    </label>
+    <label class="setting-row">
+      <span>Гравитация</span>
+      <input id="gravityTune" type="range" min="0.55" max="1.55" step="0.01" value="1.02">
+      <output id="gravityTuneValue">1.02</output>
+    </label>
+    <label class="setting-row">
+      <span>Шаг</span>
+      <input id="driveTune" type="range" min="0.5" max="2.5" step="0.05" value="1.08">
+      <output id="driveTuneValue">1.08</output>
+    </label>
+    <label class="setting-row">
+      <span>Кровь</span>
+      <input id="bloodTune" type="range" min="0" max="3" step="0.1" value="1">
+      <output id="bloodTuneValue">1.00</output>
+    </label>
+  </div>
+  <div class="score" id="score">Matter.js active ragdolls, custom Canvas 2D render</div>
+
+  <script>
+    const {
+      Engine, World, Bodies, Body, Constraint, Composite, Events, Query, Vector
+    } = Matter;
+
+    const canvas = document.getElementById('arena');
+    const ctx = canvas.getContext('2d');
+    const engine = Engine.create({ enableSleeping: false });
+    const world = engine.world;
+
+    const DPR = Math.min(devicePixelRatio || 1, 2);
+    const DEFAULT_SETTINGS = {
+      joint: 2.2,
+      muscle: 2.6,
+      leg: 3,
+      stability: 3,
+      support: 2.5,
+      gravity: 1.02,
+      drive: 1.08,
+      blood: 1
+    };
+    const BLOOD_COLOR = '#f7c948';
+    const SETTINGS = { ...DEFAULT_SETTINGS };
+    engine.gravity.y = SETTINGS.gravity;
+
+    const TEAMS = {
+      red: { color: '#ff4d59', dark: '#8d2430', group: Body.nextGroup(true), spawnX: 150, dir: 1 },
+      blue: { color: '#4aa3ff', dark: '#205f99', group: Body.nextGroup(true), spawnX: 0, dir: -1 }
+    };
+    const TYPES = {
+      grunt: { label: 'Боец', hp: 100, damage: 13, speed: 1.0, size: 1.0, stiffness: 0.030, mass: 1 },
+      runner: { label: 'Бегун', hp: 78, damage: 9, speed: 1.55, size: .88, stiffness: 0.033, mass: .78 },
+      heavy: { label: 'Тяжёлый', hp: 175, damage: 18, speed: .72, size: 1.22, stiffness: 0.068, mass: .72 },
+      bruiser: { label: 'Громила', hp: 128, damage: 22, speed: .88, size: 1.1, stiffness: 0.058, mass: .82 },
+      imp: { label: 'Мелкий', hp: 62, damage: 7, speed: 1.8, size: .72, stiffness: 0.040, mass: .55 },
+      gunner: { label: 'Стрелок', hp: 60, damage: 14, speed: 1.0, size: .78, stiffness: 0.045, mass: .6,
+                ranged: true, fireRate: .55, range: 480, missChance: .14 },
+      bazooka: { label: 'Базука', hp: 80, damage: 55, speed: .8, size: .9, stiffness: 0.050, mass: .75,
+                 ranged: true, fireRate: 3.4, range: 720, weapon: 'rocket',
+                 rocketSpeed: 540, rocketRadius: 175, rocketLife: 1.6 },
+      dog: { label: 'Собака', hp: 90, damage: 12, speed: 1.25, size: 1.0, stiffness: 0.045, mass: .85,
+             kind: 'dog' },
+      tank: { label: 'Танк', hp: 380, damage: 110, speed: .275, size: 3.0, stiffness: 0.06, mass: 1.5,
+              kind: 'tank', ranged: true, fireRate: 2.6, range: 600, weapon: 'shell',
+              shellSpeed: 760, shellRadius: 150, shellLife: 1.4 },
+      mech: { label: 'Мех', hp: 280, damage: 60, speed: .42, size: 2.2, stiffness: 0.06, mass: 1.2,
+              kind: 'mech', ranged: true, fireRate: 1.4, range: 560, weapon: 'shell',
+              shellSpeed: 720, shellRadius: 105, shellLife: 1.3 },
+      heli: { label: 'Вертолёт', hp: 220, damage: 11, speed: 1.4, size: 2.3, stiffness: 0.05, mass: 1.0,
+              kind: 'heli', ranged: true, fireRate: .12, range: 540, missChance: .22, altitude: 340 },
+      drone: { label: 'Дроны-камикадзе', hp: 22, damage: 220, speed: 2.4, size: 1.0, stiffness: 0.04, mass: .4,
+               kind: 'drone', ranged: false, swarm: 5, blastRadius: 110, altitude: 220 },
+      turret: { label: 'Турель', hp: 360, damage: 16, speed: 0, size: 1.7, stiffness: 0.06, mass: 6,
+                kind: 'turret', ranged: true, fireRate: .14, range: 620, missChance: .12 }
+    };
+
+    const ATTACK_TYPES = {
+      lowkick:  { dur: .82, hitPhase: .84 },
+      overhead: {
+        dur: .62,
+        hitPhase: .78,
+        frames: [
+          { t: 0,    u: .06,   l: .02 },
+          { t: .28,  u: 1.40,  l: 1.10 },
+          { t: .50,  u: 2.70,  l: 2.40 },
+          { t: .78,  u: 4.70,  l: 4.30 },
+          { t: 1.0,  u: 5.30,  l: 5.00 }
+        ]
+      }
+    };
+    const ATTACK_NAMES = Object.keys(ATTACK_TYPES);
+
+    function explode(x, y, radius, damage, ownerId) {
+      shake = Math.max(shake, 26);
+      flashes.push({ x, y, r: radius * .55, life: .14, maxLife: .14, color: '#fff6c8' });
+      flashes.push({ x, y, r: radius * .95, life: .32, maxLife: .32, color: '#ff9a3a' });
+      for (let i = 0; i < 28; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 120 + Math.random() * 380;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp - 80,
+          life: .55 + Math.random() * .55,
+          color: i % 3 === 0 ? '#ffe27a' : (i % 3 === 1 ? '#ff8a3a' : '#5b1c12')
+        });
+      }
+      tracers.push({ x1: x - radius * .4, y1: y, x2: x + radius * .4, y2: y, life: .12, maxLife: .12, color: '#ffe89a' });
+      for (const f of fighters) {
+        if (f.dead) continue;
+        const dx = f.position.x - x;
+        const dy = f.position.y - y;
+        const d = Math.hypot(dx, dy);
+        if (d > radius) continue;
+        const fall = 1 - d / radius;
+        const dir = d > .5 ? { x: dx / d, y: dy / d } : { x: 0, y: -1 };
+        const friendly = f.id === ownerId ? .35 : 1;
+        const dmg = damage * fall * friendly;
+        f.takeDamage(dmg, f.position.x, f.position.y - 50 * f.type.size, Math.sign(dx) || 1);
+        const force = .055 * fall * friendly;
+        for (const b of f.allBodies) {
+          Body.applyForce(b, b.position, {
+            x: dir.x * force * b.mass + (Math.random() - .5) * .004,
+            y: dir.y * force * b.mass - .006 * fall * b.mass
+          });
+        }
+      }
+    }
+
+    function updateRockets(dt) {
+      const floorY = H - 52;
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        r.life -= dt;
+        r.elapsed += dt;
+        r.x += r.vx * dt;
+        r.y += r.vy * dt;
+        r.vy += (r.gravity != null ? r.gravity : 240) * dt;
+        r.angle = Math.atan2(r.vy, r.vx);
+        particles.push({
+          x: r.x - Math.cos(r.angle) * 8,
+          y: r.y - Math.sin(r.angle) * 8,
+          vx: -r.vx * .12 + (Math.random() - .5) * 60,
+          vy: -r.vy * .12 + (Math.random() - .5) * 60 - 30,
+          life: .25 + Math.random() * .2,
+          color: Math.random() < .4 ? '#ffd95a' : '#a8a8a8'
+        });
+        let hit = false;
+        if (r.y >= floorY || r.x < 0 || r.x > W) hit = true;
+        if (!hit) {
+          const friendlyArmed = r.elapsed >= .2;
+          const hitR = r.hitRadius != null ? r.hitRadius : 22;
+          const hitR2 = hitR * hitR;
+          for (const f of fighters) {
+            if (f.dead || f.id === r.ownerId) continue;
+            if (!friendlyArmed && f.teamName === r.ownerTeam) continue;
+            for (const b of f.allBodies) {
+              if ((b.position.x - r.x) ** 2 + (b.position.y - r.y) ** 2 < hitR2) {
+                hit = true; break;
+              }
+            }
+            if (hit) break;
+          }
+        }
+        if (r.life <= 0) hit = true;
+        if (hit) {
+          explode(r.x, r.y, r.radius, r.damage, r.ownerId);
+          rockets.splice(i, 1);
+        }
+      }
+    }
+
+    function spawnBlood(x, y, dirX = 0, amount = 1) {
+      const scale = SETTINGS.blood;
+      if (scale <= 0) return;
+      const n = Math.round((6 + Math.random() * 5) * amount * scale);
+      for (let i = 0; i < n; i++) {
+        const bias = dirX !== 0 ? Math.sign(dirX) : 0;
+        const speed = 80 + Math.random() * 220;
+        const angle = bias === 0
+          ? Math.random() * Math.PI * 2
+          : (Math.random() - .5) * 1.4 + (bias > 0 ? 0 : Math.PI);
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed + bias * 60,
+          vy: Math.sin(angle) * speed - 80 - Math.random() * 120,
+          life: .55 + Math.random() * .45,
+          color: BLOOD_COLOR
+        });
+      }
+    }
+
+    function sampleAttackFrame(type, phase) {
+      const frames = type.frames;
+      for (let i = 1; i < frames.length; i++) {
+        const b = frames[i];
+        if (phase <= b.t) {
+          const a = frames[i - 1];
+          const k = (phase - a.t) / (b.t - a.t);
+          return { u: a.u + (b.u - a.u) * k, l: a.l + (b.l - a.l) * k };
+        }
+      }
+      const last = frames[frames.length - 1];
+      return { u: last.u, l: last.l };
+    }
+
+    let W = 0;
+    let H = 0;
+    let floorBody;
+    let leftWall;
+    let rightWall;
+    let fighters = [];
+    let damageTexts = [];
+    let particles = [];
+    let tracers = [];
+    let rockets = [];
+    let flashes = [];
+    let shake = 0;
+    let lastTime = performance.now();
+    const spawnOffsets = { red: 0, blue: 0 };
+    let nextDrawOrder = 0;
+    let dragConstraint = null;
+    let dragPointerId = null;
+    const dragPoint = { x: 0, y: 0 };
+
+    function resize() {
+      W = Math.floor(innerWidth);
+      H = Math.floor(innerHeight);
+      canvas.width = Math.floor(W * DPR);
+      canvas.height = Math.floor(H * DPR);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+      if (floorBody) World.remove(world, [floorBody, leftWall, rightWall]);
+      floorBody = Bodies.rectangle(W / 2, H - 26, W + 180, 52, {
+        isStatic: true, friction: 1.2, restitution: .05, label: 'floor'
+      });
+      leftWall = Bodies.rectangle(-38, H / 2, 76, H * 2, { isStatic: true });
+      rightWall = Bodies.rectangle(W + 38, H / 2, 76, H * 2, { isStatic: true });
+      World.add(world, [floorBody, leftWall, rightWall]);
+      TEAMS.blue.spawnX = W - 150;
+    }
+
+    function angleDelta(target, current) {
+      let d = target - current;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      return d;
+    }
+
+    function clamp(n, a, b) {
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function partRect(x, y, w, h, options) {
+      return Bodies.rectangle(x, y, w, h, {
+        friction: .92,
+        frictionAir: .018,
+        restitution: .02,
+        density: .0018 * (options.mass || 1),
+        collisionFilter: { group: options.group },
+        chamfer: { radius: Math.min(w, h) * .38 },
+        render: { visible: false }
+      });
+    }
+
+    function partCircle(x, y, r, options) {
+      return Bodies.circle(x, y, r, {
+        friction: .78,
+        frictionAir: .018,
+        restitution: .08,
+        density: .00165 * (options.mass || 1),
+        collisionFilter: { group: options.group },
+        render: { visible: false }
+      });
+    }
+
+    function joint(a, b, pa, pb, stiffness = .75) {
+      const constraint = Constraint.create({
+        bodyA: a,
+        bodyB: b,
+        pointA: pa,
+        pointB: pb,
+        stiffness,
+        damping: .19,
+        length: 0
+      });
+      constraint.baseStiffness = stiffness;
+      return constraint;
+    }
+
+    class Fighter {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.attackCd = .7 + Math.random() * .4;
+        this.shootCd = .8 + Math.random() * .8;
+        this.wanderDir = Math.random() < .5 ? -1 : 1;
+        this.wanderTimer = .6 + Math.random() * 1.4;
+        this.attackAnim = 0;
+        this.attackType = 'lowkick';
+        this.attackDur = ATTACK_TYPES.lowkick.dur;
+        this.attackSide = this.team.dir;
+        this.attackDir = this.team.dir;
+        this.nextAttackSide = 1;
+        this.pendingAttack = null;
+        this.attackHitDone = false;
+        this.stagger = 0;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        this.muscleScale = clamp(1 + (s - 1) * .58 + (1 - this.type.mass) * .22, .82, 1.55);
+        const jointBoost = clamp(1 + (s - 1) * .24 + (1 - this.type.mass) * .1, .95, 1.16);
+        const supportedJoint = value => Math.min(.94, value * jointBoost);
+        const opts = { group: this.team.group, mass: densityMass };
+        this.parts = {
+          head: partCircle(x, y - 68 * s, 13 * s, opts),
+          torso: partRect(x, y - 34 * s, 24 * s, 54 * s, opts),
+          upperL: partRect(x - 21 * s, y - 42 * s, 12 * s, 32 * s, opts),
+          lowerL: partRect(x - 30 * s, y - 18 * s, 10 * s, 31 * s, opts),
+          upperR: partRect(x + 21 * s, y - 42 * s, 12 * s, 32 * s, opts),
+          lowerR: partRect(x + 30 * s, y - 18 * s, 10 * s, 31 * s, opts),
+          thighL: partRect(x - 9 * s, y + 7 * s, 12 * s, 35 * s, opts),
+          shinL: partRect(x - 12 * s, y + 39 * s, 11 * s, 35 * s, opts),
+          thighR: partRect(x + 9 * s, y + 7 * s, 12 * s, 35 * s, opts),
+          shinR: partRect(x + 12 * s, y + 39 * s, 11 * s, 35 * s, opts)
+        };
+
+        this.constraints = [
+          joint(this.parts.head, this.parts.torso, { x: 0, y: 12 * s }, { x: 0, y: -29 * s }, supportedJoint(.62)),
+          joint(this.parts.upperL, this.parts.torso, { x: 0, y: -15 * s }, { x: -15 * s, y: -20 * s }, supportedJoint(.72)),
+          joint(this.parts.lowerL, this.parts.upperL, { x: 0, y: -14 * s }, { x: 0, y: 15 * s }, supportedJoint(.72)),
+          joint(this.parts.upperR, this.parts.torso, { x: 0, y: -15 * s }, { x: 15 * s, y: -20 * s }, supportedJoint(.72)),
+          joint(this.parts.lowerR, this.parts.upperR, { x: 0, y: -14 * s }, { x: 0, y: 15 * s }, supportedJoint(.72)),
+          joint(this.parts.thighL, this.parts.torso, { x: 0, y: -17 * s }, { x: -8 * s, y: 27 * s }, supportedJoint(.82)),
+          joint(this.parts.shinL, this.parts.thighL, { x: 0, y: -17 * s }, { x: 0, y: 17 * s }, supportedJoint(.82)),
+          joint(this.parts.thighR, this.parts.torso, { x: 0, y: -17 * s }, { x: 8 * s, y: 27 * s }, supportedJoint(.82)),
+          joint(this.parts.shinR, this.parts.thighR, { x: 0, y: -17 * s }, { x: 0, y: 17 * s }, supportedJoint(.82))
+        ];
+        for (const constraint of this.constraints) {
+          constraint.stiffness = Math.min(.99, constraint.baseStiffness * SETTINGS.joint);
+        }
+
+        this.allBodies = Object.values(this.parts);
+        World.add(world, [...this.allBodies, ...this.constraints]);
+      }
+
+      get core() {
+        return this.parts.torso;
+      }
+
+      get position() {
+        return this.core.position;
+      }
+
+      nearestEnemy() {
+        let best = null;
+        let bestD = Infinity;
+        for (const other of fighters) {
+          if (other === this || other.dead || other.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(other.position, this.position));
+          if (d < bestD) {
+            bestD = d;
+            best = other;
+          }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      applyMotor(body, target, strength, damping = .085) {
+        const wobble = 1 - this.stagger * .58;
+        const power = this.dead ? 0 : strength * this.muscleScale * SETTINGS.muscle * clamp(wobble, .15, 1);
+        const torque = angleDelta(target, body.angle) * power - body.angularVelocity * damping * SETTINGS.stability;
+        body.torque += torque;
+      }
+
+      applyUnwrappedMotor(body, target, strength, damping = .11) {
+        const wobble = 1 - this.stagger * .58;
+        const power = this.dead ? 0 : strength * this.muscleScale * SETTINGS.muscle * clamp(wobble, .15, 1);
+        const torque = (target - body.angle) * power - body.angularVelocity * damping * SETTINGS.stability;
+        body.torque += torque;
+      }
+
+      sideParts(localSide) {
+        const actualSide = localSide * this.facing;
+        return actualSide > 0
+          ? {
+            upper: this.parts.upperR,
+            lower: this.parts.lowerR,
+            thigh: this.parts.thighR,
+            shin: this.parts.shinR
+          }
+          : {
+            upper: this.parts.upperL,
+            lower: this.parts.lowerL,
+            thigh: this.parts.thighL,
+            shin: this.parts.shinL
+          };
+      }
+
+      localAngle(localSide, angle) {
+        return localSide * angle * this.facing;
+      }
+
+      travelAngle(angle) {
+        return -this.facing * angle;
+      }
+
+      applyWeightBalance() {
+        const s = this.type.size;
+        if (s <= 1) return;
+        const floorTop = H - 52;
+        const targetY = floorTop - 61 * s;
+        const crouch = clamp((this.core.position.y - targetY) / (32 * s), 0, 1);
+        const support = crouch * (s - 1) * SETTINGS.support * (1 - this.stagger * .55);
+        if (support <= 0) return;
+
+        Body.applyForce(this.parts.torso, this.parts.torso.position, {
+          x: 0,
+          y: -this.parts.torso.mass * .00105 * support
+        });
+        Body.applyForce(this.parts.head, this.parts.head.position, {
+          x: 0,
+          y: -this.parts.head.mass * .00065 * support
+        });
+      }
+
+      applyPendingHit() {
+        if (!this.pendingAttack || this.attackHitDone || this.attackAnim <= 0) return;
+        const phase = 1 - this.attackAnim / this.attackDur;
+        if (phase < ATTACK_TYPES[this.attackType].hitPhase) return;
+
+        const enemy = this.pendingAttack;
+        this.attackHitDone = true;
+        if (enemy.dead) return;
+
+        const dir = this.attackDir;
+        const hand = this.attackSide > 0 ? this.parts.lowerR : this.parts.lowerL;
+        Body.applyForce(hand, hand.position, { x: dir * .028 * this.type.size, y: -.010 * this.type.size });
+        Body.applyForce(this.core, this.core.position, { x: dir * .006, y: -.003 });
+        const impact = this.type.damage * (.78 + Math.random() * .5);
+        enemy.takeDamage(impact, enemy.position.x + dir * -12, enemy.position.y - 68 * this.type.size, dir);
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.attackCd -= dt;
+        this.shootCd -= dt;
+        this.attackAnim = Math.max(0, this.attackAnim - dt);
+        if (this.attackAnim <= 0) this.pendingAttack = null;
+        this.stagger = Math.max(0, this.stagger - dt * .55);
+        if (this.dead) {
+          this.updateCorpse(dt);
+          return;
+        }
+
+        const { enemy, dist } = this.nearestEnemy();
+        const dir = enemy ? Math.sign(enemy.position.x - this.position.x) || this.facing : this.team.dir;
+        this.facing = dir;
+        const ranged = !!this.type.ranged;
+        const stopDist = ranged ? this.type.range * .85 : 64 * this.type.size;
+        const close = enemy && dist <= stopDist;
+        const stride = this.age * (5.2 + this.type.speed * 2.2);
+        const walk = enemy && !close ? 1 : 0;
+        const s = this.type.size;
+        const base = this.type.stiffness;
+        const stabilityEase = Math.max(.35, SETTINGS.stability);
+        const sway = Math.sin(stride) * .055 * walk / stabilityEase;
+        const legSwing = Math.sin(stride) * .34 * walk;
+        const armSwing = -legSwing * 1.25;
+        const punchPhase = this.attackAnim > 0 ? 1 - this.attackAnim / this.attackDur : 0;
+        const windup = clamp(1 - Math.abs(punchPhase - .18) / .18, 0, 1);
+        const overhand = clamp(1 - Math.abs(punchPhase - .52) / .34, 0, 1);
+        const strike = clamp((punchPhase - .72) / .28, 0, 1);
+        const punchDir = this.attackDir;
+        const punchLocalSide = this.attackSide * this.facing;
+        const overheadFrame = (punchPhase > 0 && this.attackType === 'overhead')
+          ? sampleAttackFrame(ATTACK_TYPES.overhead, punchPhase) : null;
+        const hurtLean = (Math.random() - .5) * this.stagger * .24 / stabilityEase;
+
+        this.applyMotor(this.parts.torso, sway + hurtLean, base * (2.9 + 1.8 * walk), .2 + .12 * walk);
+        this.applyMotor(this.parts.head, sway * .55, base * 1.1, .08);
+        const front = this.sideParts(1);
+        const back = this.sideParts(-1);
+        this.applyMotor(front.thigh, this.travelAngle(.18 + legSwing), base * 1.75 * SETTINGS.leg);
+        this.applyMotor(front.shin, this.travelAngle(.04 - Math.abs(legSwing) * .26), base * 1.5 * SETTINGS.leg);
+        this.applyMotor(back.thigh, this.travelAngle(.18 - legSwing), base * 1.75 * SETTINGS.leg);
+        this.applyMotor(back.shin, this.travelAngle(.04 - Math.abs(legSwing) * .26), base * 1.5 * SETTINGS.leg);
+
+        let frontUpperTarget = this.travelAngle(.08 + armSwing);
+        let frontLowerTarget = this.travelAngle(.04 + armSwing * .5);
+        let backUpperTarget = this.travelAngle(.08 - armSwing);
+        let backLowerTarget = this.travelAngle(.04 - armSwing * .5);
+        if (punchPhase > 0 && punchLocalSide < 0 && !overheadFrame) {
+          backUpperTarget = -this.attackDir * (.06 + .72 * windup + 3.08 * overhand - 1.25 * strike);
+          backLowerTarget = -this.attackDir * (.02 + .42 * windup + 2.85 * overhand - .92 * strike);
+          frontUpperTarget = this.travelAngle(.28 - .14 * strike);
+          frontLowerTarget = this.travelAngle(.08 - .08 * strike);
+        } else if (punchPhase > 0 && !overheadFrame) {
+          frontUpperTarget = this.attackDir * (.06 + .72 * windup + 3.08 * overhand - 1.25 * strike);
+          frontLowerTarget = this.attackDir * (.02 + .42 * windup + 2.85 * overhand - .92 * strike);
+          backUpperTarget = this.travelAngle(.28 - .14 * strike);
+          backLowerTarget = this.travelAngle(.08 - .08 * strike);
+        }
+        const punchPower = 1 + (windup + overhand + strike) * 1.15;
+        if (ranged) {
+          const isRocket = this.type.weapon === 'rocket';
+          const aimUpper = -this.facing * (isRocket ? 1.80 : 1.55);
+          const aimLower = -this.facing * (isRocket ? 1.65 : 1.50);
+          this.applyMotor(this.sideParts(-1).upper, aimUpper, base * (isRocket ? 2.1 : 1.7));
+          this.applyMotor(this.sideParts(-1).lower, aimLower, base * (isRocket ? 1.7 : 1.4));
+          this.applyMotor(this.sideParts(1).upper, this.travelAngle(isRocket ? .35 : .10), base * (isRocket ? 1.4 : 1.0));
+          this.applyMotor(this.sideParts(1).lower, this.travelAngle(isRocket ? .55 : .05), base * (isRocket ? 1.3 : .9));
+        } else if (overheadFrame) {
+          const slam = clamp((punchPhase - .45) / .15, 0, 1) * (1 - clamp((punchPhase - .82) / .14, 0, 1));
+          const ovhPower = 1.4 + punchPhase * .8 + slam * 5.5;
+          const armUpper = punchLocalSide < 0 ? back.upper : front.upper;
+          const armLower = punchLocalSide < 0 ? back.lower : front.lower;
+          const balUpper = punchLocalSide < 0 ? front.upper : back.upper;
+          const balLower = punchLocalSide < 0 ? front.lower : back.lower;
+          this.applyUnwrappedMotor(armUpper, this.attackDir * overheadFrame.u, base * 1.55 * ovhPower);
+          this.applyUnwrappedMotor(armLower, this.attackDir * overheadFrame.l, base * 1.20 * ovhPower);
+          if (slam > 0) {
+            const slamTorque = this.attackDir * slam * armUpper.mass * .11 * this.type.size;
+            armUpper.torque += slamTorque;
+            armLower.torque += slamTorque * .85;
+          }
+          this.applyMotor(balUpper, this.travelAngle(.28 - .14 * punchPhase), base * 1.25 * (1 + punchPhase * .6));
+          this.applyMotor(balLower, this.travelAngle(.08 - .08 * punchPhase), base * (1 + punchPhase * .6));
+        } else {
+          this.applyMotor(front.upper, frontUpperTarget, base * 1.25 * punchPower);
+          this.applyMotor(front.lower, frontLowerTarget, base * punchPower);
+          this.applyMotor(back.upper, backUpperTarget, base * 1.25 * punchPower);
+          this.applyMotor(back.lower, backLowerTarget, base * punchPower);
+        }
+        this.applyPendingHit();
+        this.applyWeightBalance();
+
+        if (enemy && !close) {
+          const speedMul = ranged ? .5 : 1;
+          Body.applyForce(this.core, this.core.position, {
+            x: dir * .00078 * this.type.speed * speedMul * this.core.mass * SETTINGS.drive,
+            y: 0
+          });
+        }
+        if (!ranged && enemy && close && this.attackCd <= 0) {
+          this.attack(enemy);
+        }
+        if (ranged && enemy && dist < this.type.range && this.shootCd <= 0) {
+          this.shoot(enemy);
+        }
+        if (ranged && enemy && close) {
+          this.wanderTimer -= dt;
+          if (this.wanderTimer <= 0) {
+            this.wanderDir = Math.random() < .35 ? 0 : (Math.random() < .5 ? -1 : 1);
+            this.wanderTimer = .7 + Math.random() * 1.5;
+          }
+          const idle = Math.max(0, this.shootCd - .15);
+          if (this.wanderDir !== 0 && idle > 0) {
+            Body.applyForce(this.core, this.core.position, {
+              x: this.wanderDir * .00050 * this.type.speed * this.core.mass * SETTINGS.drive,
+              y: 0
+            });
+          }
+        }
+        if (this.position.y > H + 180) this.takeDamage(999, this.position.x, H - 70);
+      }
+
+      muzzlePoint() {
+        const s = this.type.size;
+        const lower = this.sideParts(-1).lower;
+        const offset = 31 * s / 2 + 5;
+        return {
+          x: lower.position.x - Math.sin(lower.angle) * offset,
+          y: lower.position.y + Math.cos(lower.angle) * offset
+        };
+      }
+
+      shoot(enemy) {
+        this.shootCd = this.type.fireRate * (.85 + Math.random() * .35);
+        const muzzle = this.muzzlePoint();
+        const tx = enemy.position.x;
+        const ty = enemy.position.y - 30;
+        const dx = tx - muzzle.x;
+        const dy = ty - muzzle.y;
+        const len = Math.hypot(dx, dy) || 1;
+        if (this.type.weapon === 'rocket') {
+          const aimY = enemy.position.y - 30 - Math.min(160, Math.max(60, len * .25));
+          const aimAng = Math.atan2(aimY - muzzle.y, dx);
+          const ang = aimAng + (Math.random() - .5) * .04;
+          const sp = this.type.rocketSpeed;
+          rockets.push({
+            x: muzzle.x, y: muzzle.y,
+            vx: Math.cos(ang) * sp,
+            vy: Math.sin(ang) * sp,
+            life: this.type.rocketLife,
+            elapsed: 0,
+            ownerId: this.id,
+            ownerTeam: this.teamName,
+            damage: this.type.damage,
+            radius: this.type.rocketRadius,
+            angle: ang
+          });
+          particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .14, color: '#ffb04a' });
+          Body.applyForce(this.core, this.core.position, {
+            x: -Math.sign(dx) * .009 * this.core.mass,
+            y: -.0035
+          });
+          shake = Math.max(shake, 12);
+          return;
+        }
+        const spread = (Math.random() - .5) * .06;
+        const ang = Math.atan2(dy, dx) + spread;
+        const ex = muzzle.x + Math.cos(ang) * len;
+        const ey = muzzle.y + Math.sin(ang) * len;
+        tracers.push({ x1: muzzle.x, y1: muzzle.y, x2: ex, y2: ey, life: .09, maxLife: .09, color: '#ffe89a' });
+        particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .09, color: '#ffd24a' });
+        const hit = Math.random() > (this.type.missChance || 0);
+        if (hit) {
+          let hitBody = enemy.core;
+          let bestD = Infinity;
+          for (const b of enemy.allBodies) {
+            const d = (b.position.x - ex) ** 2 + (b.position.y - ey) ** 2;
+            if (d < bestD) { bestD = d; hitBody = b; }
+          }
+          const dirSign = Math.sign(dx) || 1;
+          const knockX = dirSign * .034 * hitBody.mass;
+          const knockY = -.012 * hitBody.mass;
+          Body.applyForce(hitBody, hitBody.position, { x: knockX, y: knockY });
+          Body.applyForce(enemy.core, enemy.core.position, {
+            x: dirSign * .010 * enemy.core.mass,
+            y: -.003
+          });
+          enemy.takeDamage(this.type.damage * (.85 + Math.random() * .3),
+            hitBody.position.x, hitBody.position.y, dirSign);
+        }
+        Body.applyForce(this.core, this.core.position, {
+          x: -Math.sign(dx) * .0028 * this.core.mass,
+          y: -.0011
+        });
+        shake = Math.max(shake, 6);
+      }
+
+      attack(enemy) {
+        this.attackCd = .62 + Math.random() * .45;
+        const dir = Math.sign(enemy.position.x - this.position.x) || this.facing;
+        this.attackType = ATTACK_NAMES[(Math.random() * ATTACK_NAMES.length) | 0];
+        this.attackDur = ATTACK_TYPES[this.attackType].dur;
+        this.attackAnim = this.attackDur;
+        this.attackDir = dir;
+        this.attackSide = this.nextAttackSide * dir;
+        this.nextAttackSide = -this.nextAttackSide;
+        this.pendingAttack = enemy;
+        this.attackHitDone = false;
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
+        this.allBodies.forEach(body => {
+          Body.applyForce(body, body.position, {
+            x: (Math.random() - .5) * amount * .00018,
+            y: -Math.random() * amount * .00016
+          });
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 16);
+        for (let i = 0; i < 18; i++) {
+          particles.push({
+            x: this.position.x, y: this.position.y - 35,
+            vx: (Math.random() - .5) * 260,
+            vy: -80 - Math.random() * 260,
+            life: .55 + Math.random() * .35,
+            color: this.team.color
+          });
+        }
+        if (this.constraints && this.constraints.length) {
+          World.remove(world, this.constraints);
+          this.constraints.length = 0;
+        }
+        this.allBodies.forEach(body => {
+          Body.set(body, { frictionAir: .012 });
+          Body.applyForce(body, body.position, { x: (Math.random() - .5) * .045, y: -.022 - Math.random() * .022 });
+          Body.setAngularVelocity(body, (Math.random() - .5) * .6);
+        });
+        for (let i = 0; i < 12; i++) {
+          particles.push({
+            x: this.position.x + (Math.random() - .5) * 30,
+            y: this.position.y - 30 + (Math.random() - .5) * 30,
+            vx: (Math.random() - .5) * 180,
+            vy: -40 - Math.random() * 160,
+            life: .4 + Math.random() * .3,
+            color: '#7a1418'
+          });
+        }
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        if (this.corpseTimer > 0) return;
+
+        this.corpseGhosted = true;
+        for (const body of this.allBodies) {
+          Body.setVelocity(body, { x: 0, y: 0 });
+          Body.setAngularVelocity(body, 0);
+          Body.setStatic(body, true);
+          body.collisionFilter.mask = 0;
+        }
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        const backSide = this.facing;
+        const frontSide = -this.facing;
+        const shadowColor = shadeHex(color, .68);
+        const shadowDark = shadeHex(dark, .72);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        drawArmParts(this, backSide, shadowColor, shadowDark);
+        drawLegParts(this, backSide, shadowColor, shadowDark);
+        drawBone(this.parts.torso, 24 * s, 54 * s, color, dark);
+        drawHead(this.parts.head, 13 * s, color, dark, this.facing);
+        drawLegParts(this, frontSide, color, dark);
+        drawArmParts(this, frontSide, color, dark);
+        if (this.type.ranged) this.drawGun(s);
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawGun(s) {
+        const lower = this.sideParts(-1).lower;
+        ctx.save();
+        ctx.translate(lower.position.x, lower.position.y);
+        ctx.rotate(lower.angle);
+        const tip = 31 * s / 2;
+        if (this.type.weapon === 'rocket') {
+          ctx.fillStyle = '#3aa64a';
+          ctx.strokeStyle = '#173d1d';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.rect(-9, tip - 52, 18, 104);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#1f4827';
+          ctx.beginPath();
+          ctx.rect(-12, tip - 60, 24, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.rect(-11, tip + 38, 22, 14);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#23262e';
+          ctx.strokeStyle = '#0d1015';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.rect(-3, tip - 1, 6, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.rect(-2, tip - 5, 4, 5);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      drawHp() {
+        const x = this.position.x - 24;
+        const y = this.position.y - 94 * this.type.size;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 48, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 48 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    class Dog {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'dog';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.attackCd = .6 + Math.random() * .4;
+        this.attackAnim = 0;
+        this.attackDur = .42;
+        this.attackDir = this.team.dir;
+        this.pendingAttack = null;
+        this.attackHitDone = false;
+        this.stagger = 0;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        this.muscleScale = clamp(1 + (s - 1) * .58 + (1 - this.type.mass) * .22, .82, 1.55);
+        const jointBoost = clamp(1 + (s - 1) * .24 + (1 - this.type.mass) * .1, .95, 1.16);
+        const supJ = v => Math.min(.94, v * jointBoost);
+        const opts = { group: this.team.group, mass: densityMass };
+
+        this.bodyW = 56 * s;
+        this.bodyH = 26 * s;
+        this.thighLen = 22 * s;
+        this.shinLen = 26 * s;
+        const bodyY = y - 38 * s;
+
+        const body = partRect(x, bodyY, this.bodyW, this.bodyH, opts);
+        this.parts = { body };
+
+        const attach = [
+          { dx: -22 * s, side: -1, group: 'A' },
+          { dx:  -7 * s, side: -1, group: 'B' },
+          { dx:   7 * s, side:  1, group: 'B' },
+          { dx:  22 * s, side:  1, group: 'A' }
+        ];
+        this.legs = [];
+        this.constraints = [];
+        for (const a of attach) {
+          const baseX = x + a.dx;
+          const thigh = partRect(baseX + a.side * 9 * s, bodyY + 12 * s + this.thighLen / 2, 6 * s, this.thighLen, opts);
+          const shin  = partRect(baseX + a.side * 14 * s, bodyY + 12 * s + this.thighLen + this.shinLen / 2, 5 * s, this.shinLen, opts);
+          this.constraints.push(joint(thigh, body,
+            { x: 0, y: -this.thighLen / 2 },
+            { x: a.dx, y: this.bodyH / 2 - 2 * s },
+            supJ(.86)));
+          this.constraints.push(joint(shin, thigh,
+            { x: 0, y: -this.shinLen / 2 },
+            { x: 0, y: this.thighLen / 2 },
+            supJ(.84)));
+          this.legs.push({ thigh, shin, dx: a.dx, side: a.side, group: a.group });
+        }
+
+        this.allBodies = [body, ...this.legs.flatMap(l => [l.thigh, l.shin])];
+        for (const c of this.constraints) {
+          c.stiffness = Math.min(.99, c.baseStiffness * SETTINGS.joint);
+        }
+        World.add(world, [...this.allBodies, ...this.constraints]);
+      }
+
+      get core() { return this.parts.body; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      applyMotor(body, target, strength, damping = .085) {
+        const wobble = 1 - this.stagger * .58;
+        const power = this.dead ? 0 : strength * this.muscleScale * SETTINGS.muscle * clamp(wobble, .15, 1);
+        const torque = angleDelta(target, body.angle) * power - body.angularVelocity * damping * SETTINGS.stability;
+        body.torque += torque;
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.attackCd -= dt;
+        this.attackAnim = Math.max(0, this.attackAnim - dt);
+        if (this.attackAnim <= 0) this.pendingAttack = null;
+        this.stagger = Math.max(0, this.stagger - dt * .55);
+        if (this.dead) { this.updateCorpse(dt); return; }
+
+        const { enemy, dist } = this.nearestEnemy();
+        const dir = enemy ? Math.sign(enemy.position.x - this.position.x) || this.facing : this.team.dir;
+        this.facing = dir;
+        const close = enemy && dist < 78 * this.type.size;
+        const stride = this.age * (8 + this.type.speed * 4);
+        const walk = enemy && !close ? 1 : 0;
+        const base = this.type.stiffness;
+
+        this.applyMotor(this.parts.body, 0, base * 3.0, .25);
+
+        const phaseA = Math.sin(stride);
+        const phaseB = -phaseA;
+        const punchPhase = this.attackAnim > 0 ? 1 - this.attackAnim / this.attackDur : 0;
+        const strikeWindup = clamp(1 - Math.abs(punchPhase - .35) / .35, 0, 1);
+        const strikeHit = clamp((punchPhase - .55) / .25, 0, 1) * (1 - clamp((punchPhase - .85) / .15, 0, 1));
+
+        for (const l of this.legs) {
+          const phase = l.group === 'A' ? phaseA : phaseB;
+          const lift = Math.max(0, phase) * walk;
+          const sweep = phase * .55 * walk;
+          let thighTarget = l.side * .65 - this.facing * sweep;
+          let shinTarget = l.side * .35 + lift * .55;
+
+          // front legs strike during attack
+          if (this.attackAnim > 0 && l.dx * this.facing > 0) {
+            const rear = -l.side * (.4 * strikeWindup);
+            const slam = -l.side * (1.4 * strikeHit);
+            thighTarget = l.side * .55 + rear + slam - this.facing * .5 * strikeHit;
+            shinTarget = l.side * .25 - 1.0 * strikeHit;
+          }
+
+          this.applyMotor(l.thigh, thighTarget, base * 2.6 * SETTINGS.leg);
+          this.applyMotor(l.shin, shinTarget, base * 2.0 * SETTINGS.leg);
+        }
+
+        if (enemy && !close) {
+          Body.applyForce(this.core, this.core.position, {
+            x: dir * .00072 * this.type.speed * this.core.mass * SETTINGS.drive,
+            y: 0
+          });
+        }
+        if (enemy && close && this.attackCd <= 0) {
+          this.attack(enemy);
+        }
+        this.applyPendingHit();
+
+        if (this.position.y > H + 180) this.takeDamage(999, this.position.x, H - 70);
+      }
+
+      attack(enemy) {
+        this.attackCd = .55 + Math.random() * .4;
+        const dir = Math.sign(enemy.position.x - this.position.x) || this.facing;
+        this.attackAnim = this.attackDur;
+        this.attackDir = dir;
+        this.pendingAttack = enemy;
+        this.attackHitDone = false;
+        Body.applyForce(this.core, this.core.position, { x: dir * .010 * this.core.mass, y: -.005 });
+      }
+
+      applyPendingHit() {
+        if (!this.pendingAttack || this.attackHitDone || this.attackAnim <= 0) return;
+        const phase = 1 - this.attackAnim / this.attackDur;
+        if (phase < .65) return;
+        const enemy = this.pendingAttack;
+        this.attackHitDone = true;
+        if (enemy.dead) return;
+        const dir = this.attackDir;
+        const dmg = this.type.damage * (.85 + Math.random() * .35);
+        enemy.takeDamage(dmg, enemy.position.x + dir * -10, enemy.position.y - 50 * (enemy.type.size || 1), dir);
+        Body.applyForce(enemy.core, enemy.core.position, {
+          x: dir * .009 * enemy.core.mass, y: -.004
+        });
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
+        this.allBodies.forEach(b => {
+          Body.applyForce(b, b.position, {
+            x: (Math.random() - .5) * amount * .00018,
+            y: -Math.random() * amount * .00016
+          });
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 12);
+        for (let i = 0; i < 14; i++) {
+          particles.push({
+            x: this.position.x, y: this.position.y - 8,
+            vx: (Math.random() - .5) * 220,
+            vy: -60 - Math.random() * 200,
+            life: .55 + Math.random() * .35,
+            color: this.team.color
+          });
+        }
+        if (this.constraints && this.constraints.length) {
+          World.remove(world, this.constraints);
+          this.constraints.length = 0;
+        }
+        const legBodies = this.legs.flatMap(l => [l.thigh, l.shin]);
+        if (legBodies.length) World.remove(world, legBodies);
+        this.legs = [];
+        this.allBodies = [this.parts.body];
+        Body.set(this.parts.body, { frictionAir: .012 });
+        Body.applyForce(this.parts.body, this.parts.body.position, {
+          x: (Math.random() - .5) * .035,
+          y: -.018 - Math.random() * .018
+        });
+        Body.setAngularVelocity(this.parts.body, (Math.random() - .5) * .7);
+        for (let i = 0; i < 10; i++) {
+          particles.push({
+            x: this.position.x + (Math.random() - .5) * 22,
+            y: this.position.y + (Math.random() - .5) * 22,
+            vx: (Math.random() - .5) * 160,
+            vy: -30 - Math.random() * 140,
+            life: .4 + Math.random() * .3,
+            color: '#7a1418'
+          });
+        }
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -4;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.strokeStyle = shadeHex(dark, .9);
+        ctx.lineWidth = 4 * s;
+        for (const l of this.legs) {
+          const tA = l.thigh.angle;
+          const sA = l.shin.angle;
+          const topX = l.thigh.position.x + Math.sin(tA) * this.thighLen / 2;
+          const topY = l.thigh.position.y - Math.cos(tA) * this.thighLen / 2;
+          const kneeX = l.thigh.position.x - Math.sin(tA) * this.thighLen / 2;
+          const kneeY = l.thigh.position.y + Math.cos(tA) * this.thighLen / 2;
+          const footX = l.shin.position.x - Math.sin(sA) * this.shinLen / 2;
+          const footY = l.shin.position.y + Math.cos(sA) * this.shinLen / 2;
+          ctx.beginPath();
+          ctx.moveTo(topX, topY);
+          ctx.lineTo(kneeX, kneeY);
+          ctx.lineTo(footX, footY);
+          ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+        const tailBaseX = -this.facing * (this.bodyW / 2 - 2 * s);
+        const wag = Math.sin(this.age * 9) * 6 * s * (this.dead ? 0 : 1);
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 4 * s;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(tailBaseX, -2 * s);
+        ctx.quadraticCurveTo(
+          tailBaseX - this.facing * 12 * s, -10 * s + wag * .3,
+          tailBaseX - this.facing * 22 * s, -16 * s + wag
+        );
+        ctx.stroke();
+        ctx.restore();
+
+        drawBone(this.core, this.bodyW, this.bodyH, color, dark);
+
+        ctx.save();
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+        const headX = this.facing * (this.bodyW / 2 + 4 * s);
+        const headY = -6 * s;
+        const headR = 11 * s;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(headX, headY, headR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = shadeHex(color, .82);
+        ctx.beginPath();
+        ctx.ellipse(headX + this.facing * headR * .75, headY + 3 * s, headR * .55, headR * .38, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#0d1015';
+        ctx.beginPath();
+        ctx.arc(headX + this.facing * headR * 1.18, headY + 4 * s, 1.4 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = dark;
+        ctx.beginPath();
+        ctx.moveTo(headX - this.facing * 1, headY - headR + 2);
+        ctx.lineTo(headX - this.facing * 7 * s, headY - headR - 7 * s);
+        ctx.lineTo(headX + this.facing * 5 * s, headY - headR + 1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#0d1015';
+        ctx.beginPath();
+        ctx.arc(headX + this.facing * 3 * s, headY - 1 * s, 1.7 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 24;
+        const y = this.position.y - 32 * this.type.size;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 48, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 48 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    class Tank {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'tank';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.shootCd = 1.4 + Math.random() * 1.2;
+        this.attackAnim = 0;
+        this.stagger = 0;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+        this.turretAngle = this.facing > 0 ? 0 : Math.PI;
+        this.recoil = 0;
+        this.fireFlash = 0;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        this.muscleScale = 1;
+        const opts = { group: this.team.group, mass: densityMass };
+
+        this.hullW = 96 * s;
+        this.hullH = 26 * s;
+        this.wheelR = 12 * s;
+        this.cannonLen = 56 * s;
+        this.turretR = 18 * s;
+
+        const hullY = y;
+        const hull = partRect(x, hullY, this.hullW, this.hullH, opts);
+        Body.set(hull, { friction: .55, frictionAir: .03, restitution: .02 });
+        this.parts = { hull };
+
+        const wheelDx = [-this.hullW * .38, -this.hullW * .14, this.hullW * .14, this.hullW * .38];
+        this.wheels = [];
+        this.constraints = [];
+        for (const dx of wheelDx) {
+          const wheel = partCircle(x + dx, hullY + this.hullH / 2 + this.wheelR * .35, this.wheelR, opts);
+          Body.set(wheel, { friction: 1.2, frictionAir: .02, restitution: .0 });
+          this.wheels.push(wheel);
+          this.constraints.push(joint(wheel, hull,
+            { x: 0, y: 0 },
+            { x: dx, y: this.hullH / 2 + this.wheelR * .35 },
+            .98));
+        }
+
+        this.allBodies = [hull, ...this.wheels];
+        for (const c of this.constraints) {
+          c.stiffness = Math.min(.99, c.baseStiffness * SETTINGS.joint);
+        }
+        World.add(world, [...this.allBodies, ...this.constraints]);
+      }
+
+      get core() { return this.parts.hull; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      turretPivot() {
+        const a = this.core.angle;
+        const lx = 0;
+        const ly = -this.hullH / 2 - 2;
+        return {
+          x: this.core.position.x + Math.cos(a) * lx - Math.sin(a) * ly,
+          y: this.core.position.y + Math.sin(a) * lx + Math.cos(a) * ly
+        };
+      }
+
+      muzzlePoint() {
+        const p = this.turretPivot();
+        return {
+          x: p.x + Math.cos(this.turretAngle) * this.cannonLen,
+          y: p.y + Math.sin(this.turretAngle) * this.cannonLen
+        };
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.shootCd -= dt;
+        this.recoil = Math.max(0, this.recoil - dt * 5);
+        this.fireFlash = Math.max(0, this.fireFlash - dt * 8);
+        this.stagger = Math.max(0, this.stagger - dt * .55);
+        if (this.dead) { this.updateCorpse(dt); return; }
+
+        const { enemy, dist } = this.nearestEnemy();
+        if (enemy) this.facing = Math.sign(enemy.position.x - this.position.x) || this.facing;
+        const stopDist = this.type.range * .85;
+        const close = enemy && dist <= stopDist;
+
+        if (enemy) {
+          const pivot = this.turretPivot();
+          const desired = Math.atan2(enemy.position.y - 30 - pivot.y, enemy.position.x - pivot.x);
+          this.turretAngle += angleDelta(desired, this.turretAngle) * Math.min(1, dt * 4.5);
+        }
+
+        if (enemy && !close) {
+          const dirSign = Math.sign(enemy.position.x - this.position.x) || this.facing;
+          Body.applyForce(this.core, this.core.position, {
+            x: dirSign * .00120 * this.type.speed * this.core.mass * SETTINGS.drive,
+            y: 0
+          });
+        }
+
+        if (enemy && dist < this.type.range && this.shootCd <= 0) {
+          this.fire(enemy);
+        }
+
+        if (this.position.y > H + 180) this.takeDamage(999, this.position.x, H - 70);
+      }
+
+      fire(enemy) {
+        this.shootCd = this.type.fireRate * (.85 + Math.random() * .35);
+        const muzzle = this.muzzlePoint();
+        const sp = this.type.shellSpeed;
+        const ang = this.turretAngle + (Math.random() - .5) * .015;
+        rockets.push({
+          x: muzzle.x, y: muzzle.y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          life: this.type.shellLife,
+          elapsed: 0,
+          ownerId: this.id,
+          ownerTeam: this.teamName,
+          damage: this.type.damage,
+          radius: this.type.shellRadius,
+          gravity: 60,
+          kind: 'shell',
+          angle: ang,
+          size: 3.6,
+          hitRadius: 40
+        });
+        particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .12, color: '#ffd24a' });
+        flashes.push({ x: muzzle.x, y: muzzle.y, r: 22, life: .12, maxLife: .12, color: '#ffe89a' });
+        this.recoil = 1;
+        this.fireFlash = 1;
+        Body.applyForce(this.core, this.core.position, {
+          x: -Math.cos(this.turretAngle) * .015 * this.core.mass,
+          y: -.003
+        });
+        shake = Math.max(shake, 14);
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * amount * .00012,
+          y: -Math.random() * amount * .00010
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 24);
+        flashes.push({ x: this.position.x, y: this.position.y, r: 80, life: .25, maxLife: .25, color: '#ff9a3a' });
+        for (let i = 0; i < 28; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 120 + Math.random() * 360;
+          particles.push({
+            x: this.position.x, y: this.position.y - 10,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp - 60,
+            life: .55 + Math.random() * .55,
+            color: i % 3 === 0 ? '#ffe27a' : (i % 3 === 1 ? '#ff8a3a' : '#3a1d12')
+          });
+        }
+        if (this.constraints && this.constraints.length) {
+          World.remove(world, this.constraints);
+          this.constraints = [];
+        }
+        const s = this.type.size;
+        const opts = { group: this.team.group, mass: this.type.mass / (s * s) * .25 };
+        this.debris = this.debris || [];
+        for (let i = 0; i < 6; i++) {
+          const dx = (Math.random() - .5) * this.hullW * .8;
+          const dy = (Math.random() - .5) * this.hullH * .6;
+          const w = (8 + Math.random() * 14) * s;
+          const h = (6 + Math.random() * 10) * s;
+          const piece = partRect(this.position.x + dx, this.position.y + dy, w, h, opts);
+          Body.set(piece, { frictionAir: .015, friction: .6, restitution: .15 });
+          Body.applyForce(piece, piece.position, {
+            x: (Math.random() - .5) * .035 * piece.mass,
+            y: (-.025 - Math.random() * .025) * piece.mass
+          });
+          Body.setAngularVelocity(piece, (Math.random() - .5) * .6);
+          this.debris.push({ body: piece, w, h });
+          this.allBodies.push(piece);
+        }
+        World.add(world, this.debris.map(d => d.body).slice(-6));
+        this.allBodies.forEach(b => {
+          Body.set(b, { frictionAir: .012 });
+          Body.applyForce(b, b.position, { x: (Math.random() - .5) * .02, y: -.018 - Math.random() * .015 });
+        });
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -4;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        for (const w of this.wheels) {
+          ctx.save();
+          ctx.translate(w.position.x, w.position.y);
+          ctx.rotate(w.angle);
+          ctx.fillStyle = '#1d1f25';
+          ctx.strokeStyle = '#0a0c10';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.wheelR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#3b3f48';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-this.wheelR * .7, 0);
+          ctx.lineTo(this.wheelR * .7, 0);
+          ctx.moveTo(0, -this.wheelR * .7);
+          ctx.lineTo(0, this.wheelR * .7);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (this.debris) {
+          for (const d of this.debris) {
+            ctx.save();
+            ctx.translate(d.body.position.x, d.body.position.y);
+            ctx.rotate(d.body.angle);
+            ctx.fillStyle = shadeHex(color, .55);
+            ctx.strokeStyle = dark;
+            ctx.lineWidth = 1.5;
+            roundRect(-d.w / 2, -d.h / 2, d.w, d.h, 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        drawBone(this.core, this.hullW, this.hullH, color, dark);
+
+        const pivot = this.turretPivot();
+        ctx.save();
+        ctx.translate(pivot.x, pivot.y);
+        ctx.fillStyle = shadeHex(color, .82);
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.turretR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.rotate(this.turretAngle);
+        const recoilOffset = -this.recoil * 8 * s;
+        ctx.fillStyle = '#2a2d36';
+        ctx.strokeStyle = '#0d1015';
+        ctx.beginPath();
+        ctx.rect(0 + recoilOffset, -3.5 * s, this.cannonLen, 7 * s);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#11141a';
+        ctx.beginPath();
+        ctx.rect(this.cannonLen - 6 * s + recoilOffset, -5 * s, 6 * s, 10 * s);
+        ctx.fill();
+        ctx.stroke();
+        if (this.fireFlash > 0) {
+          ctx.fillStyle = '#fff5b6';
+          ctx.globalAlpha = this.fireFlash * alpha;
+          ctx.beginPath();
+          ctx.arc(this.cannonLen + 4 * s + recoilOffset, 0, 9 * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = alpha;
+        }
+        ctx.restore();
+
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 28;
+        const y = this.position.y - this.hullH / 2 - this.turretR * 2 - 14;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 56, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 56 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    class Mech {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'mech';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.shootCd = 1.0 + Math.random() * 1.0;
+        this.attackAnim = 0;
+        this.stagger = 0;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+        this.turretAngle = this.facing > 0 ? 0 : Math.PI;
+        this.recoilTop = 0;
+        this.recoilBot = 0;
+        this.flashTop = 0;
+        this.flashBot = 0;
+        this.nextBarrel = 0;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        this.muscleScale = 1;
+        const opts = { group: this.team.group, mass: densityMass };
+
+        this.hullW = 56 * s;
+        this.hullH = 64 * s;
+        this.legR = 14 * s;
+        this.cannonLen = 52 * s;
+        this.barrelGap = 7 * s;
+
+        const hullY = y;
+        const hull = partRect(x, hullY, this.hullW, this.hullH, opts);
+        Body.set(hull, { friction: .55, frictionAir: .03, restitution: .02 });
+        this.parts = { hull };
+
+        const legDx = [-this.hullW * .35, this.hullW * .35];
+        this.wheels = [];
+        this.constraints = [];
+        for (const dx of legDx) {
+          const wheel = partCircle(x + dx, hullY + this.hullH / 2 + this.legR * .55, this.legR, opts);
+          Body.set(wheel, { friction: 1.4, frictionAir: .02, restitution: .0 });
+          this.wheels.push(wheel);
+          this.constraints.push(joint(wheel, hull,
+            { x: 0, y: 0 },
+            { x: dx, y: this.hullH / 2 + this.legR * .55 },
+            .98));
+        }
+
+        this.allBodies = [hull, ...this.wheels];
+        for (const c of this.constraints) {
+          c.stiffness = Math.min(.99, c.baseStiffness * SETTINGS.joint);
+        }
+        World.add(world, [...this.allBodies, ...this.constraints]);
+      }
+
+      get core() { return this.parts.hull; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      turretPivot() {
+        const a = this.core.angle;
+        const lx = 0;
+        const ly = -this.hullH * .18;
+        return {
+          x: this.core.position.x + Math.cos(a) * lx - Math.sin(a) * ly,
+          y: this.core.position.y + Math.sin(a) * lx + Math.cos(a) * ly
+        };
+      }
+
+      barrelMuzzle(side) {
+        const p = this.turretPivot();
+        const cs = Math.cos(this.turretAngle);
+        const sn = Math.sin(this.turretAngle);
+        const off = side > 0 ? this.barrelGap : -this.barrelGap;
+        return {
+          x: p.x + cs * this.cannonLen - sn * off,
+          y: p.y + sn * this.cannonLen + cs * off
+        };
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.shootCd -= dt;
+        this.recoilTop = Math.max(0, this.recoilTop - dt * 5);
+        this.recoilBot = Math.max(0, this.recoilBot - dt * 5);
+        this.flashTop = Math.max(0, this.flashTop - dt * 8);
+        this.flashBot = Math.max(0, this.flashBot - dt * 8);
+        this.stagger = Math.max(0, this.stagger - dt * .55);
+        if (this.dead) { this.updateCorpse(dt); return; }
+
+        const { enemy, dist } = this.nearestEnemy();
+        if (enemy) this.facing = Math.sign(enemy.position.x - this.position.x) || this.facing;
+        const stopDist = this.type.range * .85;
+        const close = enemy && dist <= stopDist;
+
+        if (enemy) {
+          const pivot = this.turretPivot();
+          const desired = Math.atan2(enemy.position.y - 30 - pivot.y, enemy.position.x - pivot.x);
+          this.turretAngle += angleDelta(desired, this.turretAngle) * Math.min(1, dt * 4.5);
+        }
+
+        if (enemy && !close) {
+          const dirSign = Math.sign(enemy.position.x - this.position.x) || this.facing;
+          Body.applyForce(this.core, this.core.position, {
+            x: dirSign * .00120 * this.type.speed * this.core.mass * SETTINGS.drive,
+            y: 0
+          });
+        }
+
+        if (enemy && dist < this.type.range && this.shootCd <= 0) {
+          this.fire(enemy);
+        }
+
+        if (this.position.y > H + 180) this.takeDamage(999, this.position.x, H - 70);
+      }
+
+      fire(enemy) {
+        this.shootCd = this.type.fireRate * (.85 + Math.random() * .35);
+        const side = this.nextBarrel === 0 ? -1 : 1;
+        this.nextBarrel ^= 1;
+        const muzzle = this.barrelMuzzle(side);
+        const sp = this.type.shellSpeed;
+        const ang = this.turretAngle + (Math.random() - .5) * .02;
+        rockets.push({
+          x: muzzle.x, y: muzzle.y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          life: this.type.shellLife,
+          elapsed: 0,
+          ownerId: this.id,
+          ownerTeam: this.teamName,
+          damage: this.type.damage,
+          radius: this.type.shellRadius,
+          gravity: 60,
+          kind: 'shell',
+          angle: ang,
+          size: 2.6,
+          hitRadius: 30
+        });
+        particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .1, color: '#ffd24a' });
+        flashes.push({ x: muzzle.x, y: muzzle.y, r: 16, life: .1, maxLife: .1, color: '#ffe89a' });
+        if (side > 0) { this.recoilTop = 1; this.flashTop = 1; }
+        else { this.recoilBot = 1; this.flashBot = 1; }
+        Body.applyForce(this.core, this.core.position, {
+          x: -Math.cos(this.turretAngle) * .010 * this.core.mass,
+          y: -.002
+        });
+        shake = Math.max(shake, 10);
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * amount * .00012,
+          y: -Math.random() * amount * .00010
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 22);
+        flashes.push({ x: this.position.x, y: this.position.y, r: 70, life: .25, maxLife: .25, color: '#ff9a3a' });
+        for (let i = 0; i < 24; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 120 + Math.random() * 320;
+          particles.push({
+            x: this.position.x, y: this.position.y - 10,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp - 60,
+            life: .55 + Math.random() * .55,
+            color: i % 3 === 0 ? '#ffe27a' : (i % 3 === 1 ? '#ff8a3a' : '#3a1d12')
+          });
+        }
+        if (this.constraints && this.constraints.length) {
+          World.remove(world, this.constraints);
+          this.constraints = [];
+        }
+        const s = this.type.size;
+        const opts = { group: this.team.group, mass: this.type.mass / (s * s) * .25 };
+        this.debris = [];
+        const newPieces = [];
+        for (let i = 0; i < 5; i++) {
+          const dx = (Math.random() - .5) * this.hullW * .8;
+          const dy = (Math.random() - .5) * this.hullH * .7;
+          const w = (8 + Math.random() * 12) * s;
+          const h = (6 + Math.random() * 10) * s;
+          const piece = partRect(this.position.x + dx, this.position.y + dy, w, h, opts);
+          Body.set(piece, { frictionAir: .015, friction: .6, restitution: .15 });
+          Body.applyForce(piece, piece.position, {
+            x: (Math.random() - .5) * .032 * piece.mass,
+            y: (-.022 - Math.random() * .025) * piece.mass
+          });
+          Body.setAngularVelocity(piece, (Math.random() - .5) * .7);
+          this.debris.push({ body: piece, w, h });
+          this.allBodies.push(piece);
+          newPieces.push(piece);
+        }
+        World.add(world, newPieces);
+        this.allBodies.forEach(b => {
+          Body.set(b, { frictionAir: .012 });
+          Body.applyForce(b, b.position, { x: (Math.random() - .5) * .02, y: -.018 - Math.random() * .015 });
+        });
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -4;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      drawBarrel(side, recoil, flash, alpha) {
+        const s = this.type.size;
+        const off = side > 0 ? this.barrelGap : -this.barrelGap;
+        const recoilOffset = -recoil * 7 * s;
+        ctx.save();
+        ctx.translate(0, off);
+        ctx.fillStyle = '#2a2d36';
+        ctx.strokeStyle = '#0d1015';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(recoilOffset, -3 * s, this.cannonLen, 6 * s);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#11141a';
+        ctx.beginPath();
+        ctx.rect(this.cannonLen - 5 * s + recoilOffset, -4.5 * s, 5 * s, 9 * s);
+        ctx.fill();
+        ctx.stroke();
+        if (flash > 0) {
+          ctx.fillStyle = '#fff5b6';
+          ctx.globalAlpha = flash * alpha;
+          ctx.beginPath();
+          ctx.arc(this.cannonLen + 3 * s + recoilOffset, 0, 7 * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = alpha;
+        }
+        ctx.restore();
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        for (const w of this.wheels) {
+          ctx.save();
+          ctx.translate(w.position.x, w.position.y);
+          ctx.rotate(w.angle);
+          ctx.fillStyle = '#1d1f25';
+          ctx.strokeStyle = '#0a0c10';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.legR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#3b3f48';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-this.legR * .7, 0);
+          ctx.lineTo(this.legR * .7, 0);
+          ctx.moveTo(0, -this.legR * .7);
+          ctx.lineTo(0, this.legR * .7);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (this.debris) {
+          for (const d of this.debris) {
+            ctx.save();
+            ctx.translate(d.body.position.x, d.body.position.y);
+            ctx.rotate(d.body.angle);
+            ctx.fillStyle = shadeHex(color, .55);
+            ctx.strokeStyle = dark;
+            ctx.lineWidth = 1.5;
+            roundRect(-d.w / 2, -d.h / 2, d.w, d.h, 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        const pivot = this.turretPivot();
+        ctx.save();
+        ctx.translate(pivot.x, pivot.y);
+        ctx.rotate(this.turretAngle);
+        this.drawBarrel(-1, this.recoilBot, this.flashBot, alpha);
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+        ctx.fillStyle = color;
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2;
+        roundRect(-this.hullW / 2, -this.hullH / 2, this.hullW, this.hullH, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = shadeHex(color, .6);
+        roundRect(-this.hullW * .3, -this.hullH * .42, this.hullW * .6, this.hullH * .22, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#11151d';
+        ctx.beginPath();
+        ctx.arc(this.facing * this.hullW * .12, -this.hullH * .31, 3 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(pivot.x, pivot.y);
+        ctx.fillStyle = shadeHex(color, .82);
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2;
+        roundRect(-this.hullW * .28, -this.hullH * .22, this.hullW * .56, this.hullH * .44, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.rotate(this.turretAngle);
+        this.drawBarrel(1, this.recoilTop, this.flashTop, alpha);
+        ctx.restore();
+
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 28;
+        const y = this.position.y - this.hullH / 2 - 14;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 56, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 56 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    class Heli {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'heli';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.shootCd = .3 + Math.random() * .6;
+        this.stagger = 0;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+        this.rotorAngle = Math.random() * Math.PI * 2;
+        this.tailRotorAngle = 0;
+        this.muzzleFlash = 0;
+        this.bobPhase = Math.random() * Math.PI * 2;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        const opts = { group: this.team.group, mass: densityMass };
+
+        this.bodyW = 76 * s;
+        this.bodyH = 26 * s;
+        this.tailLen = 58 * s;
+        this.targetAlt = this.type.altitude || 220;
+
+        const hull = partRect(x, y, this.bodyW, this.bodyH, opts);
+        Body.set(hull, { friction: .2, frictionAir: .14, restitution: .15 });
+        Body.setMass(hull, densityMass * .6);
+        this.parts = { hull };
+        this.allBodies = [hull];
+        this.constraints = [];
+        World.add(world, [hull]);
+      }
+
+      get core() { return this.parts.hull; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      noseOffset() {
+        return this.facing * this.bodyW * .42;
+      }
+
+      muzzlePoint() {
+        const a = this.core.angle;
+        const lx = this.noseOffset();
+        const ly = this.bodyH * .35;
+        return {
+          x: this.core.position.x + Math.cos(a) * lx - Math.sin(a) * ly,
+          y: this.core.position.y + Math.sin(a) * lx + Math.cos(a) * ly
+        };
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.bobPhase += dt * 2.2;
+        this.muzzleFlash = Math.max(0, this.muzzleFlash - dt * 14);
+        this.stagger = Math.max(0, this.stagger - dt * .55);
+
+        if (this.dead) {
+          this.updateCorpse(dt);
+          return;
+        }
+
+        this.rotorAngle += dt * 60;
+        this.tailRotorAngle += dt * 95;
+        this.shootCd -= dt;
+
+        const { enemy, dist } = this.nearestEnemy();
+        if (enemy) this.facing = Math.sign(enemy.position.x - this.position.x) || this.facing;
+
+        const floorY = H - 52;
+        const bob = Math.sin(this.bobPhase) * 8;
+        const targetY = floorY - this.targetAlt + bob;
+        const altErr = targetY - this.position.y;
+        const grav = engine.gravity.y * (engine.gravity.scale || .001);
+        const lift = -this.core.mass * grav;
+        const pdY = clamp(altErr * .000022 - this.core.velocity.y * .00060, -.0028, .0028) * this.core.mass;
+        Body.applyForce(this.core, this.core.position, { x: 0, y: lift + pdY });
+
+        if (enemy) {
+          const dx = enemy.position.x - this.position.x;
+          const dirSign = Math.sign(dx) || this.facing;
+          const desiredDist = this.type.range * .55;
+          const horizErr = Math.abs(dx) - desiredDist;
+          if (horizErr > 0) {
+            const fx = dirSign * .00060 * this.type.speed * this.core.mass * SETTINGS.drive * Math.min(1, horizErr / 60);
+            Body.applyForce(this.core, this.core.position, { x: fx, y: 0 });
+          } else if (horizErr < -40) {
+            const fx = -dirSign * .00040 * this.type.speed * this.core.mass * SETTINGS.drive;
+            Body.applyForce(this.core, this.core.position, { x: fx, y: 0 });
+          }
+        }
+
+        Body.setAngularVelocity(this.core, this.core.angularVelocity * .82);
+        if (Math.abs(this.core.angle) > .01) {
+          this.core.torque -= this.core.angle * this.core.inertia * .015;
+        }
+
+        if (enemy && dist < this.type.range && this.shootCd <= 0) {
+          this.fire(enemy);
+        }
+      }
+
+      fire(enemy) {
+        this.shootCd = this.type.fireRate * (.85 + Math.random() * .35);
+        const muzzle = this.muzzlePoint();
+        const dx = enemy.position.x - muzzle.x;
+        const dy = enemy.position.y - 30 - muzzle.y;
+        const len = Math.hypot(dx, dy);
+        if (len < .1) return;
+        const spread = (Math.random() - .5) * .08;
+        const ang = Math.atan2(dy, dx) + spread;
+        const ex = muzzle.x + Math.cos(ang) * len;
+        const ey = muzzle.y + Math.sin(ang) * len;
+        tracers.push({ x1: muzzle.x, y1: muzzle.y, x2: ex, y2: ey, life: .08, maxLife: .08, color: '#ffe89a' });
+        particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .09, color: '#ffd24a' });
+        this.muzzleFlash = 1;
+        const hit = Math.random() > (this.type.missChance || 0);
+        if (hit) {
+          let hitBody = enemy.core;
+          let bestD = Infinity;
+          for (const b of enemy.allBodies) {
+            const d = (b.position.x - ex) ** 2 + (b.position.y - ey) ** 2;
+            if (d < bestD) { bestD = d; hitBody = b; }
+          }
+          const dirSign = Math.sign(dx) || 1;
+          Body.applyForce(hitBody, hitBody.position, {
+            x: dirSign * .020 * hitBody.mass,
+            y: -.008 * hitBody.mass
+          });
+          enemy.takeDamage(this.type.damage * (.85 + Math.random() * .3),
+            hitBody.position.x, hitBody.position.y, dirSign);
+        }
+        Body.applyForce(this.core, this.core.position, {
+          x: -Math.sign(dx) * .0008 * this.core.mass,
+          y: .0008 * this.core.mass
+        });
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * amount * .00018,
+          y: (Math.random() - .3) * amount * .00012
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.0));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.hp = 0;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 22);
+        flashes.push({ x: this.position.x, y: this.position.y, r: 80, life: .25, maxLife: .25, color: '#ff9a3a' });
+        for (let i = 0; i < 24; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 120 + Math.random() * 320;
+          particles.push({
+            x: this.position.x, y: this.position.y - 10,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp - 60,
+            life: .55 + Math.random() * .55,
+            color: i % 3 === 0 ? '#ffe27a' : (i % 3 === 1 ? '#ff8a3a' : '#3a1d12')
+          });
+        }
+        Body.set(this.core, { frictionAir: .02 });
+        Body.setAngularVelocity(this.core, (Math.random() - .5) * .8);
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * .02 * this.core.mass,
+          y: -.01 * this.core.mass
+        });
+        const s = this.type.size;
+        const opts = { group: this.team.group, mass: this.type.mass / (s * s) * .25 };
+        this.debris = [];
+        const newPieces = [];
+        for (let i = 0; i < 6; i++) {
+          const dx = (Math.random() - .5) * this.bodyW;
+          const dy = (Math.random() - .5) * this.bodyH;
+          const w = (8 + Math.random() * 14) * s;
+          const h = (6 + Math.random() * 10) * s;
+          const piece = partRect(this.position.x + dx, this.position.y + dy, w, h, opts);
+          Body.set(piece, { frictionAir: .015, friction: .6, restitution: .15 });
+          Body.applyForce(piece, piece.position, {
+            x: (Math.random() - .5) * .04 * piece.mass,
+            y: (-.025 - Math.random() * .025) * piece.mass
+          });
+          Body.setAngularVelocity(piece, (Math.random() - .5) * .8);
+          this.debris.push({ body: piece, w, h });
+          this.allBodies.push(piece);
+          newPieces.push(piece);
+        }
+        World.add(world, newPieces);
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -4;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (this.debris) {
+          for (const d of this.debris) {
+            ctx.save();
+            ctx.translate(d.body.position.x, d.body.position.y);
+            ctx.rotate(d.body.angle);
+            ctx.fillStyle = shadeHex(color, .55);
+            ctx.strokeStyle = dark;
+            ctx.lineWidth = 1.5;
+            roundRect(-d.w / 2, -d.h / 2, d.w, d.h, 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        ctx.save();
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+        ctx.scale(this.facing, 1);
+
+        const tailBoomEnd = -this.bodyW * .55 - this.tailLen;
+        ctx.fillStyle = shadeHex(color, .7);
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(tailBoomEnd, -this.bodyH * .14, -this.bodyW * .15 - tailBoomEnd, this.bodyH * .28);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        roundRect(-this.bodyW / 2, -this.bodyH / 2, this.bodyW, this.bodyH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#7fdfff';
+        ctx.beginPath();
+        ctx.moveTo(this.bodyW * .12, -this.bodyH * .35);
+        ctx.lineTo(this.bodyW * .48, -this.bodyH * .05);
+        ctx.lineTo(this.bodyW * .48, this.bodyH * .25);
+        ctx.lineTo(this.bodyW * .12, this.bodyH * .25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = shadeHex(color, .55);
+        ctx.beginPath();
+        ctx.rect(-this.bodyW * .35, this.bodyH * .45, this.bodyW * .7, 3);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(-this.bodyW * .3, this.bodyH * .35, 3, 14);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(this.bodyW * .25, this.bodyH * .35, 3, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = shadeHex(color, .55);
+        ctx.beginPath();
+        ctx.moveTo(tailBoomEnd, -this.bodyH * .35);
+        ctx.lineTo(tailBoomEnd - 14, -this.bodyH * .6);
+        ctx.lineTo(tailBoomEnd - 14, this.bodyH * .18);
+        ctx.lineTo(tailBoomEnd, this.bodyH * .18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        const trX = tailBoomEnd - 8;
+        const trY = -this.bodyH * .18;
+        const trR = 10 * s;
+        ctx.save();
+        ctx.translate(trX, trY);
+        ctx.scale(.32, 1);
+        ctx.rotate(this.tailRotorAngle);
+        ctx.strokeStyle = 'rgba(20,20,28,.7)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-trR, 0); ctx.lineTo(trR, 0);
+        ctx.moveTo(0, -trR); ctx.lineTo(0, trR);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = '#0d1015';
+        ctx.beginPath();
+        ctx.arc(trX, trY, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#11141a';
+        ctx.beginPath();
+        ctx.rect(-3, -this.bodyH / 2 - 8, 6, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        const rotorR = this.bodyW * .65;
+        const rotorY = -this.bodyH / 2 - 10;
+        const rotorSquish = .22;
+        ctx.save();
+        ctx.translate(0, rotorY);
+        ctx.scale(1, rotorSquish);
+        ctx.rotate(this.rotorAngle);
+        ctx.strokeStyle = 'rgba(20,20,28,.6)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-rotorR, 0); ctx.lineTo(rotorR, 0);
+        ctx.stroke();
+        ctx.rotate(Math.PI / 3);
+        ctx.beginPath();
+        ctx.moveTo(-rotorR, 0); ctx.lineTo(rotorR, 0);
+        ctx.stroke();
+        ctx.rotate(Math.PI / 3);
+        ctx.beginPath();
+        ctx.moveTo(-rotorR, 0); ctx.lineTo(rotorR, 0);
+        ctx.stroke();
+        ctx.restore();
+        ctx.strokeStyle = 'rgba(20,20,28,.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(0, rotorY, rotorR, rotorR * rotorSquish, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (this.muzzleFlash > 0 && !this.dead) {
+          ctx.fillStyle = '#fff5b6';
+          ctx.globalAlpha = this.muzzleFlash * alpha;
+          ctx.beginPath();
+          ctx.arc(this.bodyW * .42, this.bodyH * .35, 6 * s, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = alpha;
+        }
+
+        ctx.restore();
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 28;
+        const y = this.position.y - this.bodyH / 2 - 18;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 56, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 56 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    class Drone {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'drone';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+        this.bobPhase = Math.random() * Math.PI * 2;
+        this.targetAlt = (this.type.altitude || 220) + (Math.random() - .5) * 60;
+        this.diveLockedTarget = null;
+        this.detonated = false;
+
+        const s = this.type.size;
+        const densityMass = this.type.mass / (s * s);
+        const opts = { group: this.team.group, mass: densityMass };
+
+        this.bodyW = 28 * s;
+        this.bodyH = 10 * s;
+        this.armSpan = 32 * s;
+
+        const hull = partRect(x, y, this.bodyW, this.bodyH, opts);
+        Body.set(hull, { friction: .2, frictionAir: .08, restitution: .2 });
+        Body.setMass(hull, densityMass * .6);
+        this.parts = { hull };
+        this.allBodies = [hull];
+        this.constraints = [];
+        World.add(world, [hull]);
+      }
+
+      get core() { return this.parts.hull; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.bobPhase += dt * 4.5;
+        if (this.dead) {
+          this.updateCorpse(dt);
+          return;
+        }
+
+        let { enemy, dist } = this.nearestEnemy();
+        if (this.diveLockedTarget && !this.diveLockedTarget.dead) {
+          enemy = this.diveLockedTarget;
+          dist = Vector.magnitude(Vector.sub(enemy.position, this.position));
+        }
+        if (enemy) this.facing = Math.sign(enemy.position.x - this.position.x) || this.facing;
+
+        const grav = engine.gravity.y * (engine.gravity.scale || .001);
+        const lift = -this.core.mass * grav;
+
+        if (enemy && dist < 220) {
+          this.diveLockedTarget = enemy;
+          const dx = enemy.position.x - this.position.x;
+          const dy = enemy.position.y - this.position.y;
+          const len = Math.max(1, Math.hypot(dx, dy));
+          const ax = dx / len;
+          const ay = dy / len;
+          const F = .0011 * this.type.speed * this.core.mass * SETTINGS.drive;
+          Body.applyForce(this.core, this.core.position, {
+            x: ax * F,
+            y: ay * F + lift * .2
+          });
+          let near = Infinity;
+          for (const b of enemy.allBodies) {
+            const cx = Math.max(b.bounds.min.x, Math.min(this.position.x, b.bounds.max.x));
+            const cy = Math.max(b.bounds.min.y, Math.min(this.position.y, b.bounds.max.y));
+            const d2 = (this.position.x - cx) ** 2 + (this.position.y - cy) ** 2;
+            if (d2 < near) near = d2;
+          }
+          if (near < 16 * 16) {
+            this.detonate();
+            return;
+          }
+        } else {
+          const floorY = H - 52;
+          const bob = Math.sin(this.bobPhase) * 4;
+          const targetY = floorY - this.targetAlt + bob;
+          const altErr = targetY - this.position.y;
+          const pdY = clamp(altErr * .000028 - this.core.velocity.y * .00065, -.0030, .0030) * this.core.mass;
+          Body.applyForce(this.core, this.core.position, { x: 0, y: lift + pdY });
+          if (enemy) {
+            const dx = enemy.position.x - this.position.x;
+            const dirSign = Math.sign(dx) || this.facing;
+            const fx = dirSign * .00055 * this.type.speed * this.core.mass * SETTINGS.drive;
+            Body.applyForce(this.core, this.core.position, { x: fx, y: 0 });
+          }
+        }
+
+        Body.setAngularVelocity(this.core, this.core.angularVelocity * .8);
+        if (Math.abs(this.core.angle) > .01) {
+          this.core.torque -= this.core.angle * this.core.inertia * .015;
+        }
+      }
+
+      detonate() {
+        if (this.detonated) return;
+        this.detonated = true;
+        explode(this.position.x, this.position.y, this.type.blastRadius, this.type.damage, this.id);
+        this.hp = 0;
+        this.dead = true;
+        this.corpseGhosted = true;
+        this.removed = true;
+        World.remove(world, this.allBodies);
+        this.allBodies = [];
+        this.constraints = [];
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * amount * .00040,
+          y: (Math.random() - .3) * amount * .00030
+        });
+        spawnBlood(x, y, dirX, clamp(amount / 14, .3, 1.2));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        if (this.dead) return;
+        flashes.push({ x: this.position.x, y: this.position.y, r: 26, life: .16, maxLife: .16, color: '#ff9a3a' });
+        for (let i = 0; i < 10; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 80 + Math.random() * 200;
+          particles.push({
+            x: this.position.x, y: this.position.y,
+            vx: Math.cos(a) * sp,
+            vy: Math.sin(a) * sp - 40,
+            life: .45 + Math.random() * .4,
+            color: i % 2 === 0 ? '#ffe27a' : '#3a1d12'
+          });
+        }
+        this.dead = true;
+        this.corpseGhosted = true;
+        this.removed = true;
+        World.remove(world, this.allBodies);
+        this.allBodies = [];
+        this.constraints = [];
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -3;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      draw() {
+        if (this.removed) return;
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+
+        ctx.strokeStyle = dark;
+        ctx.fillStyle = '#2a2d36';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.rect(-this.armSpan / 2, -1.5, this.armSpan, 3);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.rect(-1.5, -this.armSpan / 2, 3, this.armSpan);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        roundRect(-this.bodyW / 2, -this.bodyH / 2, this.bodyW, this.bodyH, 3);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff5e3a';
+        ctx.beginPath();
+        ctx.arc(this.facing * this.bodyW * .35, 0, 2.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        const corners = [
+          [-this.armSpan / 2, 0],
+          [this.armSpan / 2, 0],
+          [0, -this.armSpan / 2],
+          [0, this.armSpan / 2]
+        ];
+        ctx.fillStyle = '#11141a';
+        for (const [cx, cy] of corners) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 16;
+        const y = this.position.y - this.bodyH - 12;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 32, 3);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 32 * clamp(this.hp / this.hpMax, 0, 1), 3);
+      }
+    }
+
+    class Turret {
+      constructor(teamName, typeName, x, y) {
+        this.teamName = teamName;
+        this.team = TEAMS[teamName];
+        this.typeName = typeName;
+        this.type = TYPES[typeName];
+        this.kind = 'turret';
+        this.hpMax = this.type.hp;
+        this.hp = this.hpMax;
+        this.dead = false;
+        this.corpseTimer = 0;
+        this.corpseGhosted = false;
+        this.age = Math.random() * 10;
+        this.shootCd = .2 + Math.random() * .5;
+        this.facing = this.team.dir;
+        this.id = Math.random().toString(36).slice(2);
+        this.drawOrder = nextDrawOrder++;
+        this.turretAngle = this.facing > 0 ? -.15 : Math.PI + .15;
+        this.recoil = 0;
+        this.fireFlash = 0;
+        this.barrelToggle = 0;
+
+        const s = this.type.size;
+        const opts = { group: this.team.group, mass: this.type.mass };
+
+        this.baseW = 84 * s;
+        this.baseH = 38 * s;
+        this.cannonLen = 50 * s;
+        this.turretR = 18 * s;
+
+        const hull = partRect(x, y, this.baseW, this.baseH, opts);
+        Body.set(hull, { friction: 1, frictionAir: .04, restitution: .02 });
+        Body.setStatic(hull, true);
+        this.parts = { hull };
+        this.allBodies = [hull];
+        this.constraints = [];
+        World.add(world, [hull]);
+      }
+
+      get core() { return this.parts.hull; }
+      get position() { return this.core.position; }
+
+      nearestEnemy() {
+        let best = null, bestD = Infinity;
+        for (const o of fighters) {
+          if (o === this || o.dead || o.teamName === this.teamName) continue;
+          const d = Vector.magnitude(Vector.sub(o.position, this.position));
+          if (d < bestD) { bestD = d; best = o; }
+        }
+        return { enemy: best, dist: bestD };
+      }
+
+      turretPivot() {
+        return {
+          x: this.core.position.x,
+          y: this.core.position.y - this.baseH / 2 - 4
+        };
+      }
+
+      muzzlePoint() {
+        const p = this.turretPivot();
+        return {
+          x: p.x + Math.cos(this.turretAngle) * this.cannonLen,
+          y: p.y + Math.sin(this.turretAngle) * this.cannonLen
+        };
+      }
+
+      update(dt) {
+        this.age += dt;
+        this.recoil = Math.max(0, this.recoil - dt * 6);
+        this.fireFlash = Math.max(0, this.fireFlash - dt * 14);
+        if (this.dead) { this.updateCorpse(dt); return; }
+        this.shootCd -= dt;
+
+        const { enemy, dist } = this.nearestEnemy();
+        if (enemy) {
+          this.facing = Math.sign(enemy.position.x - this.position.x) || this.facing;
+          const pivot = this.turretPivot();
+          const desired = Math.atan2(enemy.position.y - 30 - pivot.y, enemy.position.x - pivot.x);
+          this.turretAngle += angleDelta(desired, this.turretAngle) * Math.min(1, dt * 6);
+        }
+
+        if (enemy && dist < this.type.range && this.shootCd <= 0) this.fire(enemy);
+      }
+
+      fire(enemy) {
+        this.shootCd = this.type.fireRate * (.85 + Math.random() * .35);
+        const muzzle = this.muzzlePoint();
+        const dx = enemy.position.x - muzzle.x;
+        const dy = enemy.position.y - 30 - muzzle.y;
+        const len = Math.hypot(dx, dy);
+        if (len < .1) return;
+        const spread = (Math.random() - .5) * .05;
+        const ang = Math.atan2(dy, dx) + spread;
+        const ex = muzzle.x + Math.cos(ang) * len;
+        const ey = muzzle.y + Math.sin(ang) * len;
+        tracers.push({ x1: muzzle.x, y1: muzzle.y, x2: ex, y2: ey, life: .08, maxLife: .08, color: '#ffe89a' });
+        particles.push({ x: muzzle.x, y: muzzle.y, vx: 0, vy: 0, life: .09, color: '#ffd24a' });
+        this.recoil = 1;
+        this.fireFlash = 1;
+        this.barrelToggle ^= 1;
+        const hit = Math.random() > (this.type.missChance || 0);
+        if (hit) {
+          let hitBody = enemy.core;
+          let bestD = Infinity;
+          for (const b of enemy.allBodies) {
+            const d = (b.position.x - ex) ** 2 + (b.position.y - ey) ** 2;
+            if (d < bestD) { bestD = d; hitBody = b; }
+          }
+          const dirSign = Math.sign(dx) || 1;
+          Body.applyForce(hitBody, hitBody.position, {
+            x: dirSign * .026 * hitBody.mass,
+            y: -.010 * hitBody.mass
+          });
+          enemy.takeDamage(this.type.damage * (.85 + Math.random() * .3),
+            hitBody.position.x, hitBody.position.y, dirSign);
+        }
+      }
+
+      takeDamage(amount, x, y, dirX = 0) {
+        if (this.dead) return;
+        this.hp -= amount;
+        spawnBlood(x, y, dirX, clamp(amount / 16, .3, 1.5));
+        damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
+        if (this.hp <= 0) this.die();
+      }
+
+      die() {
+        this.dead = true;
+        this.corpseTimer = 3;
+        this.corpseGhosted = false;
+        shake = Math.max(shake, 22);
+        explode(this.position.x, this.position.y - this.baseH * .2, 100, 30, this.id);
+        Body.setStatic(this.core, false);
+        Body.set(this.core, { frictionAir: .04 });
+        Body.applyForce(this.core, this.core.position, {
+          x: (Math.random() - .5) * .03 * this.core.mass,
+          y: -.01 * this.core.mass
+        });
+        Body.setAngularVelocity(this.core, (Math.random() - .5) * .4);
+
+        const s = this.type.size;
+        const opts = { group: this.team.group, mass: this.type.mass / (s * s) * .25 };
+        this.debris = [];
+        const newPieces = [];
+        for (let i = 0; i < 6; i++) {
+          const dx = (Math.random() - .5) * this.baseW * .8;
+          const dy = (Math.random() - .5) * this.baseH * .6;
+          const w = (10 + Math.random() * 14) * s;
+          const h = (8 + Math.random() * 10) * s;
+          const piece = partRect(this.position.x + dx, this.position.y + dy, w, h, opts);
+          Body.set(piece, { frictionAir: .015, friction: .8, restitution: .12 });
+          Body.applyForce(piece, piece.position, {
+            x: (Math.random() - .5) * .04 * piece.mass,
+            y: (-.03 - Math.random() * .025) * piece.mass
+          });
+          Body.setAngularVelocity(piece, (Math.random() - .5) * .8);
+          this.debris.push({ body: piece, w, h });
+          this.allBodies.push(piece);
+          newPieces.push(piece);
+        }
+        World.add(world, newPieces);
+      }
+
+      updateCorpse(dt) {
+        if (this.corpseGhosted) return;
+        this.corpseTimer -= dt;
+        const force = this.corpseTimer <= -4;
+        let allRested = true;
+        for (const b of this.allBodies) {
+          if (b.isStatic) continue;
+          const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+          const w = Math.abs(b.angularVelocity);
+          if (force || (this.corpseTimer <= 0 && v2 < .25 && w < .05)) {
+            Body.setVelocity(b, { x: 0, y: 0 });
+            Body.setAngularVelocity(b, 0);
+            Body.setStatic(b, true);
+            b.collisionFilter.mask = 0;
+          } else {
+            allRested = false;
+          }
+        }
+        if (allRested && this.corpseTimer <= 0) this.corpseGhosted = true;
+      }
+
+      draw() {
+        const color = this.dead ? desaturateHex(this.team.color) : this.team.color;
+        const dark = this.dead ? desaturateHex(this.team.dark) : this.team.dark;
+        const alpha = 1;
+        const s = this.type.size;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (this.debris) {
+          for (const d of this.debris) {
+            ctx.save();
+            ctx.translate(d.body.position.x, d.body.position.y);
+            ctx.rotate(d.body.angle);
+            ctx.fillStyle = '#5b5e66';
+            ctx.strokeStyle = '#1d1f25';
+            ctx.lineWidth = 1.5;
+            roundRect(-d.w / 2, -d.h / 2, d.w, d.h, 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        ctx.save();
+        ctx.translate(this.core.position.x, this.core.position.y);
+        ctx.rotate(this.core.angle);
+        ctx.fillStyle = '#5e6068';
+        ctx.strokeStyle = '#1d1f25';
+        ctx.lineWidth = 2;
+        roundRect(-this.baseW / 2, -this.baseH / 2, this.baseW, this.baseH, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#3a3d44';
+        ctx.beginPath();
+        ctx.rect(-this.baseW / 2 + 4, this.baseH / 2 - 8, this.baseW - 8, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = shadeHex(color, .55);
+        ctx.beginPath();
+        ctx.rect(-this.baseW / 2 + 4, -this.baseH / 2 + 4, this.baseW - 8, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        const sandbagY = -this.baseH / 2 - 6;
+        for (let i = 0; i < 5; i++) {
+          const sx = -this.baseW / 2 + 8 + i * (this.baseW - 16) / 4;
+          ctx.fillStyle = i % 2 === 0 ? '#7a6a4a' : '#5f5337';
+          ctx.strokeStyle = '#1d1f25';
+          ctx.beginPath();
+          ctx.ellipse(sx, sandbagY, 11, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        if (!this.dead) {
+          const pivot = this.turretPivot();
+          ctx.save();
+          ctx.translate(pivot.x, pivot.y);
+          ctx.fillStyle = shadeHex(color, .82);
+          ctx.strokeStyle = dark;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.turretR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(0, 0, this.turretR * .55, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.rotate(this.turretAngle);
+          const recoilOffset = -this.recoil * 6 * s;
+          ctx.fillStyle = '#2a2d36';
+          ctx.strokeStyle = '#0d1015';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.rect(recoilOffset, -3 * s, this.cannonLen, 6 * s);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#11141a';
+          ctx.beginPath();
+          ctx.rect(this.cannonLen - 5 * s + recoilOffset, -4.5 * s, 5 * s, 9 * s);
+          ctx.fill();
+          ctx.stroke();
+          if (this.fireFlash > 0) {
+            ctx.fillStyle = '#fff5b6';
+            ctx.globalAlpha = this.fireFlash * alpha;
+            ctx.beginPath();
+            ctx.arc(this.cannonLen + 3 * s + recoilOffset, 0, 7 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = alpha;
+          }
+          ctx.restore();
+        }
+
+        ctx.restore();
+        if (!this.dead) this.drawHp();
+      }
+
+      drawHp() {
+        const x = this.position.x - 28;
+        const y = this.position.y - this.baseH / 2 - this.turretR * 2 - 16;
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(x, y, 56, 5);
+        ctx.fillStyle = this.team.color;
+        ctx.fillRect(x, y, 56 * clamp(this.hp / this.hpMax, 0, 1), 5);
+      }
+    }
+
+    function drawBone(body, w, h, color, dark) {
+      ctx.save();
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = 2;
+      roundRect(-w / 2, -h / 2, w, h, Math.min(w, h) * .42);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawHead(body, r, color, dark, facing) {
+      ctx.save();
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#11151d';
+      ctx.beginPath();
+      ctx.arc(4 * facing, -3, Math.max(2, r * .16), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawArmParts(fighter, side, color, dark) {
+      const s = fighter.type.size;
+      const upper = side > 0 ? fighter.parts.upperR : fighter.parts.upperL;
+      const lower = side > 0 ? fighter.parts.lowerR : fighter.parts.lowerL;
+      drawBone(upper, 12 * s, 32 * s, color, dark);
+      drawBone(lower, 10 * s, 31 * s, color, dark);
+    }
+
+    function drawLegParts(fighter, side, color, dark) {
+      const s = fighter.type.size;
+      const thigh = side > 0 ? fighter.parts.thighR : fighter.parts.thighL;
+      const shin = side > 0 ? fighter.parts.shinR : fighter.parts.shinL;
+      drawBone(thigh, 12 * s, 35 * s, color, dark);
+      drawBone(shin, 11 * s, 35 * s, color, dark);
+    }
+
+    function shadeHex(hex, factor) {
+      const clean = hex.replace('#', '');
+      const r = Math.round(parseInt(clean.slice(0, 2), 16) * factor);
+      const g = Math.round(parseInt(clean.slice(2, 4), 16) * factor);
+      const b = Math.round(parseInt(clean.slice(4, 6), 16) * factor);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function desaturateHex(hex, mix = .85, darken = .78) {
+      const clean = hex.replace('#', '');
+      const r = parseInt(clean.slice(0, 2), 16);
+      const g = parseInt(clean.slice(2, 4), 16);
+      const b = parseInt(clean.slice(4, 6), 16);
+      const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+      const mr = clamp(Math.round((r * (1 - mix) + luma * mix) * darken), 0, 255);
+      const mg = clamp(Math.round((g * (1 - mix) + luma * mix) * darken), 0, 255);
+      const mb = clamp(Math.round((b * (1 - mix) + luma * mix) * darken), 0, 255);
+      const toHex = v => v.toString(16).padStart(2, '0');
+      return `#${toHex(mr)}${toHex(mg)}${toHex(mb)}`;
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function spawnFighter(teamName, typeName) {
+      const team = TEAMS[teamName];
+      const type = TYPES[typeName];
+      spawnOffsets[teamName] = (spawnOffsets[teamName] + 31) % 94;
+      const x = team.spawnX + team.dir * (Math.random() * 35 + spawnOffsets[teamName]);
+      const floorTop = H - 52;
+      let footOffset;
+      if (type.kind === 'dog') footOffset = 50 * type.size;
+      else if (type.kind === 'tank') footOffset = 38 * type.size;
+      else if (type.kind === 'mech') footOffset = 50 * type.size;
+      else if (type.kind === 'heli') footOffset = (type.altitude || 220) + 16;
+      else if (type.kind === 'drone') footOffset = (type.altitude || 220) + (Math.random() - .5) * 80;
+      else if (type.kind === 'turret') footOffset = 22 * type.size;
+      else footOffset = 57 * type.size;
+      const y = floorTop - footOffset - 4;
+      let f;
+      if (type.kind === 'dog') f = new Dog(teamName, typeName, x, y);
+      else if (type.kind === 'tank') f = new Tank(teamName, typeName, x, y);
+      else if (type.kind === 'mech') f = new Mech(teamName, typeName, x, y);
+      else if (type.kind === 'heli') f = new Heli(teamName, typeName, x, y);
+      else if (type.kind === 'drone') f = new Drone(teamName, typeName, x, y);
+      else if (type.kind === 'turret') f = new Turret(teamName, typeName, x, y);
+      else f = new Fighter(teamName, typeName, x, y);
+      fighters.push(f);
+      updateCounts();
+    }
+
+    function clearArena() {
+      for (const f of fighters) World.remove(world, [...f.allBodies, ...f.constraints]);
+      stopDragging();
+      fighters = [];
+      damageTexts = [];
+      particles = [];
+      tracers = [];
+      rockets = [];
+      flashes = [];
+      shake = 0;
+      nextDrawOrder = 0;
+      spawnOffsets.red = 0;
+      spawnOffsets.blue = 0;
+      updateCounts();
+    }
+
+    function autoBattle() {
+      clearArena();
+      const keys = Object.keys(TYPES);
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => spawnFighter('red', keys[Math.floor(Math.random() * keys.length)]), i * 95);
+        setTimeout(() => spawnFighter('blue', keys[Math.floor(Math.random() * keys.length)]), i * 95 + 45);
+      }
+    }
+
+    function updateCounts() {
+      const red = fighters.filter(f => f.teamName === 'red' && !f.dead).length;
+      const blue = fighters.filter(f => f.teamName === 'blue' && !f.dead).length;
+      document.getElementById('redCount').textContent = red;
+      document.getElementById('blueCount').textContent = blue;
+      document.getElementById('score').textContent = `Красные: ${red} | Синие: ${blue} | Тел: ${fighters.length}`;
+    }
+
+    function eventPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
+    function pickBody(point) {
+      const bodies = fighters.flatMap(f => f.allBodies);
+      const hits = Query.point(bodies, point);
+      if (hits.length) return hits[hits.length - 1];
+
+      let nearest = null;
+      let nearestD = 24;
+      for (const body of bodies) {
+        const d = Vector.magnitude(Vector.sub(body.position, point));
+        if (d < nearestD) {
+          nearest = body;
+          nearestD = d;
+        }
+      }
+      return nearest;
+    }
+
+    function startDragging(event) {
+      if (dragConstraint || event.button > 0) return;
+      const point = eventPoint(event);
+      const body = pickBody(point);
+      if (!body) return;
+
+      dragPointerId = event.pointerId;
+      dragPoint.x = point.x;
+      dragPoint.y = point.y;
+      dragConstraint = Constraint.create({
+        pointA: dragPoint,
+        bodyB: body,
+        pointB: Vector.rotate(Vector.sub(point, body.position), -body.angle),
+        stiffness: .18,
+        damping: .22,
+        length: 0
+      });
+      World.add(world, dragConstraint);
+      canvas.classList.add('dragging');
+      canvas.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    }
+
+    function moveDragging(event) {
+      if (!dragConstraint || event.pointerId !== dragPointerId) return;
+      const point = eventPoint(event);
+      dragPoint.x = point.x;
+      dragPoint.y = point.y;
+      event.preventDefault();
+    }
+
+    function stopDragging(event) {
+      if (!dragConstraint) return;
+      if (event && event.pointerId !== dragPointerId) return;
+      World.remove(world, dragConstraint);
+      dragConstraint = null;
+      dragPointerId = null;
+      canvas.classList.remove('dragging');
+      if (event && canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    function applySettingsToWorld() {
+      engine.gravity.y = SETTINGS.gravity;
+      for (const fighter of fighters) {
+        for (const constraint of fighter.constraints) {
+          constraint.stiffness = Math.min(.99, constraint.baseStiffness * SETTINGS.joint);
+        }
+      }
+    }
+
+    function syncSettingsUi() {
+      for (const key of Object.keys(DEFAULT_SETTINGS)) {
+        const input = document.getElementById(key + 'Tune');
+        const output = document.getElementById(key + 'TuneValue');
+        input.value = SETTINGS[key];
+        output.value = Number(SETTINGS[key]).toFixed(2);
+      }
+    }
+
+    function buildSettings() {
+      for (const key of Object.keys(DEFAULT_SETTINGS)) {
+        const input = document.getElementById(key + 'Tune');
+        const output = document.getElementById(key + 'TuneValue');
+        input.addEventListener('input', () => {
+          SETTINGS[key] = Number(input.value);
+          output.value = SETTINGS[key].toFixed(2);
+          applySettingsToWorld();
+        });
+      }
+      document.getElementById('resetSettings').addEventListener('click', () => {
+        Object.assign(SETTINGS, DEFAULT_SETTINGS);
+        syncSettingsUi();
+        applySettingsToWorld();
+      });
+      syncSettingsUi();
+      applySettingsToWorld();
+    }
+
+    function buildUi() {
+      for (const team of ['red', 'blue']) {
+        const box = document.getElementById(team + 'Buttons');
+        for (const [key, type] of Object.entries(TYPES)) {
+          const button = document.createElement('button');
+          button.textContent = type.label;
+          button.title = `${type.hp} HP, ${type.damage} урон`;
+          button.addEventListener('click', () => {
+            const n = type.swarm || 1;
+            for (let i = 0; i < n; i++) {
+              setTimeout(() => spawnFighter(team, key), i * 60);
+            }
+          });
+          box.appendChild(button);
+        }
+      }
+      document.getElementById('autoBattle').addEventListener('click', autoBattle);
+      document.getElementById('clearArena').addEventListener('click', clearArena);
+      buildSettings();
+    }
+
+    function drawArena() {
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#1b202a');
+      grad.addColorStop(.62, '#22252d');
+      grad.addColorStop(1, '#151922');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = 'rgba(255,255,255,.055)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 56) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = H - 250; y < H; y += 42) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#252b35';
+      ctx.fillRect(0, H - 52, W, 52);
+      ctx.fillStyle = '#313946';
+      ctx.fillRect(0, H - 52, W, 8);
+      ctx.fillStyle = 'rgba(255,77,89,.15)';
+      ctx.fillRect(0, H - 52, W * .22, 8);
+      ctx.fillStyle = 'rgba(74,163,255,.15)';
+      ctx.fillRect(W * .78, H - 52, W * .22, 8);
+    }
+
+    function drawEffects(dt) {
+      for (let i = damageTexts.length - 1; i >= 0; i--) {
+        const d = damageTexts[i];
+        d.life -= dt;
+        d.y -= dt * 56;
+        if (d.life <= 0) {
+          damageTexts.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = clamp(d.life / .85, 0, 1);
+        ctx.font = '800 18px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0,0,0,.62)';
+        ctx.strokeText(d.text, d.x, d.y);
+        ctx.fillStyle = '#fff5bd';
+        ctx.fillText(d.text, d.x, d.y);
+        ctx.globalAlpha = 1;
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        p.vy += 640 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = clamp(p.life, 0, 1);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+        ctx.globalAlpha = 1;
+      }
+
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        const f = flashes[i];
+        f.life -= dt;
+        if (f.life <= 0) { flashes.splice(i, 1); continue; }
+        const k = f.life / f.maxLife;
+        const r = f.r * (1.4 - k * .4);
+        ctx.globalAlpha = k;
+        const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, r);
+        grad.addColorStop(0, f.color);
+        grad.addColorStop(.55, f.color.length > 7 ? f.color : f.color + '88');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      for (const r of rockets) {
+        ctx.save();
+        ctx.translate(r.x, r.y);
+        ctx.rotate(r.angle);
+        if (r.kind === 'shell') {
+          const ss = r.size != null ? r.size : 1;
+          ctx.fillStyle = '#1c1e23';
+          ctx.strokeStyle = '#0d1015';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.rect(-7 * ss, -2.5 * ss, 12 * ss, 5 * ss);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#5b5c63';
+          ctx.beginPath();
+          ctx.moveTo(5 * ss, -2.5 * ss);
+          ctx.lineTo(9 * ss, 0);
+          ctx.lineTo(5 * ss, 2.5 * ss);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#2c2f37';
+          ctx.strokeStyle = '#0d1015';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.rect(-9, -3, 18, 6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#ff5e3a';
+          ctx.beginPath();
+          ctx.moveTo(9, -3);
+          ctx.lineTo(13, 0);
+          ctx.lineTo(9, 3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#ffe27a';
+          ctx.beginPath();
+          ctx.arc(-10 - Math.random() * 4, 0, 3 + Math.random() * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      for (let i = tracers.length - 1; i >= 0; i--) {
+        const t = tracers[i];
+        t.life -= dt;
+        if (t.life <= 0) { tracers.splice(i, 1); continue; }
+        ctx.globalAlpha = clamp(t.life / t.maxLife, 0, 1);
+        ctx.strokeStyle = t.color;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(t.x1, t.y1);
+        ctx.lineTo(t.x2, t.y2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function tick(now) {
+      const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+      lastTime = now;
+      for (let i = 0; i < 2; i++) {
+        fighters.forEach(f => f.update(dt / 2));
+        Engine.update(engine, dt * 500);
+      }
+      updateRockets(dt);
+      updateCounts();
+
+      const sx = (Math.random() - .5) * shake;
+      const sy = (Math.random() - .5) * shake;
+      shake = Math.max(0, shake - dt * 30);
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, sx, sy);
+      drawArena();
+      fighters.sort((a, b) => {
+        const at = (a.kind === 'tank' || a.kind === 'mech' || a.kind === 'turret') ? 0 : 1;
+        const bt = (b.kind === 'tank' || b.kind === 'mech' || b.kind === 'turret') ? 0 : 1;
+        if (at !== bt) return at - bt;
+        return a.drawOrder - b.drawOrder;
+      }).forEach(f => f.draw());
+      drawEffects(dt);
+      ctx.restore();
+      requestAnimationFrame(tick);
+    }
+
+    addEventListener('resize', resize);
+    canvas.addEventListener('pointerdown', startDragging);
+    canvas.addEventListener('pointermove', moveDragging);
+    canvas.addEventListener('pointerup', stopDragging);
+    canvas.addEventListener('pointercancel', stopDragging);
+    buildUi();
+    resize();
+    autoBattle();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
