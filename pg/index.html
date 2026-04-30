@@ -309,7 +309,7 @@
         const dir = d > .5 ? { x: dx / d, y: dy / d } : { x: 0, y: -1 };
         const friendly = f.id === ownerId ? .35 : 1;
         const dmg = damage * fall * friendly;
-        f.takeDamage(dmg, f.position.x, f.position.y - 50 * f.type.size, Math.sign(dx) || 1);
+        f.takeDamage(dmg, f.position.x, f.position.y - 50 * f.type.size, Math.sign(dx) || 1, fall);
         const force = .055 * fall * friendly;
         for (const b of f.allBodies) {
           Body.applyForce(b, b.position, {
@@ -873,7 +873,7 @@
         this.attackHitDone = false;
       }
 
-      takeDamage(amount, x, y, dirX = 0) {
+      takeDamage(amount, x, y, dirX = 0, blast = 0) {
         if (this.dead) return;
         this.hp -= amount;
         this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
@@ -885,19 +885,24 @@
         });
         spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
         damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
-        if (this.hp <= 0) this.die();
+        if (this.hp <= 0) {
+          this._deathBlast = blast;
+          this.die();
+        }
       }
 
       die() {
         this.dead = true;
         this.corpseTimer = 3;
         this.corpseGhosted = false;
-        shake = Math.max(shake, 16);
-        for (let i = 0; i < 18; i++) {
+        const blast = this._deathBlast || 0;
+        shake = Math.max(shake, blast > 0 ? 16 : 6);
+        const puff = blast > 0 ? 18 : 6;
+        for (let i = 0; i < puff; i++) {
           particles.push({
             x: this.position.x, y: this.position.y - 35,
-            vx: (Math.random() - .5) * 260,
-            vy: -80 - Math.random() * 260,
+            vx: (Math.random() - .5) * (blast > 0 ? 260 : 80),
+            vy: -40 - Math.random() * (blast > 0 ? 260 : 90),
             life: .55 + Math.random() * .35,
             color: this.team.color
           });
@@ -906,17 +911,24 @@
           World.remove(world, this.constraints);
           this.constraints.length = 0;
         }
+        const fx = blast > 0 ? .045 : .006;
+        const fyBase = blast > 0 ? .022 : .003;
+        const angV = blast > 0 ? .6 : .18;
         this.allBodies.forEach(body => {
           Body.set(body, { frictionAir: .012 });
-          Body.applyForce(body, body.position, { x: (Math.random() - .5) * .045, y: -.022 - Math.random() * .022 });
-          Body.setAngularVelocity(body, (Math.random() - .5) * .6);
+          Body.applyForce(body, body.position, {
+            x: (Math.random() - .5) * fx,
+            y: -fyBase - Math.random() * fyBase
+          });
+          Body.setAngularVelocity(body, (Math.random() - .5) * angV);
         });
-        for (let i = 0; i < 12; i++) {
+        const blood = blast > 0 ? 12 : 5;
+        for (let i = 0; i < blood; i++) {
           particles.push({
             x: this.position.x + (Math.random() - .5) * 30,
             y: this.position.y - 30 + (Math.random() - .5) * 30,
-            vx: (Math.random() - .5) * 180,
-            vy: -40 - Math.random() * 160,
+            vx: (Math.random() - .5) * (blast > 0 ? 180 : 70),
+            vy: -20 - Math.random() * (blast > 0 ? 160 : 60),
             life: .4 + Math.random() * .3,
             color: '#7a1418'
           });
@@ -1183,7 +1195,7 @@
         });
       }
 
-      takeDamage(amount, x, y, dirX = 0) {
+      takeDamage(amount, x, y, dirX = 0, blast = 0) {
         if (this.dead) return;
         this.hp -= amount;
         this.stagger = clamp(this.stagger + amount / this.hpMax * 1.15, 0, 1);
@@ -1195,19 +1207,24 @@
         });
         spawnBlood(x, y, dirX, clamp(amount / 14, .5, 2.5));
         damageTexts.push({ text: Math.round(amount), x, y, life: .85, color: this.team.color });
-        if (this.hp <= 0) this.die();
+        if (this.hp <= 0) {
+          this._deathBlast = blast;
+          this.die();
+        }
       }
 
       die() {
         this.dead = true;
         this.corpseTimer = 3;
         this.corpseGhosted = false;
-        shake = Math.max(shake, 12);
-        for (let i = 0; i < 14; i++) {
+        const blast = this._deathBlast || 0;
+        shake = Math.max(shake, blast > 0 ? 12 : 5);
+        const puff = blast > 0 ? 14 : 5;
+        for (let i = 0; i < puff; i++) {
           particles.push({
             x: this.position.x, y: this.position.y - 8,
-            vx: (Math.random() - .5) * 220,
-            vy: -60 - Math.random() * 200,
+            vx: (Math.random() - .5) * (blast > 0 ? 220 : 70),
+            vy: -30 - Math.random() * (blast > 0 ? 200 : 70),
             life: .55 + Math.random() * .35,
             color: this.team.color
           });
@@ -1221,17 +1238,21 @@
         this.legs = [];
         this.allBodies = [this.parts.body];
         Body.set(this.parts.body, { frictionAir: .012 });
+        const fx = blast > 0 ? .035 : .005;
+        const fyBase = blast > 0 ? .018 : .003;
+        const angV = blast > 0 ? .7 : .2;
         Body.applyForce(this.parts.body, this.parts.body.position, {
-          x: (Math.random() - .5) * .035,
-          y: -.018 - Math.random() * .018
+          x: (Math.random() - .5) * fx,
+          y: -fyBase - Math.random() * fyBase
         });
-        Body.setAngularVelocity(this.parts.body, (Math.random() - .5) * .7);
-        for (let i = 0; i < 10; i++) {
+        Body.setAngularVelocity(this.parts.body, (Math.random() - .5) * angV);
+        const blood = blast > 0 ? 10 : 4;
+        for (let i = 0; i < blood; i++) {
           particles.push({
             x: this.position.x + (Math.random() - .5) * 22,
             y: this.position.y + (Math.random() - .5) * 22,
-            vx: (Math.random() - .5) * 160,
-            vy: -30 - Math.random() * 140,
+            vx: (Math.random() - .5) * (blast > 0 ? 160 : 60),
+            vy: -15 - Math.random() * (blast > 0 ? 140 : 50),
             life: .4 + Math.random() * .3,
             color: '#7a1418'
           });
