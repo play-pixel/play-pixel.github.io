@@ -16,41 +16,43 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
+    /* Light theme — full backrooms: the yellow title-screen aesthetic carried into the chat */
     :root {
-      --bg: #f0f1f5;
-      --surface: #ffffff;
-      --bubble-npc: #ffffff;
-      --bubble-player: #3b82f6;
-      --text: #1a1a1e;
-      --text-dim: #8c8c96;
-      --text-muted: #b0b0ba;
-      --text-on-accent: #ffffff;
-      --accent: #3b82f6;
-      --green: #22c55e;
-      --border: #e4e4e8;
-      --radius: 18px;
-      --header-bg: #ffffff;
-      --input-bg: #f0f1f5;
-      --tab-bg: #ffffff;
-      --shadow: 0 -1px 0 rgba(0,0,0,.06);
-      --bubble-shadow: 0 1px 2px rgba(0,0,0,.06);
+      --bg: #b3a742;
+      --surface: #b0a43f;
+      --bubble-npc: #1f1d12;
+      --bubble-player: #e8e1bb;
+      --text: #211e0f;
+      --text-dim: #5e5427;
+      --text-muted: #786d38;
+      --text-on-accent: #1a1a1a;
+      --accent: #1a1a1a;
+      --green: #2f6b1c;
+      --border: #8e822d;
+      --radius: 11px;
+      --header-bg: #ab9f3a;
+      --input-bg: #cabf78;
+      --tab-bg: #ab9f3a;
+      --shadow: 0 -1px 0 rgba(0,0,0,.15);
+      --bubble-shadow: 0 2px 0 rgba(0,0,0,.18);
     }
+    /* Dark theme — "Backrooms ночью": the same yellow aesthetic, after dark */
     [data-theme="dark"] {
-      --bg: #0e0e12;
-      --surface: #1a1a22;
-      --bubble-npc: #1e1e2a;
-      --bubble-player: #2563eb;
-      --text: #e0e0e8;
-      --text-dim: #6a6a7a;
-      --text-muted: #404050;
-      --text-on-accent: #ffffff;
-      --accent: #3b82f6;
-      --green: #4ade80;
-      --border: #28283a;
-      --header-bg: #14141c;
-      --input-bg: #1a1a22;
-      --tab-bg: #14141c;
-      --shadow: 0 -1px 0 rgba(255,255,255,.04);
+      --bg: #18160d;
+      --surface: #1f1c11;
+      --bubble-npc: #100f0a;
+      --bubble-player: #57501f;
+      --text: #e8dfb8;
+      --text-dim: #8f8550;
+      --text-muted: #6b633a;
+      --text-on-accent: #f3ecc8;
+      --accent: #c9b863;
+      --green: #8fb84a;
+      --border: #4a4422;
+      --header-bg: #15130b;
+      --input-bg: #2a2614;
+      --tab-bg: #120f08;
+      --shadow: 0 -1px 0 rgba(0,0,0,.4);
       --bubble-shadow: none;
     }
 
@@ -61,9 +63,9 @@
       display: flex; justify-content: center;
     }
 
-    .screen { 
+    .screen {
       display:none; flex-direction:column; height:100dvh; width: 100%;
-      background: var(--bg);
+      background: var(--bg); position:relative;
     }
     
     @media (min-width: 500px) {
@@ -230,8 +232,8 @@
     .chat-hdr-status.online { color:var(--green); }
     .chat-hdr-status.typing { color:var(--accent); }
 
-    .chat-area { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:3px; scroll-behavior:smooth; background:var(--bg); background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%23f0f1f5ff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%23e0e0e0ff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
-    [data-theme="dark"] .chat-area { background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%230e0e12ff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%231a1a22ff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
+    .chat-area { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:3px; scroll-behavior:smooth; background:var(--bg); background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%23e9e7d6ff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%23d6d3bcff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
+    [data-theme="dark"] .chat-area { background-image: url("data:image/svg+xml,<svg id='patternId' width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'><defs><pattern id='a' patternUnits='userSpaceOnUse' width='40' height='59.428' patternTransform='scale(1) rotate(0)'><rect x='0' y='0' width='100%25' height='100%25' fill='%2314120cff'/><path d='M0 70.975V47.881m20-1.692L8.535 52.808v13.239L20 72.667l11.465-6.62V52.808zm0-32.95l11.465-6.62V-6.619L20-13.24 8.535-6.619V6.619L20 13.24m8.535 4.927v13.238L40 38.024l11.465-6.62V18.166L40 11.546zM20 36.333L0 47.88m0 0v23.094m0 0l20 11.548 20-11.548V47.88m0 0L20 36.333m0 0l20 11.549M0 11.547l-11.465 6.619v13.239L0 38.025l11.465-6.62v-13.24L0 11.548v-23.094l20-11.547 20 11.547v23.094M20 36.333V13.24' stroke-linecap='square' stroke-width='1' stroke='%2334301fff' fill='none'/></pattern></defs><rect width='800%25' height='800%25' transform='translate(-55,0)' fill='url(%23a)'/></svg>"); }
 
     /* Date separator */
     .date-sep { text-align:center; padding:12px 0 8px; font-size:12px; color:var(--text-dim); }
@@ -297,8 +299,8 @@
     .new-msg { animation: msgIn .25s ease; }
 
     /* Bottom panel — always visible */
-    .bottom-panel { flex-shrink:0; border-top:1px solid #b9b9b9; background:#e8e9ed; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
-    [data-theme="dark"] .bottom-panel { border-top-color:#2a2a38; background:#111116; }
+    .bottom-panel { flex-shrink:0; border-top:1px solid #8e822d; background:#a89b37; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
+    [data-theme="dark"] .bottom-panel { border-top-color:#2c2818; background:#16140e; }
     .bottom-status { font-size:12px; color:var(--text-dim); text-align:center; min-height:16px; }
     .bottom-choices { display:flex; flex-direction:column; gap:6px; }
     .bottom-choices:empty { display:none; }
@@ -356,38 +358,203 @@
     .lightbox-close { position:absolute; top:12px; right:12px; width:40px; height:40px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:22px; line-height:40px; text-align:center; cursor:pointer; z-index:10000; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
     .lightbox-close:active { background:rgba(255,255,255,.3); }
 
-    /* Glitch Effects */
-    @keyframes glitch-flicker {
-      0% { opacity: 1; filter: contrast(1) brightness(1); }
-      10% { opacity: 0.8; filter: contrast(1.2) brightness(1.2); }
-      15% { opacity: 1; filter: contrast(1) brightness(1); }
-      30% { opacity: 0.9; filter: contrast(1.1) brightness(1.1); }
-      35% { opacity: 1; }
-      100% { opacity: 1; }
+    /* ════ CRT overlay — scanlines + RGB drift + flicker + vignette, on every screen ════ */
+    #chatScreen::after, #contactsScreen::after, #settingsScreen::after {
+      content:''; position:absolute; inset:0; z-index:60; pointer-events:none;
     }
-    .glitch-flicker { animation: glitch-flicker 0.2s ease infinite; }
-
-    @keyframes glitch-shake {
-      0% { transform: translate(0); }
-      20% { transform: translate(-2px, 2px); }
-      40% { transform: translate(-2px, -2px); }
-      60% { transform: translate(2px, 2px); }
-      80% { transform: translate(2px, -2px); }
-      100% { transform: translate(0); }
+    [data-theme="dark"] #chatScreen::after,
+    [data-theme="dark"] #contactsScreen::after,
+    [data-theme="dark"] #settingsScreen::after {
+      background:
+        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 50%, rgba(0,0,0,.55) 100%),
+        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.28) 50%),
+        linear-gradient(90deg, rgba(255,0,0,.04), rgba(0,255,0,.02), rgba(0,0,255,.04));
+      background-size: 100% 100%, 100% 4px, 3px 100%;
+      animation: screen-flicker .2s infinite;
     }
-    .glitch-shake { animation: glitch-shake 0.15s ease infinite; }
-
-    @keyframes glitch-avatar-rgb {
-      0% { filter: none; transform: scale(1); }
-      20% { filter: drop-shadow(2px 0 0 rgba(255,0,0,0.5)) drop-shadow(-2px 0 0 rgba(0,255,255,0.5)); transform: scale(1.05); }
-      40% { filter: drop-shadow(-1px 0 0 rgba(255,0,0,0.5)) drop-shadow(1px 0 0 rgba(0,255,255,0.5)); transform: scale(0.98); }
-      60% { filter: drop-shadow(3px 0 0 rgba(255,0,0,0.5)) drop-shadow(-3px 0 0 rgba(0,255,255,0.5)); transform: scale(1.02); }
-      100% { filter: none; transform: scale(1); }
+    [data-theme="light"] #chatScreen::after,
+    [data-theme="light"] #contactsScreen::after,
+    [data-theme="light"] #settingsScreen::after {
+      background:
+        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 52%, rgba(0,0,0,.42) 100%),
+        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.2) 50%),
+        linear-gradient(90deg, rgba(255,0,0,.05), rgba(0,255,0,.02), rgba(0,0,255,.05));
+      background-size: 100% 100%, 100% 4px, 3px 100%;
+      animation: screen-flicker .2s infinite;
     }
-    .glitch-avatar { animation: glitch-avatar-rgb 0.25s ease infinite; }
 
-    .glitch-active .msg-bubble { border-style: double !important; }
-    .glitch-active .chat-area { filter: sepia(0.2) saturate(1.2); }
+    /* ════ Light theme — the yellow backrooms wallpaper bleeds onto the chat ════ */
+    [data-theme="light"] .chat-area {
+      background-color:#b3a742;
+      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%23b3a742'/><path d='M30 0v160M90 0v160' stroke='%238e822d' stroke-width='12' opacity='0.3'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%238e822d' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%238e822d' stroke-width='2' stroke-dasharray='10,10' opacity='0.4'/></svg>");
+      background-size: 120px 160px;
+    }
+    /* NPC bubble is a dark brutalist block — needs light text. Player bubble is pale cream. */
+    [data-theme="light"] .msg-row.npc .msg-bubble { color:#dccf8f; }
+    [data-theme="light"] .msg-row.npc .msg-meta { color:rgba(220,207,143,.55); }
+    [data-theme="light"] .msg-row.player .msg-meta { color:rgba(0,0,0,.5); }
+    [data-theme="light"] .typing-dots span { background:#9c8e4d; }
+    [data-theme="light"] .msg-row.npc .v-play { background:#9c8e4d; color:#1a1a1a; }
+    [data-theme="light"] .msg-row.npc .v-wave span { background:#cdbf7a; }
+    [data-theme="light"] .msg-row.npc .v-dur { color:#bdb07a; }
+    /* Key choice — the player's own reply, reads as chat text (not a title button) */
+    [data-theme="light"] .bottom-choices button.choice-key {
+      color:#cdbf7a; border:1px solid #cdbf7a; border-radius:2px;
+    }
+    [data-theme="light"] .bottom-choices button.choice-optional {
+      border:1px solid var(--border); border-radius:2px;
+    }
+
+    /* ════ Light theme — contacts & settings: dark cards on the yellow wallpaper ════ */
+    [data-theme="light"] .contacts-hdr { background:#ab9f3a; border-bottom:1px solid #8e822d; }
+    [data-theme="light"] .contacts-hdr h1 {
+      font-family:'Courier New', monospace; text-transform:uppercase;
+      letter-spacing:6px; font-size:17px; font-weight:700; color:#4a4322;
+    }
+    [data-theme="light"] .contacts-search {
+      background:#1f1d12; border:1px solid #8e822d; border-radius:2px;
+    }
+    [data-theme="light"] .contacts-search span { color:#9c8e4d; font-family:'Courier New', monospace; font-size:13px; }
+    [data-theme="light"] .contacts-search svg { color:#9c8e4d; }
+    [data-theme="light"] .contacts-list {
+      background-color:#b3a742;
+      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%23b3a742'/><path d='M30 0v160M90 0v160' stroke='%238e822d' stroke-width='12' opacity='0.3'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%238e822d' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%238e822d' stroke-width='2' stroke-dasharray='10,10' opacity='0.4'/></svg>");
+      background-size: 120px 160px;
+      padding:12px; display:flex; flex-direction:column; gap:8px;
+    }
+    [data-theme="light"] .contact-item {
+      background:#1f1d12; border:1px solid #8e822d; border-radius:3px;
+      box-shadow:0 2px 0 rgba(0,0,0,.3); padding:12px 14px;
+    }
+    [data-theme="light"] .contact-item:active { background:#2a2718; }
+    [data-theme="light"] .contact-item.locked {
+      opacity:1; background:#191811; border-style:dashed; border-color:#6e6535;
+    }
+    [data-theme="light"] .contact-item.locked .ct-name { color:#a89a52 !important; }
+    [data-theme="light"] .ct-name { color:#e8dca0; font-size:17px; }
+    [data-theme="light"] .ct-preview { color:#b3a468; font-size:14px; }
+    [data-theme="light"] .ct-time { color:#8a7d44; font-size:13px; }
+    [data-theme="light"] .ct-avatar { background:#cabf78 !important; color:#1a1a1a !important; border:1px solid #8e822d; }
+    [data-theme="light"] .ct-avatar.lock { background:#2a2718 !important; color:#9c8e4d !important; }
+    [data-theme="light"] .ct-badge { background:#cdbf7a; color:#1a1a1a; }
+    /* Tab bar — dark strip, matches the cards */
+    [data-theme="light"] .tab-bar { background:#1f1d12; border-top:1px solid #8e822d; }
+    [data-theme="light"] .tab-item { color:#9c8e4d; }
+    [data-theme="light"] .tab-item.active { color:#e8dca0; }
+    /* Avatars — cream discs, no clashing purple gradient */
+    [data-theme="light"] .chat-hdr-av,
+    [data-theme="light"] .msg-avatar { background:#cabf78; color:#1a1a1a; border:1px solid #8e822d; }
+
+    /* ════════ Dark theme — "Backrooms ночью": same aesthetic in a dark-ochre key ════════ */
+    [data-theme="dark"] .chat-area {
+      background-color:#18160d;
+      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%2318160d'/><path d='M30 0v160M90 0v160' stroke='%233a3520' stroke-width='12' opacity='0.5'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%233a3520' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%233a3520' stroke-width='2' stroke-dasharray='10,10' opacity='0.55'/></svg>");
+      background-size: 120px 160px;
+    }
+    [data-theme="dark"] .msg-row.npc .msg-bubble { color:#d8cd92; border:1px solid #3a3520; }
+    [data-theme="dark"] .typing-dots span { background:#6b633a; }
+    [data-theme="dark"] .input-row button { color:#1a1a1a; }
+    /* Key choice — the player's own reply, reads as chat text */
+    [data-theme="dark"] .bottom-choices button.choice-key {
+      background:#c9b863; color:#1a1a1a; border-radius:2px;
+    }
+    [data-theme="dark"] .bottom-choices button.choice-optional {
+      border:1px solid var(--border); border-radius:2px;
+    }
+    /* Contacts — dark-ochre cards on the night wallpaper */
+    [data-theme="dark"] .contacts-hdr { border-bottom:1px solid #4a4422; }
+    [data-theme="dark"] .contacts-hdr h1 {
+      font-family:'Courier New', monospace; text-transform:uppercase;
+      letter-spacing:6px; font-size:17px; font-weight:700; color:#8f8550;
+    }
+    [data-theme="dark"] .contacts-search { border:1px solid #4a4422; border-radius:2px; }
+    [data-theme="dark"] .contacts-search span { color:#8f8550; font-family:'Courier New', monospace; font-size:13px; }
+    [data-theme="dark"] .contacts-search svg { color:#8f8550; }
+    [data-theme="dark"] .contacts-list {
+      background-color:#18160d;
+      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%2318160d'/><path d='M30 0v160M90 0v160' stroke='%233a3520' stroke-width='12' opacity='0.5'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%233a3520' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%233a3520' stroke-width='2' stroke-dasharray='10,10' opacity='0.55'/></svg>");
+      background-size: 120px 160px;
+      padding:12px; display:flex; flex-direction:column; gap:8px;
+    }
+    [data-theme="dark"] .contact-item {
+      background:#262213; border:1px solid #4a4422; border-radius:3px;
+      box-shadow:0 2px 0 rgba(0,0,0,.45); padding:12px 14px;
+    }
+    [data-theme="dark"] .contact-item:active { background:#312c18; }
+    [data-theme="dark"] .contact-item.locked {
+      opacity:1; background:#141209; border-style:dashed; border-color:#3f3a22;
+    }
+    [data-theme="dark"] .contact-item.locked .ct-name { color:#6b633a !important; }
+    [data-theme="dark"] .ct-name { color:#e8dfb8; font-size:17px; }
+    [data-theme="dark"] .ct-preview { color:#9a9056; font-size:14px; }
+    [data-theme="dark"] .ct-time { color:#6b633a; font-size:13px; }
+    [data-theme="dark"] .ct-avatar { background:#4a4422 !important; color:#e8dfb8 !important; border:1px solid #6b633a; }
+    [data-theme="dark"] .ct-avatar.lock { background:#211e10 !important; color:#8f8550 !important; }
+    [data-theme="dark"] .ct-badge { background:#c9b863; color:#1a1a1a; }
+    [data-theme="dark"] .tab-bar { border-top:1px solid #4a4422; }
+    [data-theme="dark"] .chat-hdr-av,
+    [data-theme="dark"] .msg-avatar { background:#4a4422; color:#e8dfb8; border:1px solid #6b633a; }
+
+    /* ════ Chat chrome — terminal / system register ════ */
+    .chat-hdr { box-shadow: inset 0 -1px 0 rgba(0,0,0,.18); }
+    .chat-hdr-name { letter-spacing:.4px; }
+    .chat-hdr-status {
+      display:inline-block; width:fit-content; margin-top:2px;
+      font-family:'Courier New', monospace; font-size:11px; letter-spacing:1px;
+      padding:2px 8px; border-radius:8px;
+      background:rgba(0,0,0,.5); color:#d8cd92;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .chat-hdr-status.online { color:#9bc05a; }
+    .chat-hdr-status.typing { color:#e6dca2; }
+    /* Date separator & status messages — pill with a contrast backing, readable over the busy wallpaper */
+    .date-sep {
+      width:fit-content; margin:10px auto 6px; padding:4px 12px;
+      font-family:'Courier New', monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase;
+      background:rgba(0,0,0,.55); color:#d8cd92; border-radius:10px;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .msg-status {
+      width:fit-content; max-width:82%; margin:8px auto; padding:6px 13px;
+      font-family:'Courier New', monospace; font-style:normal; font-size:11px;
+      letter-spacing:.6px; line-height:1.45; text-align:center;
+      background:rgba(0,0,0,.62); color:#e4d9a0; border-radius:11px;
+      border:1px solid rgba(255,255,255,.09);
+    }
+    .bottom-status {
+      align-self:center; width:fit-content; max-width:100%;
+      font-family:'Courier New', monospace; letter-spacing:.4px; font-size:12px;
+      padding:3px 11px; border-radius:9px;
+      background:rgba(0,0,0,.55); color:#d8cd92;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .bottom-status:empty { display:none; }
+
+    /* ════ Glitch — clean signal-interference burst (RGB split + jitter) ════ */
+    @keyframes glitch-burst {
+      0%   { filter: none; transform: translate(0); }
+      12%  { filter: drop-shadow(2px 0 rgba(255,40,80,.75)) drop-shadow(-2px 0 rgba(0,225,255,.75)); transform: translateX(2px); }
+      24%  { filter: drop-shadow(-3px 0 rgba(255,40,80,.75)) drop-shadow(3px 0 rgba(0,225,255,.75)); transform: translateX(-3px); }
+      36%  { filter: none; transform: translateX(0); }
+      52%  { filter: drop-shadow(2px 0 rgba(255,40,80,.6)) drop-shadow(-2px 0 rgba(0,225,255,.6)); transform: translateX(1px); }
+      68%  { filter: none; transform: translateX(-1px); }
+      100% { filter: none; transform: translate(0); }
+    }
+    .glitch-burst { animation: glitch-burst .42s steps(1,end) both; }
+    .glitch-burst.high {
+      animation-duration: .58s;
+      animation-name: glitch-burst-high;
+    }
+    @keyframes glitch-burst-high {
+      0%   { filter: none; transform: translate(0); }
+      10%  { filter: drop-shadow(5px 0 rgba(255,40,80,.85)) drop-shadow(-5px 0 rgba(0,225,255,.85)); transform: translate(5px,-1px) skewX(-2deg); }
+      22%  { filter: drop-shadow(-6px 0 rgba(255,40,80,.85)) drop-shadow(6px 0 rgba(0,225,255,.85)); transform: translate(-6px,2px) skewX(3deg); }
+      34%  { filter: none; transform: translate(2px,0); }
+      50%  { filter: drop-shadow(4px 0 rgba(255,40,80,.8)) drop-shadow(-4px 0 rgba(0,225,255,.8)); transform: translate(-3px,-2px) skewX(-1deg); }
+      66%  { filter: none; transform: translate(1px,1px); }
+      82%  { filter: drop-shadow(-2px 0 rgba(255,40,80,.6)) drop-shadow(2px 0 rgba(0,225,255,.6)); transform: translateX(-1px); }
+      100% { filter: none; transform: translate(0); }
+    }
   </style>
 </head>
 <body data-theme="light">
@@ -586,6 +753,25 @@
     let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true, notifications: true };
     function vibrate(ms) { if (prefs.vibration && navigator.vibrate) navigator.vibrate(ms); }
 
+    // Glitch effect — clean signal-interference burst (RGB split + jitter) on the active screen
+    let glitchTimer = null;
+    function triggerGlitch(intensity) {
+      const el = document.querySelector('.screen.active');
+      if (!el) return;
+      const high = intensity === 'high';
+      // Clear any in-flight burst on every screen, then restart cleanly
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('glitch-burst', 'high'));
+      void el.offsetWidth;
+      el.classList.add('glitch-burst');
+      if (high) el.classList.add('high');
+      vibrate(high ? 40 : 15);
+      if (glitchTimer) clearTimeout(glitchTimer);
+      glitchTimer = setTimeout(() => {
+        el.classList.remove('glitch-burst', 'high');
+        glitchTimer = null;
+      }, high ? 600 : 440);
+    }
+
     // Notifications
     let notifPermission = Notification ? Notification.permission : 'denied';
     function requestNotifPermission() {
@@ -619,25 +805,52 @@
       profileOverrides:null
     };
 
-    let state = {
-      started: false,
-      activeStory: null,       // currently viewed story id
-      stories: {}              // { "lika": { ...EMPTY_STORY_STATE }, ... }
-    };
+    const PER_STORY_KEYS = Object.keys(EMPTY_STORY_STATE);
+
+    // state holds: { started, activeStory, stories }.
+    // Per-story fields (timeline, history, phase, …) are exposed as accessors
+    // on `state` that read/write the active story's record directly.
+    // No sync-bridge needed — the engine reads `state.timeline` and the
+    // active story's array is mutated in place.
+    const state = { started:false, activeStory:null, stories:{} };
+    for (const k of PER_STORY_KEYS) {
+      Object.defineProperty(state, k, {
+        configurable: false,
+        enumerable: false, // keep JSON.stringify(state) clean of duplicates
+        get() {
+          const s = state.stories[state.activeStory];
+          return s ? s[k] : undefined;
+        },
+        set(v) {
+          const s = state.stories[state.activeStory];
+          if (s) s[k] = v;
+        }
+      });
+    }
+
+    function ensureStoryRecord(id) {
+      if (!state.stories[id]) {
+        state.stories[id] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE));
+      }
+      const st = state.stories[id];
+      for (const k of PER_STORY_KEYS) {
+        if (st[k] === undefined) st[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
+      }
+      if (!Array.isArray(st.timeline)) st.timeline = [];
+      if (!Array.isArray(st.history)) st.history = [];
+      if (!Array.isArray(st.choices)) st.choices = [];
+      if (!Array.isArray(st.usedOptionals)) st.usedOptionals = [];
+      if (!Array.isArray(st.knowledgeFlags)) st.knowledgeFlags = [];
+      return st;
+    }
 
     let storiesMeta = [];      // loaded from stories.json
     let activeScenario = null; // loaded scenario for active story
 
-    // Activate a story — copies story fields into state for engine compatibility
+    // Activate a story — engine reads through accessors directly, no copy.
     function activateStory(id) {
-      // Save current story back if switching
-      if (state.activeStory && state.stories[state.activeStory]) {
-        syncToStories();
-      }
       state.activeStory = id;
-      if (!state.stories[id]) state.stories[id] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE));
-      // Copy story fields into state (engine reads state.timeline etc.)
-      syncFromStories();
+      ensureStoryRecord(id);
       // Update chat header with story name and avatar
       const meta = storiesMeta.find(s => s.id === id);
       const hdrName = $('chatHdrName');
@@ -647,27 +860,6 @@
         hdrAv.innerHTML = avatarHTML(meta);
       }
     }
-
-    // Copy active story fields INTO state (for engine)
-    function syncFromStories() {
-      const s = state.stories[state.activeStory];
-      if (!s) return;
-      for (const k of Object.keys(EMPTY_STORY_STATE)) {
-        state[k] = s[k];
-      }
-    }
-
-    // Copy state fields BACK into stories (after engine modifies them)
-    function syncToStories() {
-      const s = state.stories[state.activeStory];
-      if (!s) return;
-      for (const k of Object.keys(EMPTY_STORY_STATE)) {
-        s[k] = state[k];
-      }
-    }
-
-    // Override save to sync back first
-    const _origSave = () => localStorage.setItem(SAVE, JSON.stringify(state));
 
     const $ = id => document.getElementById(id);
     const chatArea = $('chatArea');
@@ -736,45 +928,63 @@
     }
 
     // ── Save / Load ─────────────────
-    function save() { syncToStories(); localStorage.setItem(SAVE, JSON.stringify(state)); }
+    let _saveTimer = null;
+    let _lastSaveAt = 0;
+    function _writeSaveNow() {
+      _saveTimer = null;
+      _lastSaveAt = Date.now();
+      // Compact timeline: drop already-delivered events to keep storage bounded.
+      // timelineIdx points at the next unprocessed event, so [0, timelineIdx) is past.
+      for (const id of Object.keys(state.stories)) {
+        const st = state.stories[id];
+        if (Array.isArray(st.timeline) && st.timelineIdx > 0) {
+          st.timeline = st.timeline.slice(st.timelineIdx);
+          st.timelineIdx = 0;
+        }
+      }
+      const payload = { started: state.started, activeStory: state.activeStory, stories: state.stories };
+      try { localStorage.setItem(SAVE, JSON.stringify(payload)); }
+      catch(e) { console.error('Save failed:', e); }
+    }
+    function save() {
+      // Throttle: at most 1 write/sec. Tick fires 2x/sec; this halves write cost
+      // and avoids serializing huge state mid-burst.
+      const now = Date.now();
+      if (now - _lastSaveAt >= 1000) { _writeSaveNow(); return; }
+      if (_saveTimer) return;
+      _saveTimer = setTimeout(_writeSaveNow, 1000 - (now - _lastSaveAt));
+    }
+    // Flush on hide so we don't lose a pending throttled write.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && _saveTimer) _writeSaveNow();
+    });
+    window.addEventListener('pagehide', () => { if (_saveTimer) _writeSaveNow(); });
     function load() {
       try {
         const s = JSON.parse(localStorage.getItem(SAVE));
-        if (s) {
-          // Migrate old format (flat state) to new (stories object)
-          if (!s.stories) {
-            // Old save — wrap into stories.lika
-            const storyFields = {};
-            for (const k of Object.keys(EMPTY_STORY_STATE)) {
-              storyFields[k] = s[k] !== undefined ? s[k] : EMPTY_STORY_STATE[k];
-            }
-            state = {
-              started: s.started || false,
-              activeStory: 'lika',
-              stories: { lika: storyFields }
-            };
-          } else {
-            state = s;
+        if (!s) return false;
+
+        // Migrate old format (flat state) to new (stories object)
+        let migrated;
+        if (!s.stories) {
+          const storyFields = {};
+          for (const k of PER_STORY_KEYS) {
+            storyFields[k] = s[k] !== undefined ? s[k] : EMPTY_STORY_STATE[k];
           }
-          // Ensure structure
-          if (!state.stories) state.stories = {};
-          if (!state.activeStory) state.activeStory = 'lika';
-          // Ensure each story has all fields
-          for (const id of Object.keys(state.stories)) {
-            const st = state.stories[id];
-            for (const k of Object.keys(EMPTY_STORY_STATE)) {
-              if (st[k] === undefined) st[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
-            }
-            if (!Array.isArray(st.timeline)) st.timeline = [];
-            if (!Array.isArray(st.history)) st.history = [];
-            if (!Array.isArray(st.choices)) st.choices = [];
-            if (!Array.isArray(st.usedOptionals)) st.usedOptionals = [];
-            if (!Array.isArray(st.knowledgeFlags)) st.knowledgeFlags = [];
-          }
-          // Activate and sync
-          activateStory(state.activeStory);
-          return true;
+          migrated = { started: s.started || false, activeStory: 'lika', stories: { lika: storyFields } };
+        } else {
+          migrated = s;
         }
+
+        state.started = migrated.started || false;
+        state.activeStory = migrated.activeStory || 'lika';
+        state.stories = migrated.stories || {};
+
+        // Ensure each story has all fields and correct array types
+        for (const id of Object.keys(state.stories)) ensureStoryRecord(id);
+
+        activateStory(state.activeStory);
+        return true;
       } catch(e) { console.error('Load error:', e); }
       return false;
     }
@@ -782,9 +992,9 @@
 
     function resetState() {
       localStorage.removeItem(SAVE);
-      state = { started:false, activeStory:null, stories:{} };
-      // Also reset flat fields used by engine
-      for (const k of Object.keys(EMPTY_STORY_STATE)) state[k] = JSON.parse(JSON.stringify(EMPTY_STORY_STATE[k]));
+      state.started = false;
+      state.activeStory = null;
+      state.stories = {};
       lastRenderedCount = 0;
       lastNpcMsgAt = 0;
       activeScenario = null;
@@ -903,9 +1113,13 @@
 
     // ── Nav ─────────────────────────
     function go(id) {
+      const prev = currentScreen;
       currentScreen = id;
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       $(id).classList.add('active');
+      // Glitch flash on entering the chat — "tuning in" to the signal
+      // Glitch flash on every screen change — signal interference between rooms
+      if (prev && prev !== id && id !== 'startScreen') triggerGlitch('low');
     }
     function isChatVisible() { return currentScreen === 'chatScreen'; }
 
@@ -1066,7 +1280,7 @@
           const rawText = (msg.text && msg.text.en) ? msg.text.en : '';
           const isScreaming = /[A-Z]{4,}/.test(rawText);
           if (msg.glitch || isScreaming) {
-            triggerGlitch(msg.glitch === 'high' ? 'high' : 'low', 500);
+            triggerGlitch(msg.glitch === 'high' ? 'high' : 'low');
           }
           state.history.push({ ...msg, _ts: evt.ts });
           if (msg.type !== 'status') {
@@ -1128,7 +1342,7 @@
       // Glitch effect on Choice Override
       const isOverride = !!ch.overrideText;
       const textToSend = isOverride ? ch.overrideText : ch.text;
-      if (isOverride) triggerGlitch('high', 600);
+      if (isOverride) triggerGlitch('high');
 
       // If target is an input-node, skip pushing the button label as a player message.
       // The player's typed text will be pushed by submitInput() instead.
@@ -1697,8 +1911,6 @@
     let lastSeenHistoryCount = 0;
 
     function updateContactList() {
-      // Sync current story state before re-rendering
-      syncToStories();
       renderContactList();
     }
 
@@ -2007,7 +2219,6 @@
       if (state.activeStory && state.stories[state.activeStory]) {
         state.stories[state.activeStory]._lastSeen = state.history.length;
       }
-      syncToStories();
       go('contactsScreen');
       renderContactList();
     };

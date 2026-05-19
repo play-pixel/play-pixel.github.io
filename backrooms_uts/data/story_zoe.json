@@ -2605,10 +2605,8 @@
         },
         {
           "type": "image",
-          "src": "media/_placeholder.png",
-          "plannedSrc": "media/act2_map_items_01.jpg",
+          "src": "media/act2_map_items_01.jpg",
           "alt": "yellow room floor with scattered items: one Nike sneaker, a dead iPhone face-down, a child's crayon drawing of a sun and house, a family beach photo with blurred faces",
-          "pending": true,
           "delay": 3500
         },
         {
@@ -2814,10 +2812,8 @@
         },
         {
           "type": "image",
-          "src": "media/_placeholder.png",
-          "plannedSrc": "media/act2_descent_stairs_01.jpg",
+          "src": "media/act2_descent_stairs_01.jpg",
           "alt": "concrete staircase descending into darkness, metal railing on left, yellow walls fading to grey, single bare bulb illuminating first few steps only",
-          "pending": true,
           "delay": 3500
         },
         {
@@ -2981,10 +2977,8 @@
         },
         {
           "type": "image",
-          "src": "media/_placeholder.png",
-          "plannedSrc": "media/act3_deeper_wall_01.jpg",
+          "src": "media/act3_deeper_wall_01.jpg",
           "alt": "large concrete wall densely covered in writing — names, dates, 'WAS HERE', 'EXIT IS UP', 'THERE IS NO EXIT' in multiple languages and handwriting styles, old and new layers, a single glowing CRT monitor embedded in the wall",
-          "pending": true,
           "delay": 4000
         },
         {
@@ -3216,10 +3210,8 @@
         },
         {
           "type": "image",
-          "src": "media/_placeholder.png",
-          "plannedSrc": "media/act3_fork_doors_01.jpg",
+          "src": "media/act3_fork_doors_01.jpg",
           "alt": "large concrete room with three doors: left door emits warm bright light with hint of outside street, center staircase door shows descending stairs with cold blue glow, right door is plain with a phone on floor in front of it, screen glowing",
-          "pending": true,
           "delay": 4000
         },
         {
@@ -3398,10 +3390,8 @@
         },
         {
           "type": "image",
-          "src": "media/_placeholder.png",
-          "plannedSrc": "media/act3_end_deep_stairs.jpg",
+          "src": "media/act3_end_deep_stairs.jpg",
           "alt": "infinite staircase descending into strange warm light, not yellow but golden-blue and ethereal, beautiful and deeply unsettling",
-          "pending": true,
           "delay": 4000
         },
         {
@@ -3464,10 +3454,8 @@
         },
         {
           "type": "voice",
-          "src": "media/_placeholder.mp3",
-          "plannedSrc": "media/act3_end_call_voice.mp3",
+          "src": "media/act3_end_call_voice.mp3",
           "transcript": "hey",
-          "pending": true,
           "delay": 5000
         },
         {

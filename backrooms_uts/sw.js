@@ -1,4 +1,4 @@
-const CACHE_NAME = 'backrooms-v1';
+const CACHE_NAME = 'backrooms-v2';
 const MEDIA_CACHE = 'backrooms-media-v1';
 
 // Media files — cache-first (large, rarely change)

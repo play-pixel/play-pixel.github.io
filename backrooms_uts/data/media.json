@@ -85,6 +85,36 @@
       "description": "Narrow vertical-format corridor in Backrooms. Bright overhead fluorescent strip, yellow wallpapered walls, beige carpet. Corridor ends in a solid back wall — no visible branching. Well-lit, empty, clean.",
       "used_in": ["path_light"],
       "notes": "Used in path_light as the bright corridor Zoe walks through before hitting the T-junction."
+    },
+    "act2_map_items_01.jpg": {
+      "description": "Vertical shot of a vast yellow Backrooms room with square columns. On the worn beige carpet: a single white Nike sneaker, a dead smartphone face-down, a child's crayon drawing, and a creased family beach photo — scattered as if someone left in a hurry.",
+      "used_in": ["act2_map_items"],
+      "notes": "Generated 2026-05-19 via ChatGPT (GPT-4o image)."
+    },
+    "act2_descent_stairs_01.jpg": {
+      "description": "Vertical shot looking down a concrete staircase descending into pitch black. Metal handrail on the left. Walls transition from yellow Level 0 at the top to bare grey concrete lower down. A single bare incandescent bulb lights only the first few steps.",
+      "used_in": ["act2_descent_stairs"],
+      "notes": "Generated 2026-05-19 via ChatGPT (GPT-4o image)."
+    },
+    "act3_deeper_wall_01.jpg": {
+      "description": "Vertical shot of a large concrete wall in a deep Backrooms level, densely covered in layered handwriting — names, dates, phrases like 'WAS HERE', 'EXIT IS UP', 'THERE IS NO EXIT' in multiple languages. An old CRT monitor is embedded in the wall, screen glowing dimly. Flat fluorescent light, dirty concrete floor.",
+      "used_in": ["act3_deeper_wall"],
+      "notes": "Generated 2026-05-19 via ChatGPT (GPT-4o image)."
+    },
+    "act3_fork_doors_01.jpg": {
+      "description": "Vertical shot of a large concrete Backrooms room with three doors in three walls. Left door ajar with warm golden light and a hint of a night street; center door opens onto a descending staircase with cold blue glow; right door plain and closed with a glowing smartphone on the floor in front of it.",
+      "used_in": ["act3_fork_arrive"],
+      "notes": "Generated 2026-05-19 via ChatGPT (GPT-4o image)."
+    },
+    "act3_end_deep_stairs.jpg": {
+      "description": "Vertical shot of an infinite staircase descending into a strange warm golden-blue light — ethereal, almost bioluminescent. Concrete stairs with subtly wrong geometry extending beyond visibility, the glow intensifying toward the depths. Liminal horror-beauty.",
+      "used_in": ["act3_end_deep_2"],
+      "notes": "Generated 2026-05-19 via ChatGPT (GPT-4o image). Loop-ending deep-descent image."
+    },
+    "act3_end_call_voice.mp3": {
+      "description": "Voice message — Zoe says a single word, 'hey'. Female Latina voice (ElevenLabs 'Monica - Sultry Latina Storyteller'). Flat, matter-of-fact delivery — the loop-closing echo of her very first message.",
+      "used_in": ["act3_end_call_2"],
+      "notes": "Generated 2026-05-19 via ElevenLabs (Multilingual v2, stability 50 / similarity 75 / style 0)."
     }
   },
   "unused_assets": [
