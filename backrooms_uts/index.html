@@ -1809,8 +1809,13 @@
         mkChoice(ch, 'choice-key', () => playerChoose(idx));
       });
 
-      // Optional choices
-      const optionals = node.choices.filter(ch => ch.optional && !state.usedOptionals.includes(ch.tag));
+      // Optional choices — show only enough to keep total buttons at 3
+      const keyCount = node.choices.filter(ch => ch.key).length;
+      const optSlots = Math.max(0, 3 - keyCount);
+      const optionals = node.choices
+        .filter(ch => ch.optional && !state.usedOptionals.includes(ch.tag)
+          && (!ch.requires || state.knowledgeFlags.includes(ch.requires)))
+        .slice(0, optSlots);
       optionals.forEach(ch => {
         const idx = node.choices.indexOf(ch);
         mkChoice(ch, 'choice-optional', () => playerChooseOptional(idx));
