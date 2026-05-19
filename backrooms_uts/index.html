@@ -86,8 +86,8 @@
       background: #b3a742; 
       background-image: 
         radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%),
-        url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%23b3a742'/><path d='M30 0v160M90 0v160' stroke='%238e822d' stroke-width='12' opacity='0.3'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%238e822d' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%238e822d' stroke-width='2' stroke-dasharray='10,10' opacity='0.4'/></svg>");
-      background-size: auto, 120px 160px;
+        url("media/wallpaper.svg");
+      background-size: auto, 69px 130px;
       color:#1a1a1a; overflow:hidden; position:relative; 
     }
     
@@ -225,7 +225,7 @@
     /* ── Chat Screen ─────── */
     .chat-hdr { display:flex; align-items:center; padding:8px 8px; background:var(--header-bg); border-bottom:1px solid var(--border); flex-shrink:0; }
     .chat-back { width:32px; height:40px; border:none; background:none; color:var(--accent); font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .chat-hdr-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; margin-right:10px; flex-shrink:0; font-weight:600; overflow:hidden; }
+    .chat-hdr-av { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:16px; color:#fff; margin-right:10px; flex-shrink:0; font-weight:600; overflow:hidden; cursor:pointer; }
     .chat-hdr-info { flex:1; }
     .chat-hdr-name { font-size:15px; font-weight:600; }
     .chat-hdr-status { font-size:12px; color:var(--text-dim); }
@@ -243,7 +243,7 @@
     .msg-row.npc { align-self:flex-start; }
     .msg-row.player { align-self:flex-end; flex-direction:row-reverse; }
 
-    .msg-avatar { width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; overflow:hidden; }
+    .msg-avatar { width:39px; height:39px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; overflow:hidden; }
 
     .msg-bubble { padding:8px 12px; border-radius:var(--radius); font-size:15px; line-height:1.4; word-wrap:break-word; position:relative; box-shadow:var(--bubble-shadow); }
     .msg-row.npc .msg-bubble { background:var(--bubble-npc); border-bottom-left-radius:4px; }
@@ -254,7 +254,7 @@
     .msg-row.npc .msg-meta { color:var(--text-muted); }
     .msg-row.player .msg-meta { color:rgba(255,255,255,.65); }
 
-    .checks { font-size:13px; line-height:1; }
+    .checks { font-size:16px; line-height:1; font-weight:700; -webkit-text-stroke:0.5px currentColor; letter-spacing:-1.5px; }
     .checks.sent { opacity:.5; }
     .checks.delivered { opacity:.6; }
     .checks.read { color:#60d0ff; opacity:1; }
@@ -386,8 +386,8 @@
     /* ════ Light theme — the yellow backrooms wallpaper bleeds onto the chat ════ */
     [data-theme="light"] .chat-area {
       background-color:#b3a742;
-      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%23b3a742'/><path d='M30 0v160M90 0v160' stroke='%238e822d' stroke-width='12' opacity='0.3'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%238e822d' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%238e822d' stroke-width='2' stroke-dasharray='10,10' opacity='0.4'/></svg>");
-      background-size: 120px 160px;
+      background-image: url("media/wallpaper.svg");
+      background-size: 69px 130px;
     }
     /* NPC bubble is a dark brutalist block — needs light text. Player bubble is pale cream. */
     [data-theme="light"] .msg-row.npc .msg-bubble { color:#dccf8f; }
@@ -418,8 +418,8 @@
     [data-theme="light"] .contacts-search svg { color:#9c8e4d; }
     [data-theme="light"] .contacts-list {
       background-color:#b3a742;
-      background-image: url("data:image/svg+xml,<svg width='120' height='160' viewBox='0 0 120 160' xmlns='http://www.w3.org/2000/svg'><rect width='120' height='160' fill='%23b3a742'/><path d='M30 0v160M90 0v160' stroke='%238e822d' stroke-width='12' opacity='0.3'/><path d='M30 40l-15 15M30 40l15 15M90 40l-15 15M90 40l15 15M30 120l-15 15M30 120l15 15M90 120l-15 15M90 120l15 15' stroke='%238e822d' stroke-width='8' fill='none'/><path d='M60 0v160' stroke='%238e822d' stroke-width='2' stroke-dasharray='10,10' opacity='0.4'/></svg>");
-      background-size: 120px 160px;
+      background-image: url("media/wallpaper.svg");
+      background-size: 69px 130px;
       padding:12px; display:flex; flex-direction:column; gap:8px;
     }
     [data-theme="light"] .contact-item {
@@ -555,6 +555,32 @@
       82%  { filter: drop-shadow(-2px 0 rgba(255,40,80,.6)) drop-shadow(2px 0 rgba(0,225,255,.6)); transform: translateX(-1px); }
       100% { filter: none; transform: translate(0); }
     }
+
+    /* ════ Scrollbars — slim, on-theme, out of the way ════ */
+    .chat-area, .contacts-list, .settings-list, .admin-panel select {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,.28) transparent;
+    }
+    .chat-area::-webkit-scrollbar,
+    .contacts-list::-webkit-scrollbar,
+    .settings-list::-webkit-scrollbar { width: 5px; height: 5px; }
+    .chat-area::-webkit-scrollbar-track,
+    .contacts-list::-webkit-scrollbar-track,
+    .settings-list::-webkit-scrollbar-track { background: transparent; }
+    .chat-area::-webkit-scrollbar-thumb,
+    .contacts-list::-webkit-scrollbar-thumb,
+    .settings-list::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,.28); border-radius: 3px;
+    }
+    .chat-area::-webkit-scrollbar-thumb:hover,
+    .contacts-list::-webkit-scrollbar-thumb:hover,
+    .settings-list::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.45); }
+    [data-theme="dark"] .chat-area, [data-theme="dark"] .contacts-list, [data-theme="dark"] .settings-list {
+      scrollbar-color: rgba(255,255,255,.18) transparent;
+    }
+    [data-theme="dark"] .chat-area::-webkit-scrollbar-thumb,
+    [data-theme="dark"] .contacts-list::-webkit-scrollbar-thumb,
+    [data-theme="dark"] .settings-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); }
   </style>
 </head>
 <body data-theme="light">
@@ -601,7 +627,8 @@
       <div class="settings-section" id="settingsProfileSection">Profile</div>
       <div class="settings-row"><div class="settings-row-label" id="settingsNameLabel">Your name</div><input type="text" id="playerNameInput" placeholder="stranger" style="flex:1;max-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--input-bg);color:var(--text);font-size:13px;text-align:right;"></div>
       <div class="settings-section">Оформление</div>
-      <div class="settings-row"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <!-- Dark theme hidden for now — single backrooms theme. Restore this row + the loadPrefs override to bring it back. -->
+      <div class="settings-row" style="display:none"><div class="settings-row-label">Тёмная тема</div><label class="toggle"><input type="checkbox" id="themeToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-row"><div class="settings-row-label" id="settingsVibLabel">Вибрация</div><label class="toggle"><input type="checkbox" id="vibToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-row"><div class="settings-row-label" id="settingsNotifLabel">Уведомления</div><label class="toggle"><input type="checkbox" id="notifToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Язык / Language</div>
@@ -869,7 +896,7 @@
     let unreadWhileScrolled = 0;
 
     // ── Prefs ───────────────────────
-    function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} applyTheme(); applyLang(); }
+    function loadPrefs() { try { const p=JSON.parse(localStorage.getItem(PREFS)); if(p) prefs=p; } catch(e){} prefs.theme='light'; /* dark theme hidden for now */ applyTheme(); applyLang(); }
     function savePrefs() { localStorage.setItem(PREFS, JSON.stringify(prefs)); }
     function applyTheme() {
       document.body.setAttribute('data-theme', prefs.theme);
@@ -2306,6 +2333,18 @@
           vVid.src = vWrap.dataset.video;
           vVid.play();
           vLb.classList.add('active');
+          return;
+        }
+        // Header avatar — open the contact's photo fullscreen (only if it's a real photo)
+        const hdrAv = e.target.closest('#chatHdrAv');
+        if (hdrAv) {
+          const avImg = hdrAv.querySelector('img');
+          if (avImg && avImg.src) {
+            lbImg.src = avImg.src;
+            scale = 1; px = 0; py = 0;
+            applyTransform();
+            lb.classList.add('active');
+          }
           return;
         }
         const img = e.target.closest('.img-msg img');
