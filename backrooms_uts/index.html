@@ -95,7 +95,7 @@
     #startScreen::after {
       content: " ";
       position: absolute; inset: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.21) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.035), rgba(0, 255, 0, 0.014), rgba(0, 0, 255, 0.035));
       background-size: 100% 4px, 3px 100%;
       pointer-events: none;
       z-index: 2;
@@ -244,24 +244,25 @@
     .msg-row.player { align-self:flex-end; flex-direction:row-reverse; }
 
     .msg-avatar { width:39px; height:39px; border-radius:50%; background:linear-gradient(135deg,#7c3aed,#3b82f6); display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; flex-shrink:0; font-weight:600; margin-bottom:2px; overflow:hidden; }
+    .msg-avatar.grouped { background:none !important; border:none !important; visibility:hidden; }
 
-    .msg-bubble { padding:8px 12px; border-radius:var(--radius); font-size:15px; line-height:1.4; word-wrap:break-word; position:relative; box-shadow:var(--bubble-shadow); }
+    .msg-bubble { padding:8px 12px; border-radius:var(--radius); font-size:19px; line-height:1.4; word-wrap:break-word; position:relative; box-shadow:var(--bubble-shadow); }
     .msg-row.npc .msg-bubble { background:var(--bubble-npc); border-bottom-left-radius:4px; }
     .msg-row.player .msg-bubble { background:var(--bubble-player); color:var(--text-on-accent); border-bottom-right-radius:4px; }
 
     /* Message meta (time + checks) */
-    .msg-meta { display:inline-flex; align-items:center; gap:3px; float:right; margin:4px 0 -4px 10px; font-size:11px; }
+    .msg-meta { display:inline-flex; align-items:center; gap:3px; float:right; margin:4px 0 -4px 10px; font-size:13px; }
     .msg-row.npc .msg-meta { color:var(--text-muted); }
     .msg-row.player .msg-meta { color:rgba(255,255,255,.65); }
 
-    .checks { font-size:16px; line-height:1; font-weight:700; -webkit-text-stroke:0.5px currentColor; letter-spacing:-1.5px; }
+    .checks { font-size:18px; line-height:1; font-weight:700; -webkit-text-stroke:0.5px currentColor; letter-spacing:-1.5px; }
     .checks.sent { opacity:.5; }
     .checks.delivered { opacity:.6; }
     .checks.read { color:#60d0ff; opacity:1; }
     [data-theme="dark"] .checks.read { color:#60a5fa; }
 
     /* Status messages */
-    .msg-status { text-align:center; font-size:12px; color:var(--text-dim); font-style:italic; padding:8px 0; }
+    .msg-status { text-align:center; font-size:14px; color:var(--text-dim); font-style:italic; padding:8px 0; }
 
     /* Image */
     .msg-row.npc .msg-bubble.img-msg { padding:3px; }
@@ -285,7 +286,7 @@
     .v-wave { flex:1; height:20px; display:flex; align-items:center; gap:2px; }
     .v-wave span { display:block; width:2px; border-radius:1px; background:var(--accent); opacity:.4; }
     .msg-row.player .v-wave span { background:rgba(255,255,255,.5); }
-    .v-dur { font-size:10px; color:var(--text-dim); flex-shrink:0; }
+    .v-dur { font-size:12px; color:var(--text-dim); flex-shrink:0; }
     .msg-row.player .v-dur { color:rgba(255,255,255,.6); }
 
     /* Typing */
@@ -301,16 +302,16 @@
     /* Bottom panel — always visible */
     .bottom-panel { flex-shrink:0; border-top:1px solid #8e822d; background:#a89b37; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; }
     [data-theme="dark"] .bottom-panel { border-top-color:#2c2818; background:#16140e; }
-    .bottom-status { font-size:12px; color:var(--text-dim); text-align:center; min-height:16px; }
+    .bottom-status { font-size:14px; color:var(--text-dim); text-align:center; min-height:16px; }
     .bottom-choices { display:flex; flex-direction:column; gap:6px; }
     .bottom-choices:empty { display:none; }
 
-    .bottom-choices button { width:100%; padding:13px 16px; border:none; border-radius:14px; font-size:15px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
+    .bottom-choices button { width:100%; padding:13px 16px; border:none; border-radius:14px; font-size:19px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
     .bottom-choices button:disabled { opacity:.4; pointer-events:none; }
     .bottom-choices button.choice-key { background:var(--accent); color:#fff; }
     .bottom-choices button.choice-key:active { opacity:.85; }
     .choice-arrow { display:none; }
-    .bottom-choices button.choice-optional { background:var(--input-bg); color:var(--text); font-size:14px; }
+    .bottom-choices button.choice-optional { background:var(--input-bg); color:var(--text); font-size:18px; }
     .bottom-choices button.choice-optional:active { background:var(--border); }
     [data-theme="dark"] .bottom-choices button.choice-optional { background:var(--surface); }
 
@@ -366,9 +367,9 @@
     [data-theme="dark"] #contactsScreen::after,
     [data-theme="dark"] #settingsScreen::after {
       background:
-        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 50%, rgba(0,0,0,.55) 100%),
-        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.28) 50%),
-        linear-gradient(90deg, rgba(255,0,0,.04), rgba(0,255,0,.02), rgba(0,0,255,.04));
+        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 50%, rgba(0,0,0,.39) 100%),
+        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.2) 50%),
+        linear-gradient(90deg, rgba(255,0,0,.028), rgba(0,255,0,.014), rgba(0,0,255,.028));
       background-size: 100% 100%, 100% 4px, 3px 100%;
       animation: screen-flicker .2s infinite;
     }
@@ -376,9 +377,9 @@
     [data-theme="light"] #contactsScreen::after,
     [data-theme="light"] #settingsScreen::after {
       background:
-        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 52%, rgba(0,0,0,.42) 100%),
-        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.2) 50%),
-        linear-gradient(90deg, rgba(255,0,0,.05), rgba(0,255,0,.02), rgba(0,0,255,.05));
+        radial-gradient(circle at 50% 42%, rgba(0,0,0,0) 52%, rgba(0,0,0,.29) 100%),
+        linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,.14) 50%),
+        linear-gradient(90deg, rgba(255,0,0,.035), rgba(0,255,0,.014), rgba(0,0,255,.035));
       background-size: 100% 100%, 100% 4px, 3px 100%;
       animation: screen-flicker .2s infinite;
     }
@@ -510,7 +511,7 @@
     /* Date separator & status messages — pill with a contrast backing, readable over the busy wallpaper */
     .date-sep {
       width:fit-content; margin:10px auto 6px; padding:4px 12px;
-      font-family:'Courier New', monospace; font-size:11px; letter-spacing:2px; text-transform:uppercase;
+      font-family:'Courier New', monospace; font-size:13px; letter-spacing:2px; text-transform:uppercase;
       background:rgba(0,0,0,.55); color:#d8cd92; border-radius:10px;
       border:1px solid rgba(255,255,255,.08);
     }
@@ -1561,12 +1562,19 @@
       const isPlayer = msg.type === 'player';
       row.className = 'msg-row ' + (isPlayer ? 'player' : 'npc') + cls;
 
-      // Avatar for NPC
+      // Avatar for NPC — shown only on the first message of a consecutive
+      // NPC group; repeats are suppressed until a player message breaks the run.
       if (!isPlayer) {
         const av = document.createElement('div');
         av.className = 'msg-avatar';
-        const stMeta = storiesMeta.find(s => s.id === state.activeStory);
-        av.innerHTML = avatarHTML(stMeta);
+        const prev = state.history[histIdx - 1];
+        const grouped = prev && (prev.type === 'text' || prev.type === 'image' || prev.type === 'voice');
+        if (grouped) {
+          av.classList.add('grouped');
+        } else {
+          const stMeta = storiesMeta.find(s => s.id === state.activeStory);
+          av.innerHTML = avatarHTML(stMeta);
+        }
         row.appendChild(av);
       }
 
@@ -1646,7 +1654,7 @@
         if (msg.transcript) {
           const t = document.createElement('div');
           t.className = 'vt';
-          t.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
+          t.style.cssText = 'font-size:15px;color:var(--text-dim);margin-top:6px;width:100%;font-style:italic;';
           t.textContent = '\u201c'+L(msg.transcript)+'\u201d';
           bubble.style.flexWrap = 'wrap';
           bubble.appendChild(t);
@@ -1699,9 +1707,15 @@
         const row = document.createElement('div');
         row.className = 'msg-row npc typing'; row.id = 'td';
         const av = document.createElement('div');
-        const stMeta2 = storiesMeta.find(s => s.id === state.activeStory);
         av.className = 'msg-avatar';
-        av.innerHTML = avatarHTML(stMeta2);
+        const lastMsg = state.history[state.history.length - 1];
+        const tGrouped = lastMsg && (lastMsg.type === 'text' || lastMsg.type === 'image' || lastMsg.type === 'voice');
+        if (tGrouped) {
+          av.classList.add('grouped');
+        } else {
+          const stMeta2 = storiesMeta.find(s => s.id === state.activeStory);
+          av.innerHTML = avatarHTML(stMeta2);
+        }
         const dots = document.createElement('div');
         dots.className = 'typing-dots';
         dots.innerHTML = '<span></span><span></span><span></span>';
