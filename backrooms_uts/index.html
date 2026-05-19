@@ -300,20 +300,30 @@
     .new-msg { animation: msgIn .25s ease; }
 
     /* Bottom panel — always visible */
-    .bottom-panel { flex-shrink:0; border-top:1px solid #000000; box-shadow:-4px -7px 12px -5px rgb(0 0 0 / 67%); background:#a89b37; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; z-index:1; }
-    [data-theme="dark"] .bottom-panel { border-top-color:#2c2818; background:#16140e; }
+    .bottom-panel { position:relative; flex-shrink:0; border-top:1px solid #000000; box-shadow:-4px -7px 12px -5px rgb(0 0 0 / 67%); background:#241f12; min-height:52px; padding:8px 12px; display:flex; flex-direction:column; gap:6px; z-index:1; }
+    [data-theme="dark"] .bottom-panel { border-top-color:#2c2818; background:#100e08; }
     .bottom-status { font-size:14px; color:var(--text-dim); text-align:center; min-height:16px; }
-    .bottom-choices { display:flex; flex-direction:column; gap:6px; }
+    .bottom-choices { display:flex; flex-direction:column; gap:6px; padding:0 18px; }
     .bottom-choices:empty { display:none; }
 
-    .bottom-choices button { width:100%; padding:13px 16px; border:none; border-radius:14px; font-size:19px; font-weight:500; cursor:pointer; text-align:left; line-height:1.35; transition:all .15s; }
+    /* Player dialogue choices — white rounded pills, dark text */
+    .bottom-choices button {
+      width:100%; padding:11px 18px; border:none;
+      border-radius:999px; font-size:18px; font-weight:500; cursor:pointer;
+      text-align:left; line-height:1.3; transition:background .12s, transform .08s;
+      display:flex; gap:9px; align-items:baseline;
+      background:#ececec; color:#1a1a1a; box-shadow:0 2px 6px rgba(0,0,0,.35);
+    }
+    .bottom-choices button:active { transform:scale(.99); }
     .bottom-choices button:disabled { opacity:.4; pointer-events:none; }
-    .bottom-choices button.choice-key { background:var(--accent); color:#fff; }
-    .bottom-choices button.choice-key:active { opacity:.85; }
+    .choice-txt { flex:1; }
     .choice-arrow { display:none; }
-    .bottom-choices button.choice-optional { background:var(--input-bg); color:var(--text); font-size:18px; }
-    .bottom-choices button.choice-optional:active { background:var(--border); }
-    [data-theme="dark"] .bottom-choices button.choice-optional { background:var(--surface); }
+    .bottom-choices button.choice-key { background:#ececec; }
+    .bottom-choices button.choice-key:active { background:#dcdcdc; }
+    .bottom-choices button.choice-key .choice-txt { color:#161616; font-weight:700; }
+    .bottom-choices button.choice-optional { font-size:16px; background:#9c9c9c; }
+    .bottom-choices button.choice-optional:active { background:#8c8c8c; }
+    .bottom-choices button.choice-optional .choice-txt { color:#3a3a3a; }
 
     .wait-skip { padding:6px 18px; border:1px solid var(--border); border-radius:16px; background:none; color:var(--text-muted); font-size:11px; cursor:pointer; display:inline-block; margin-top:2px; }
 
@@ -324,7 +334,7 @@
     .input-row button:disabled { opacity:.4; pointer-events:none; }
 
     /* Scroll-to-bottom FAB */
-    .scroll-fab { position:absolute; bottom:70px; right:16px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
+    .scroll-fab { position:absolute; bottom:100%; margin-bottom:10px; right:16px; z-index:10; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
     .scroll-fab svg { width:36px; height:36px; padding:8px; background:var(--surface); border-radius:50%; box-shadow:0 2px 8px rgba(0,0,0,.15); color:var(--text-dim); }
     .scroll-fab.has-unread svg { background:var(--accent); color:#fff; animation:fabPulse 1.5s ease-in-out infinite; }
     @keyframes fabPulse { 0%,100%{box-shadow:0 2px 8px rgba(59,130,246,.3)} 50%{box-shadow:0 2px 16px rgba(59,130,246,.6)} }
@@ -398,13 +408,6 @@
     [data-theme="light"] .msg-row.npc .v-play { background:#9c8e4d; color:#1a1a1a; }
     [data-theme="light"] .msg-row.npc .v-wave span { background:#cdbf7a; }
     [data-theme="light"] .msg-row.npc .v-dur { color:#bdb07a; }
-    /* Key choice — the player's own reply, reads as chat text (not a title button) */
-    [data-theme="light"] .bottom-choices button.choice-key {
-      color:#cdbf7a; border:1px solid #cdbf7a; border-radius:2px;
-    }
-    [data-theme="light"] .bottom-choices button.choice-optional {
-      border:1px solid var(--border); border-radius:2px;
-    }
 
     /* ════ Light theme — contacts & settings: dark cards on the yellow wallpaper ════ */
     [data-theme="light"] .contacts-hdr { background:#ab9f3a; border-bottom:1px solid #8e822d; }
@@ -455,13 +458,6 @@
     [data-theme="dark"] .msg-row.npc .msg-bubble { color:#d8cd92; border:1px solid #3a3520; }
     [data-theme="dark"] .typing-dots span { background:#6b633a; }
     [data-theme="dark"] .input-row button { color:#1a1a1a; }
-    /* Key choice — the player's own reply, reads as chat text */
-    [data-theme="dark"] .bottom-choices button.choice-key {
-      background:#c9b863; color:#1a1a1a; border-radius:2px;
-    }
-    [data-theme="dark"] .bottom-choices button.choice-optional {
-      border:1px solid var(--border); border-radius:2px;
-    }
     /* Contacts — dark-ochre cards on the night wallpaper */
     [data-theme="dark"] .contacts-hdr { border-bottom:1px solid #4a4422; }
     [data-theme="dark"] .contacts-hdr h1 {
@@ -690,13 +686,13 @@
       </div>
     </div>
     <div class="chat-area" id="chatArea"></div>
-    <!-- Scroll-to-bottom button -->
-    <div class="scroll-fab hidden" id="scrollFab">
-      <span class="scroll-fab-badge" id="scrollFabBadge">0</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-    </div>
     <!-- Bottom panel — always visible -->
     <div class="bottom-panel" id="bottomPanel">
+      <!-- Scroll-to-bottom button — anchored just above the panel -->
+      <div class="scroll-fab hidden" id="scrollFab">
+        <span class="scroll-fab-badge" id="scrollFabBadge">0</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
       <div class="bottom-status" id="bottomStatus"></div>
       <div class="bottom-choices" id="bottomChoices"></div>
     </div>
@@ -1795,30 +1791,30 @@
 
       bottomChoices.innerHTML = '';
 
+      const mkChoice = (ch, cls, onClick) => {
+        const btn = document.createElement('button');
+        btn.className = cls;
+        btn.disabled = optBusy;
+        const txt = document.createElement('span');
+        txt.className = 'choice-txt';
+        txt.textContent = L(ch.text);
+        btn.appendChild(txt);
+        btn.onclick = onClick;
+        bottomChoices.appendChild(btn);
+      };
+
       // Key choices (also blocked while optional response plays)
       node.choices.filter(ch => ch.key).forEach(ch => {
         const idx = node.choices.indexOf(ch);
-        const btn = document.createElement('button');
-        btn.className = 'choice-key';
-        btn.innerHTML = '<span class="choice-arrow">\u25B6</span> ' + L(ch.text);
-        btn.disabled = optBusy;
-        btn.onclick = () => playerChoose(idx);
-        bottomChoices.appendChild(btn);
+        mkChoice(ch, 'choice-key', () => playerChoose(idx));
       });
 
       // Optional choices
       const optionals = node.choices.filter(ch => ch.optional && !state.usedOptionals.includes(ch.tag));
-      if (optionals.length > 0) {
-        optionals.forEach(ch => {
-          const idx = node.choices.indexOf(ch);
-          const btn = document.createElement('button');
-          btn.className = 'choice-optional';
-          btn.disabled = optBusy;
-          btn.textContent = L(ch.text);
-          btn.onclick = () => playerChooseOptional(idx);
-          bottomChoices.appendChild(btn);
-        });
-      }
+      optionals.forEach(ch => {
+        const idx = node.choices.indexOf(ch);
+        mkChoice(ch, 'choice-optional', () => playerChooseOptional(idx));
+      });
 
       // Admin Skip — visible only when turbo is ON. Forces first default/key choice.
       if (turboMode) {
