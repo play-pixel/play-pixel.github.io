@@ -7,7 +7,15 @@
       "avatarGradient": ["#7c3aed", "#3b82f6"],
       "scenario": "data/story_zoe.json",
       "unlocked": true,
-      "order": 1
+      "order": 1,
+      "pacing": {
+        "readDelay":     [1800, 4500],
+        "postReadPause": [20000, 60000],
+        "typingPerChar": 188,
+        "typingFloor":   1500,
+        "typingJitter":  0.15,
+        "thinkDefault":  600
+      }
     },
     {
       "id": "story2",

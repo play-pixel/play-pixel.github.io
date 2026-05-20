@@ -1164,25 +1164,54 @@
     }
 
     // ── Message pacing (length-aware) ─────────────
+    // Per-character pacing profile. Lives in stories.json so each contact can feel different.
+    const PACING_DEFAULTS = {
+      readDelay:     [1800, 4500],
+      postReadPause: [20000, 60000],
+      typingPerChar: 188,
+      typingFloor:   1500,
+      typingJitter:  0.15,
+      thinkDefault:  600
+    };
+    function getPacing() {
+      const meta = storiesMeta.find(s => s.id === state.activeStory);
+      return Object.assign({}, PACING_DEFAULTS, (meta && meta.pacing) || {});
+    }
+    function randRange(range) {
+      const [lo, hi] = range;
+      return lo + Math.floor(Math.random() * Math.max(0, hi - lo));
+    }
     // Think pause before typing starts. Respects authored msg.delay fully.
     function thinkPause(delay) {
       if (turboMode) return 200;
       if (typeof delay === 'number' && delay > 0) return delay;
-      return 600;
+      return getPacing().thinkDefault;
     }
-    // Typing indicator duration — scales with length, ±15% jitter.
-    // base = 400 + len * 188, floor 1500ms. Short msgs stay snappy, long msgs feel human.
-    // (per-char multiplier bumped +25% from 150 → 188 so readers keep up with longer lines.)
+    // Typing indicator duration — scales with length, ±jitter.
     function typingDuration(len) {
       if (turboMode) return TURBO_TYPING;
-      const base = Math.max(1500, 400 + len * 188);
-      const jitter = 0.85 + Math.random() * 0.30; // 0.85..1.15
+      const p = getPacing();
+      const base = Math.max(p.typingFloor, 400 + len * p.typingPerChar);
+      const j = p.typingJitter;
+      const jitter = (1 - j) + Math.random() * (2 * j);
       return Math.round(base * jitter);
     }
     // Effective length for pacing: voice uses transcript, else text.
     function msgPaceLen(msg) {
       const src = L(msg.text) || L(msg.transcript) || '';
       return src.length;
+    }
+    // Delay from "delivered" (✓✓) to "read" (blue ✓✓). NPC isn't glued to the phone.
+    function readDelay() {
+      if (turboMode) return 400;
+      if (prefs.testMode) return 800;
+      return randRange(getPacing().readDelay);
+    }
+    // Pause after "read" before typing indicator appears. She read it, now she's thinking.
+    function postReadPause() {
+      if (turboMode) return 200;
+      if (prefs.testMode) return 600;
+      return randRange(getPacing().postReadPause);
     }
 
     // ── Time formatting ─────────────
@@ -1313,6 +1342,8 @@
             if (msg.type === 'text' && msg.text) notifyMsg(L(msg.text), state.timelineIdx);
           }
           updateChecksToRead();
+        } else if (evt.type === 'read') {
+          updateChecksToRead();
         } else if (evt.type === 'update_profile') {
           const meta = storiesMeta.find(s => s.id === state.activeStory);
           if (meta) {
@@ -1384,7 +1415,12 @@
           if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
         }, 1000);
       }
-      scheduleNode(ch.next, now + (turboMode ? 400 : 1500));
+      const rd = readDelay();
+      const pr = postReadPause();
+      if (!isInputTarget) {
+        state.timeline.push({ ts: now + rd, type: 'read' });
+      }
+      scheduleNode(ch.next, now + rd + pr);
       save(); renderUI(); updateBottomPanel();
     }
 
@@ -1406,7 +1442,9 @@
       }
 
       // Schedule response messages, then return to choice
-      let t = now + 1500;
+      const rd = readDelay();
+      state.timeline.push({ ts: now + rd, type: 'read' });
+      let t = now + rd + postReadPause();
       for (const msg of ch.response) {
         const len = msgPaceLen(msg);
         t += thinkPause(msg.delay);
@@ -1446,7 +1484,11 @@
         const pm = [...state.history].reverse().find(m => m.type === 'player');
         if (pm && pm.checks === 1) { pm.checks = 2; save(); renderUI(); }
       }, 1000);
-      if (node.next) scheduleNode(node.next, now + 1500);
+      if (node.next) {
+        const rd = readDelay();
+        state.timeline.push({ ts: now + rd, type: 'read' });
+        scheduleNode(node.next, now + rd + postReadPause());
+      }
       save(); renderUI();
     }
 
@@ -1517,7 +1559,7 @@
         addMsgDOM(state.history[i], i, false);
       }
       lastRenderedCount = state.history.length;
-      updateAllChecks(); updateTypingUI(); updateBottomPanel(); scroll();
+      updateAllChecks(); updateTypingUI(); updateBottomPanel(); scroll(true);
     }
 
     function maybeAddDateSep(idx) {
@@ -1916,7 +1958,9 @@
         state.knowledgeFlags.push(wc.flag);
       }
 
-      let t = now + 1500;
+      const rd = readDelay();
+      state.timeline.push({ ts: now + rd, type: 'read' });
+      let t = now + rd + postReadPause();
       for (const msg of wc.response) {
         const len = msgPaceLen(msg);
         t += thinkPause(msg.delay);
@@ -1980,14 +2024,23 @@
       }
     }
 
-    function scroll() {
+    function scroll(instant = false) {
       userScrolledUp = false;
       unreadWhileScrolled = 0;
       $('scrollFab').classList.add('hidden');
       $('scrollFab').classList.remove('has-unread');
-      requestAnimationFrame(() => {
-        chatArea.scrollTop = chatArea.scrollHeight;
-      });
+      const snap = () => {
+        if (instant) {
+          const prev = chatArea.style.scrollBehavior;
+          chatArea.style.scrollBehavior = 'auto';
+          chatArea.scrollTop = chatArea.scrollHeight;
+          // Restore on next frame so subsequent scrolls keep their smooth behavior.
+          requestAnimationFrame(() => { chatArea.style.scrollBehavior = prev || ''; });
+        } else {
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
+      };
+      requestAnimationFrame(snap);
     }
 
     // When scrolling to bottom, also trigger choice display if pending
