@@ -1322,47 +1322,58 @@
       const now = Date.now();
       let changed = false;
 
-      while (state.timelineIdx < state.timeline.length) {
-        const evt = state.timeline[state.timelineIdx];
-        if (evt.ts > now) break;
-        state.timelineIdx++;
-        changed = true;
-        if (evt.type === 'msg') {
-          const msg = evt.data;
-          // Auto-glitch on caps (screaming) or specific node flag
-          const rawText = (msg.text && msg.text.en) ? msg.text.en : '';
-          const isScreaming = /[A-Z]{4,}/.test(rawText);
-          if (msg.glitch || isScreaming) {
-            triggerGlitch(msg.glitch === 'high' ? 'high' : 'low');
+      // Cascade loop: timeline delivery + phase transitions repeat until quiescent.
+      // Each autoChoose/wait-end appends new past-dated events when player has been
+      // absent — without this loop those would dribble out across future ticks
+      // instead of catching up to wall-clock now.
+      let safety = 1000;
+      let iter = true;
+      while (iter && safety-- > 0) {
+        iter = false;
+
+        while (state.timelineIdx < state.timeline.length) {
+          const evt = state.timeline[state.timelineIdx];
+          if (evt.ts > now) break;
+          state.timelineIdx++;
+          changed = true; iter = true;
+          if (evt.type === 'msg') {
+            const msg = evt.data;
+            const rawText = (msg.text && msg.text.en) ? msg.text.en : '';
+            const isScreaming = /[A-Z]{4,}/.test(rawText);
+            if (msg.glitch || isScreaming) {
+              triggerGlitch(msg.glitch === 'high' ? 'high' : 'low');
+            }
+            state.history.push({ ...msg, _ts: evt.ts });
+            if (msg.type !== 'status') {
+              lastNpcMsgAt = Date.now();
+              vibrate(15);
+              if (msg.type === 'text' && msg.text) notifyMsg(L(msg.text), state.timelineIdx);
+            }
+            updateChecksToRead();
+          } else if (evt.type === 'read') {
+            updateChecksToRead();
+          } else if (evt.type === 'update_profile') {
+            const meta = storiesMeta.find(s => s.id === state.activeStory);
+            if (meta) {
+              if (evt.data.name) meta.name = evt.data.name;
+              if (evt.data.avatarImg) meta.avatarImg = evt.data.avatarImg;
+            }
+            state.profileOverrides = { name: evt.data.name, avatarImg: evt.data.avatarImg };
           }
-          state.history.push({ ...msg, _ts: evt.ts });
-          if (msg.type !== 'status') {
-            lastNpcMsgAt = Date.now();
-            vibrate(15);
-            if (msg.type === 'text' && msg.text) notifyMsg(L(msg.text), state.timelineIdx);
-          }
-          updateChecksToRead();
-        } else if (evt.type === 'read') {
-          updateChecksToRead();
-        } else if (evt.type === 'update_profile') {
-          const meta = storiesMeta.find(s => s.id === state.activeStory);
-          if (meta) {
-            if (evt.data.name) meta.name = evt.data.name;
-            if (evt.data.avatarImg) meta.avatarImg = evt.data.avatarImg;
-          }
-          state.profileOverrides = { name: evt.data.name, avatarImg: evt.data.avatarImg };
+        }
+
+        if (state.phase === 'choice' && state.choiceDeadline && now >= state.choiceDeadline) {
+          autoChoose(now); changed = true; iter = true;
+        }
+        if (state.phase === 'wait' && state.waitUntil && now >= state.waitUntil) {
+          const next = state.waitNextNode;
+          const waitEnded = state.waitUntil;
+          state.waitUntil = null; state.waitNextNode = null; state.waitChatNode = null; state.phase = 'playing';
+          if (next) scheduleNode(next, waitEnded);
+          changed = true; iter = true;
         }
       }
-
-      if (state.phase === 'choice' && state.choiceDeadline && now >= state.choiceDeadline) {
-        autoChoose(now); changed = true;
-      }
-      if (state.phase === 'wait' && state.waitUntil && now >= state.waitUntil) {
-        const next = state.waitNextNode;
-        state.waitUntil = null; state.waitNextNode = null; state.waitChatNode = null; state.phase = 'playing';
-        if (next) scheduleNode(next, now);
-        changed = true;
-      }
+      if (safety <= 0) console.warn('[tick] cascade safety limit reached');
 
       if (changed) { save(); renderUI(); }
 
@@ -1380,10 +1391,13 @@
       if (!node || !node.choices) return;
       const defIdx = node.choices.findIndex(c => c.default);
       const ch = node.choices[defIdx >= 0 ? defIdx : 0];
-      state.history.push({ type:'auto', text:t('auto_choice'), _ts:now });
+      // Anchor cascade to the deadline moment, not wall-clock now.
+      // Ensures story timeline catches up after long absence (24h closed → finale).
+      const deadline = state.choiceDeadline || now;
+      state.history.push({ type:'auto', text:t('auto_choice'), _ts: deadline });
       state.choices.push(ch.tag + '_auto');
       state.choiceNode = null; state.choiceAvailableAt = null; state.choiceDeadline = null; state.phase = 'playing';
-      scheduleNode(ch.next, now + 1000);
+      scheduleNode(ch.next, deadline + 1000);
     }
 
     function playerChoose(choiceIdx) {
