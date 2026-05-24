@@ -179,6 +179,19 @@
   }
   .empty .big{font-size:60px;display:block;margin-bottom:8px;animation:hop 2s ease-in-out infinite;}
 
+  /* заголовки разделов Открытые / Сделанные */
+  .section-title{
+    display:flex;align-items:center;gap:8px;margin:22px 4px 2px;
+    font-size:20px;font-weight:bold;color:var(--ink);
+  }
+  .section-title .count{
+    background:#fff;border:3px solid var(--pink-soft);border-radius:14px;
+    font-size:15px;padding:1px 10px;color:var(--purple);
+  }
+  .section-title.done-title{color:#0e9c6e;}
+  .section-title.done-title .count{border-color:var(--mint);color:#0e9c6e;}
+  .done-empty{text-align:center;color:#c4b3d6;font-size:15px;padding:8px 0 0;}
+
   /* модалка */
   .overlay{
     position:fixed;inset:0;background:rgba(120,60,104,.4);backdrop-filter:blur(3px);
@@ -199,6 +212,14 @@
     font-size:18px;font-family:inherit;color:var(--ink);outline:none;background:#fff;
   }
   .sheet input:focus{border-color:var(--pink);}
+  .preset-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .preset-pick button{
+    border:3px solid var(--pink-soft);background:#fff;border-radius:16px;
+    padding:8px 12px;font-size:15px;font-family:inherit;color:var(--ink);
+    cursor:pointer;transition:transform .15s;font-weight:bold;
+  }
+  .preset-pick button:active{transform:scale(.9);}
+  .preset-pick button.sel{border-color:var(--pink);background:var(--pink-soft);}
   .emoji-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
   .emoji-pick button{
     font-size:26px;border:3px solid transparent;background:#fff;border-radius:14px;
@@ -262,6 +283,10 @@
 <div class="overlay" id="overlay">
   <div class="sheet">
     <h2 id="sheetTitle">✨ Новое задание ✨</h2>
+    <div id="presetWrap">
+      <label>Готовые дела (нажми, чтобы выбрать)</label>
+      <div class="preset-pick" id="presetPick"></div>
+    </div>
     <label>Как называется?</label>
     <input type="text" id="taskName" placeholder="Например: Уборка в комнате" maxlength="40">
     <label>Выбери картинку</label>
@@ -287,6 +312,11 @@ function loadState(){
     if(s&&s.tasks){
       if(typeof s.trophies!=='number')s.trophies=0;   // совместимость со старыми сохранениями
       if(typeof s.muted!=='boolean')s.muted=false;
+      // флаги «награда уже начислена» — чтобы старые сохранения не давали очки повторно
+      s.tasks.forEach(t=>{
+        if(typeof t.awarded!=='boolean')t.awarded=t.subs.length>0&&t.subs.every(x=>x.done);
+        t.subs.forEach(x=>{if(typeof x.awarded!=='boolean')x.awarded=x.done;});
+      });
       return s;
     }
   }catch(e){}
@@ -319,6 +349,34 @@ EMOJIS.forEach(em=>{
   emojiPick.appendChild(b);
 });
 
+//==== типовые (готовые) дела ====
+const PRESETS=[
+  {name:'Уборка в комнате',emoji:'🧹',subs:['Убрать игрушки','Застелить кровать','Протереть пыль','Пропылесосить']},
+  {name:'Уроки',emoji:'📚',subs:['Математика','Чтение','Письмо','Проверить дневник']},
+  {name:'Принять ванну',emoji:'🛁',subs:['Намочить волосы','Помыть голову','Помыться','Вытереться насухо']},
+  {name:'Почистить зубы',emoji:'🪥',subs:['Щётка с пастой','Чистить 2 минуты','Прополоскать рот']},
+  {name:'Накрыть на стол',emoji:'🍽️',subs:['Тарелки','Вилки и ложки','Салфетки']},
+  {name:'Покормить питомца',emoji:'🐶',subs:['Насыпать корм','Налить свежей воды']},
+  {name:'Собрать рюкзак',emoji:'🎒',subs:['Учебники','Тетради','Пенал','Форма для физкультуры']},
+  {name:'Полить цветы',emoji:'🌱',subs:['Проверить землю','Полить водой']},
+  {name:'Заправить кровать',emoji:'🛏️',subs:['Расправить простыню','Поправить подушку','Накрыть покрывалом']},
+  {name:'Помочь на кухне',emoji:'🍎',subs:['Помыть фрукты','Убрать со стола','Помыть посуду']},
+];
+let pendingSubs=[];   // подзадачи выбранного готового дела (добавятся при сохранении нового дела)
+const presetPick=document.getElementById('presetPick');
+PRESETS.forEach(p=>{
+  const b=document.createElement('button');b.textContent=p.emoji+' '+p.name;
+  b.onclick=()=>{
+    sfxClick();
+    taskName.value=p.name;
+    pickEmoji(p.emoji);
+    pendingSubs=p.subs.slice();
+    [...presetPick.children].forEach(c=>c.classList.remove('sel'));
+    b.classList.add('sel');
+  };
+  presetPick.appendChild(b);
+});
+
 //==== фразы маскота ====
 const cheers=['Ты супер! 🌟','Молодец! 💖','Так держать! 🦄','Ура! Получилось! 🎉','Я тобой горжусь! 🌈','Ещё чуть-чуть! 💪','Какая умничка! ✨'];
 const idle=['Привет! Давай выполнять задания! 💕','Нажми на квадратик, когда сделаешь! ✅','Ты сегодня большая молодец! 🌸','Каждая звёздочка — твоя! ⭐'];
@@ -333,6 +391,8 @@ document.getElementById('uni').onclick=()=>{
 
 //==== рендер ====
 const list=document.getElementById('list');
+function isDone(t){return t.subs.length>0&&t.subs.every(s=>s.done);}
+
 function render(){
   document.getElementById('stars').textContent=state.stars;
   document.getElementById('points').textContent=state.points;
@@ -342,7 +402,32 @@ function render(){
     list.innerHTML='<div class="empty"><span class="big">🦄</span>Пока нет заданий!<br>Нажми «Новое задание» 💕</div>';
     return;
   }
-  state.tasks.forEach(t=>list.appendChild(taskCard(t)));
+  const open=state.tasks.filter(t=>!isDone(t));
+  const done=state.tasks.filter(t=>isDone(t));
+
+  // Открытые
+  const hOpen=document.createElement('div');
+  hOpen.className='section-title';
+  hOpen.innerHTML=`📋 Открытые <span class="count">${open.length}</span>`;
+  list.appendChild(hOpen);
+  if(open.length===0){
+    const e=document.createElement('div');e.className='done-empty';
+    e.textContent='Всё сделано! Ты умничка 🌈';list.appendChild(e);
+  }else{
+    open.forEach(t=>list.appendChild(taskCard(t)));
+  }
+
+  // Сделанные
+  const hDone=document.createElement('div');
+  hDone.className='section-title done-title';
+  hDone.innerHTML=`✅ Сделанные <span class="count">${done.length}</span>`;
+  list.appendChild(hDone);
+  if(done.length===0){
+    const e=document.createElement('div');e.className='done-empty';
+    e.textContent='Пока пусто — выполни задание целиком 💪';list.appendChild(e);
+  }else{
+    done.forEach(t=>list.appendChild(taskCard(t)));
+  }
 }
 
 function taskCard(t){
@@ -406,25 +491,29 @@ function toggleSub(taskId,subId,li){
   const wasAllDone=t.subs.length>0&&t.subs.every(x=>x.done);
   s.done=!s.done;
   if(s.done){
-    state.points+=5;state.stars+=1;
-    cheer();sfxPop();
-    burstAtEl(li,10);
-    bumpScore('points');bumpScore('stars');
+    cheer();sfxPop();burstAtEl(li,10);
+    if(!s.awarded){              // награда только за ПЕРВОЕ выполнение шага (защита от накрутки)
+      s.awarded=true;
+      state.points+=5;state.stars+=1;
+      bumpScore('points');bumpScore('stars');
+    }
   }
   const nowAllDone=t.subs.length>0&&t.subs.every(x=>x.done);
   save();render();
   if(nowAllDone&&!wasAllDone){
-    // большое задание целиком — крупная награда в общую копилку
-    state.trophies+=1;state.points+=50;save();
-    bumpScore('trophies');bumpScore('points');
-    render();
+    if(!t.awarded){             // кубок и крупные очки — только за первое полное выполнение
+      t.awarded=true;
+      state.trophies+=1;state.points+=50;save();
+      bumpScore('trophies');bumpScore('points');
+      render();
+    }
     bigCelebrate(t.name);
   }
 }
 
 function addSub(taskId,text){
   const t=state.tasks.find(x=>x.id===taskId);if(!t)return;
-  t.subs.push({id:uid(),text,done:false});
+  t.subs.push({id:uid(),text,done:false,awarded:false});
   save();render();
 }
 function removeSub(taskId,subId){
@@ -440,18 +529,22 @@ function removeTask(id,card){
 //==== модалка ====
 const overlay=document.getElementById('overlay');
 const taskName=document.getElementById('taskName');
+const presetWrap=document.getElementById('presetWrap');
+function clearPresetSel(){[...presetPick.children].forEach(c=>c.classList.remove('sel'));pendingSubs=[];}
 function openAdd(){
   sfxClick();
   editingId=null;
   document.getElementById('sheetTitle').textContent='✨ Новое задание ✨';
-  taskName.value='';pickEmoji(EMOJIS[0]);
+  taskName.value='';pickEmoji(EMOJIS[0]);clearPresetSel();
+  presetWrap.style.display='';     // готовые дела — только при создании
   overlay.classList.add('show');setTimeout(()=>taskName.focus(),300);
 }
 function openEdit(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
   editingId=id;
   document.getElementById('sheetTitle').textContent='✏️ Изменить задание';
-  taskName.value=t.name;pickEmoji(t.emoji);
+  taskName.value=t.name;pickEmoji(t.emoji);clearPresetSel();
+  presetWrap.style.display='none'; // при редактировании готовые дела не нужны
   overlay.classList.add('show');
 }
 function pickEmoji(em){
@@ -465,8 +558,10 @@ function saveTask(){
     const t=state.tasks.find(x=>x.id===editingId);
     if(t){t.name=name;t.emoji=pickedEmoji;}
   }else{
-    state.tasks.unshift({id:uid(),name,emoji:pickedEmoji,subs:[]});
+    const subs=pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}));
+    state.tasks.unshift({id:uid(),name,emoji:pickedEmoji,awarded:false,subs});
   }
+  pendingSubs=[];
   sfxPop();
   save();render();closeSheet();
 }
