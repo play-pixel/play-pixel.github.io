@@ -2,9 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ff8fc7">
 <title>🦄 Мои Задания</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Задания">
 <style>
   :root{
     --pink:#ff8fc7;
@@ -102,6 +109,16 @@
     transition:transform .15s;
   }
   .add-btn:active{transform:scale(.95);}
+
+  .install-btn{
+    display:block;width:100%;margin:0 0 8px;border:none;cursor:pointer;
+    background:#fff;border:3px dashed var(--purple);color:var(--purple);
+    font-size:17px;font-weight:bold;font-family:inherit;
+    padding:13px;border-radius:22px;box-shadow:var(--shadow);
+    animation:cardIn .4s;transition:transform .15s;
+  }
+  .install-btn:active{transform:scale(.95);}
+  .install-btn[hidden]{display:none;}
 
   /* карточка задания */
   .task{
@@ -275,6 +292,8 @@
   </header>
 
   <button class="add-btn" id="openAdd">➕ Новое задание</button>
+
+  <button class="install-btn" id="installBtn" hidden>📲 Установить приложение</button>
 
   <div id="list"></div>
 </div>
@@ -726,6 +745,31 @@ function bigCelebrate(name){
 }
 
 render();
+
+//==== PWA: оффлайн + установка на домашний экран ====
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+let deferredPrompt=null;
+const installBtn=document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();           // не показываем стандартную мини-плашку, делаем свою кнопку
+  deferredPrompt=e;
+  installBtn.hidden=false;
+});
+installBtn.onclick=async()=>{
+  sfxClick();
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  installBtn.hidden=true;
+};
+window.addEventListener('appinstalled',()=>{
+  installBtn.hidden=true;
+  speak('Ура! Теперь я живу на твоём экране 🦄💖');
+  sfxWin();
+});
 </script>
 </body>
 </html>
