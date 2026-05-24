@@ -26,15 +26,14 @@
     --shadow:0 8px 22px rgba(255,95,168,.25);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;}   /* страница не скроллится */
   body{
     font-family:'Comic Sans MS','Segoe UI Rounded','Baloo',system-ui,sans-serif;
     color:var(--ink);
-    min-height:100vh;
     background:linear-gradient(160deg,#ffe3f3 0%,#f3e2ff 50%,#e2f6ff 100%);
-    overflow-x:hidden;
     position:relative;
     -webkit-user-select:none;user-select:none;
+    overscroll-behavior:none;
   }
 
   /* плавающие фоновые штучки */
@@ -49,20 +48,68 @@
     100%{transform:translateY(-15vh) rotate(360deg);opacity:0;}
   }
 
-  .app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:14px 14px 120px;}
+  .app{
+    position:relative;z-index:1;max-width:520px;margin:0 auto;
+    height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+  }
+  /* верхняя панель (заголовок + счёт) — не скроллится */
+  .topbar{flex:0 0 auto;text-align:center;padding:10px 14px 6px;}
+  /* единственная скроллящаяся область; полоса прокрутки стилизована */
+  .content{
+    flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:0 14px 120px;
+    scrollbar-width:thin;scrollbar-color:var(--pink-soft) transparent;
+  }
+  .content::-webkit-scrollbar{width:8px;}
+  .content::-webkit-scrollbar-track{background:transparent;}
+  .content::-webkit-scrollbar-thumb{background:var(--pink-soft);border-radius:8px;}
+  /* экраны (Задания/Магазин/Настройки) */
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s;}
+  .view-title{text-align:center;font-size:24px;color:var(--pink-deep);margin:10px 0 12px;}
 
-  /* шапка со счётом */
-  header{
-    text-align:center;padding:10px 0 6px;position:relative;
+  /* табы Открытые / Сделанные — прилипают к верху при прокрутке */
+  .tabs{
+    position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:8px 0 6px;margin:0 0 2px;
+    background:rgba(252,233,245,.92);backdrop-filter:blur(6px);
+    overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;
   }
-  .mute-btn{
-    position:absolute;top:4px;right:0;cursor:pointer;
-    background:#fff;border:3px solid var(--pink-soft);border-radius:50%;
-    width:44px;height:44px;font-size:20px;box-shadow:var(--shadow);
-    transition:transform .15s;z-index:3;
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:0 0 auto;white-space:nowrap;border:3px solid var(--pink-soft);background:#fff;border-radius:18px;
+    padding:10px 14px;font-family:inherit;font-weight:bold;font-size:15px;color:var(--ink);
+    cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .12s;
   }
-  .mute-btn:active{transform:scale(.82);}
-  .mute-btn.off{filter:grayscale(.8);opacity:.55;}
+  .tab:active{transform:scale(.96);}
+  .tab.active{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-deep);}
+  .tab-count{background:#fff;border-radius:12px;font-size:13px;padding:1px 8px;color:var(--purple);}
+  .tab.active .tab-count{color:var(--pink-deep);}
+
+  /* FAB «Новое задание» — поверх списка, над навигацией */
+  .fab{
+    position:absolute;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:40;
+    width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-size:30px;line-height:1;
+    box-shadow:0 8px 22px rgba(255,95,168,.5);transition:transform .15s;
+  }
+  .fab:active{transform:scale(.9);}
+  .fab[hidden]{display:none;}
+
+  /* нижняя навигация — фиксирована внизу, не скроллится */
+  .bottom-nav{
+    flex:0 0 auto;display:flex;background:#fff;border-top:3px solid var(--pink-soft);
+    box-shadow:0 -4px 16px rgba(255,95,168,.12);padding-bottom:env(safe-area-inset-bottom);
+  }
+  .nav-item{
+    flex:1;border:none;background:transparent;cursor:pointer;font-family:inherit;
+    padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    color:#c98bb3;transition:transform .12s;
+  }
+  .nav-item:active{transform:scale(.9);}
+  .nav-ic{font-size:24px;line-height:1;filter:grayscale(.4);opacity:.65;transition:transform .15s;}
+  .nav-lb{font-size:12px;font-weight:bold;}
+  .nav-item.active{color:var(--pink-deep);}
+  .nav-item.active .nav-ic{filter:none;opacity:1;transform:scale(1.12);}
+
   header h1{
     margin:0;font-size:30px;line-height:1.1;
     color:#fff;
@@ -86,18 +133,17 @@
   @keyframes wiggle{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
   .score-pill #stars{color:var(--pink-deep);}
   .score-pill #points{color:var(--purple);}
-  .score-pill #trophies{color:#e8950c;}
   .pop{animation:pop .5s cubic-bezier(.3,1.6,.5,1);}
   @keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.5);}100%{transform:scale(1);}}
 
-  /* единорог-маскот */
-  .mascot{text-align:center;margin:4px 0 2px;}
-  .mascot .uni{font-size:56px;display:inline-block;animation:hop 2.2s ease-in-out infinite;cursor:pointer;}
+  /* единорог-маскот: единорог зафиксирован слева, текст справа — длина текста его не двигает */
+  .mascot{display:flex;align-items:center;gap:10px;margin:8px 2px 2px;}
+  .mascot .uni{flex:0 0 auto;font-size:52px;display:inline-block;animation:hop 2.2s ease-in-out infinite;cursor:pointer;}
   @keyframes hop{0%,100%{transform:translateY(0) scale(1);}30%{transform:translateY(-12px) scale(1.05);}60%{transform:translateY(0) scale(.97);}}
   .speech{
-    display:inline-block;background:#fff;border:3px solid var(--pink-soft);
-    border-radius:18px;padding:6px 14px;font-size:15px;margin-top:2px;
-    box-shadow:0 4px 10px rgba(0,0,0,.06);max-width:90%;
+    flex:1;background:#fff;border:3px solid var(--pink-soft);
+    border-radius:18px;padding:8px 14px;font-size:15px;text-align:left;
+    box-shadow:0 4px 10px rgba(0,0,0,.06);
   }
 
   /* кнопка добавить */
@@ -131,9 +177,9 @@
   @keyframes cardOut{to{transform:scale(.6) translateY(-10px);opacity:0;height:0;margin:0;padding:0;}}
   .task.done{background:linear-gradient(135deg,#fff,#f1ffe9);border-color:var(--mint);}
 
-  .task-head{display:flex;align-items:center;gap:10px;}
-  .task-emoji{font-size:38px;flex:0 0 auto;animation:wiggle 3s ease-in-out infinite;}
-  .task-title{font-size:22px;font-weight:bold;flex:1;word-break:break-word;}
+  .task-head{display:flex;align-items:center;gap:8px;}
+  .task-emoji{font-size:32px;flex:0 0 auto;animation:wiggle 3s ease-in-out infinite;}
+  .task-title{font-size:19px;font-weight:bold;flex:1;word-break:break-word;line-height:1.15;}
   .task.done .task-title{text-decoration:line-through;opacity:.6;}
   .icon-btn{
     border:none;background:var(--lilac);color:var(--purple);font-size:18px;
@@ -150,9 +196,19 @@
     height:100%;width:0%;border-radius:10px;
     background:linear-gradient(90deg,var(--pink),var(--purple),var(--mint));
     background-size:200% 100%;transition:width .5s cubic-bezier(.3,1.3,.5,1);
-    animation:shimmer 2s linear infinite;
+    animation:shimmer 3.4s ease-in-out infinite alternate;   /* плавно туда-сюда, без резкого стыка */
   }
-  @keyframes shimmer{0%{background-position:0 0;}100%{background-position:200% 0;}}
+  @keyframes shimmer{0%{background-position:0% 50%;}100%{background-position:100% 50%;}}
+  /* завершённое задание: спокойный статичный бар, не отвлекает */
+  .task.done .progress-fill{animation:none;background:var(--mint);}
+
+  /* свёрнутые задания: видны только шапка и прогресс; шаги — по тапу */
+  .task.collapsed .subs,.task.collapsed .add-sub{display:none;}
+  .task.collapsed .icon-btn.edit{display:none;}   /* карандаш — только когда развёрнуто */
+  .task.collapsed .task-head{cursor:pointer;}
+  .task.collapsed .progress-wrap{margin-bottom:0;}
+  .task:not(.collapsed) .subs{animation:fade .25s;}
+  .icon-btn.again{background:#e6fff4;color:#0e9c6e;}
   .progress-label{font-size:13px;text-align:right;margin-top:3px;opacity:.7;}
 
   /* подзадания */
@@ -220,7 +276,12 @@
     background:var(--cream);width:100%;max-width:520px;border-radius:30px 30px 0 0;
     padding:22px 18px 30px;box-shadow:0 -8px 30px rgba(0,0,0,.2);
     animation:slideUp .35s cubic-bezier(.3,1.3,.5,1);
+    max-height:90vh;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:var(--pink-soft) transparent;
   }
+  .sheet::-webkit-scrollbar{width:8px;}
+  .sheet::-webkit-scrollbar-track{background:transparent;}
+  .sheet::-webkit-scrollbar-thumb{background:var(--pink-soft);border-radius:8px;}
   @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
   .sheet h2{margin:0 0 14px;text-align:center;font-size:24px;color:var(--pink-deep);}
   .sheet label{font-size:15px;font-weight:bold;display:block;margin:10px 0 5px;}
@@ -272,30 +333,184 @@
     80%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1;}
     100%{transform:translate(-50%,-60%) scale(.8);opacity:0;}
   }
+
+  /* ===== новые элементы ===== */
+  .mute-btn.gear{left:0;right:auto;}
+
+  /* кнопка магазина */
+  .shop-btn{
+    display:block;width:100%;margin:0 0 8px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#ffd36e,#ff8fc7);
+    color:#fff;font-size:18px;font-weight:bold;font-family:inherit;
+    padding:14px;border-radius:22px;box-shadow:var(--shadow);transition:transform .15s;
+  }
+  .shop-btn:active{transform:scale(.95);}
+
+  /* бейджи на карточке: повтор и стрик */
+  .task-badges{display:flex;gap:5px;align-items:center;flex:0 0 auto;}
+  .badge{
+    font-size:13px;font-weight:bold;border-radius:12px;padding:2px 8px;white-space:nowrap;
+  }
+  .badge.repeat{background:var(--lilac);color:var(--purple);}
+  .badge.streak{background:#fff0d6;color:#e8730c;border:2px solid #ffd9a0;}
+
+  /* ручка перетаскивания */
+  .drag-handle{
+    flex:0 0 auto;cursor:grab;color:#d9a8c6;font-size:22px;line-height:1;
+    padding:4px 2px;touch-action:none;user-select:none;
+  }
+  .drag-handle:active{cursor:grabbing;}
+  .task.dragging{box-shadow:0 18px 40px rgba(255,95,168,.45);opacity:.96;}
+  .task-placeholder{
+    border:3px dashed var(--pink);border-radius:26px;margin:14px 0;
+    background:rgba(255,143,199,.08);
+  }
+
+  /* переключатель «повторять» */
+  .switch-row{
+    display:flex;align-items:center;gap:10px;margin-top:14px;font-size:16px;
+    background:#fff;border:3px solid var(--pink-soft);border-radius:16px;padding:10px 14px;cursor:pointer;
+  }
+  .switch-row input{width:22px;height:22px;accent-color:var(--pink-deep);}
+
+  /* выбор повторения: режим + дни недели */
+  .repeat-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .repeat-pick button{
+    flex:1;min-width:96px;border:3px solid var(--pink-soft);background:#fff;border-radius:16px;
+    padding:10px 8px;font-family:inherit;font-weight:bold;font-size:14px;color:var(--ink);
+    cursor:pointer;transition:transform .15s;
+  }
+  .repeat-pick button:active{transform:scale(.93);}
+  .repeat-pick button.sel{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-deep);}
+  .weekday-pick{display:flex;gap:6px;margin-top:8px;}
+  .weekday-pick[hidden]{display:none;}
+  .weekday-pick button{
+    flex:1;border:3px solid var(--pink-soft);background:#fff;border-radius:12px;
+    padding:9px 0;font-family:inherit;font-weight:bold;font-size:14px;color:var(--ink);
+    cursor:pointer;transition:transform .12s;
+  }
+  .weekday-pick button:active{transform:scale(.9);}
+  .weekday-pick button.sel{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-deep);}
+
+  /* полноэкранный просмотр задания: маскот/табы/список скрыты, шкала ⭐💎 сверху остаётся */
+  #viewTasks.detail-mode .mascot,#viewTasks.detail-mode .tabs{display:none;}
+  .detail-back{
+    border:3px solid var(--pink-soft);background:#fff;color:var(--pink-deep);
+    font-family:inherit;font-weight:bold;font-size:16px;border-radius:16px;padding:10px 16px;
+    margin:6px 0 4px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  }
+  .detail-back:active{transform:scale(.95);}
+  .task.detail{margin:8px 0;}
+  .task.detail .task-title{font-size:22px;}
+  .task.detail .task-emoji{font-size:40px;}
+
+  /* магазин */
+  .shop-balance{text-align:center;font-size:20px;font-weight:bold;color:var(--purple);margin:0 0 12px;}
+  .reward-card{
+    display:flex;flex-direction:column;gap:8px;background:#fff;border:3px solid var(--pink-soft);
+    border-radius:18px;padding:10px 12px;margin:8px 0;animation:cardIn .3s;
+  }
+  .reward-top{display:flex;align-items:center;gap:10px;}
+  .reward-card .r-emoji{font-size:30px;flex:0 0 auto;}
+  .reward-card .r-name{flex:1;font-weight:bold;font-size:16px;word-break:break-word;}
+  .reward-card .r-cost{font-size:15px;font-weight:bold;color:var(--purple);white-space:nowrap;}
+  .reward-actions{display:flex;gap:8px;align-items:center;}
+  .buy-btn{
+    flex:1;border:none;border-radius:14px;padding:10px 14px;font-family:inherit;font-weight:bold;font-size:15px;
+    background:linear-gradient(135deg,var(--mint),#7fe0c0);color:#0a6b4e;cursor:pointer;transition:transform .15s;
+  }
+  .buy-btn:active{transform:scale(.95);}
+  .buy-btn:disabled{background:var(--lilac);color:#b6a8cf;cursor:default;}
+  .r-del{border:none;background:#ffe0e9;color:var(--pink-deep);border-radius:14px;width:46px;height:40px;cursor:pointer;font-size:16px;flex:0 0 auto;}
+  .add-reward-toggle,.settings-btn-row button{
+    display:block;width:100%;border:3px dashed var(--purple);background:#fff;color:var(--purple);
+    font-family:inherit;font-weight:bold;font-size:16px;border-radius:16px;padding:12px;margin-top:10px;cursor:pointer;
+  }
+  #addRewardForm label{font-size:15px;font-weight:bold;display:block;margin:10px 0 5px;color:var(--ink);}
+  #addRewardForm input[type=text],#addRewardForm input[type=number]{
+    width:100%;border:3px solid var(--pink-soft);border-radius:16px;padding:12px;font-size:18px;
+    font-family:inherit;color:var(--ink);outline:none;background:#fff;
+  }
+  #addRewardForm input:focus{border-color:var(--pink);}
+  #saveReward{
+    display:block;width:100%;border:none;border-radius:16px;padding:12px;margin-top:10px;cursor:pointer;
+    background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;font-weight:bold;font-size:16px;font-family:inherit;
+  }
+  .claimed-title{margin:16px 0 4px;font-weight:bold;color:var(--ink);}
+  .claimed-item{font-size:14px;color:#9a7b90;padding:3px 0;}
+  .settings-note{font-size:13px;color:#a98abf;text-align:center;margin-top:12px;}
+  .settings-stats{
+    text-align:center;font-size:15px;font-weight:bold;color:var(--purple);
+    background:#fff;border:3px solid var(--pink-soft);border-radius:14px;padding:9px;margin:0 0 14px;
+  }
+  .settings-btn-row button{border-style:solid;border-color:var(--pink-soft);}
 </style>
 </head>
 <body>
 
 <div class="app">
-  <header>
-    <button class="mute-btn" id="muteBtn" title="Звук вкл/выкл">🔊</button>
+  <header class="topbar">
     <h1>🦄 Мои Задания 🌈</h1>
     <div class="scorebar">
       <div class="score-pill"><span class="ic">⭐</span><span id="stars">0</span></div>
       <div class="score-pill"><span class="ic">💎</span><span id="points">0</span></div>
-      <div class="score-pill"><span class="ic">🏆</span><span id="trophies">0</span></div>
-    </div>
-    <div class="mascot">
-      <span class="uni" id="uni" title="Нажми меня!">🦄</span>
-      <div class="speech" id="speech">Привет! Давай выполнять задания! 💕</div>
     </div>
   </header>
 
-  <button class="add-btn" id="openAdd">➕ Новое задание</button>
+  <main class="content">
+    <!-- ЭКРАН: ЗАДАНИЯ -->
+    <section class="view active" id="viewTasks">
+      <div class="mascot">
+        <span class="uni" id="uni" title="Нажми меня!">🦄</span>
+        <div class="speech" id="speech">Привет! Давай выполнять задания! 💕</div>
+      </div>
+      <div class="tabs" id="taskTabs">
+        <button class="tab active" data-tab="open">📋 Открытые <span class="tab-count" id="cntOpen">0</span></button>
+        <button class="tab" data-tab="daily">🗓️ Режим дня <span class="tab-count" id="cntDaily">0</span></button>
+        <button class="tab" data-tab="done">✅ Закрытые <span class="tab-count" id="cntDone">0</span></button>
+      </div>
+      <div id="list"></div>
+    </section>
 
-  <button class="install-btn" id="installBtn" hidden>📲 Установить приложение</button>
+    <!-- ЭКРАН: МАГАЗИН -->
+    <section class="view" id="viewShop">
+      <h2 class="view-title">🎁 Магазин наград</h2>
+      <div id="shopList"></div>
+      <button class="add-reward-toggle" id="addRewardToggle">➕ Добавить награду</button>
+      <div id="addRewardForm" hidden>
+        <label>Название награды</label>
+        <input type="text" id="rewardName" placeholder="Например: Мороженое" maxlength="30">
+        <label>Картинка</label>
+        <div class="emoji-pick" id="rewardEmoji"></div>
+        <label>Сколько стоит (💎)</label>
+        <input type="number" id="rewardCost" value="50" min="1" max="9999">
+        <button id="saveReward">Сохранить награду 💖</button>
+      </div>
+      <div id="claimedWrap"></div>
+    </section>
 
-  <div id="list"></div>
+    <!-- ЭКРАН: НАСТРОЙКИ -->
+    <section class="view" id="viewSettings">
+      <h2 class="view-title">⚙️ Настройки</h2>
+      <div class="settings-stats" id="settingsStats"></div>
+      <label class="switch-row" for="muteChk"><input type="checkbox" id="muteChk"> 🔊 Звуки</label>
+      <div class="settings-btn-row">
+        <button id="exportBtn">💾 Сохранить данные в файл</button>
+        <button id="importBtn">📂 Загрузить данные из файла</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button class="install-btn" id="installBtn" hidden>📲 Установить приложение</button>
+      <p class="settings-note">Сохрани файл, чтобы не потерять прогресс или перенести его на другое устройство. Загрузка заменит текущие данные.</p>
+    </section>
+  </main>
+
+  <button class="fab" id="openAdd" title="Новое задание">➕</button>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-view="tasks"><span class="nav-ic">📋</span><span class="nav-lb">Задания</span></button>
+    <button class="nav-item" data-view="shop"><span class="nav-ic">🎁</span><span class="nav-lb">Магазин</span></button>
+    <button class="nav-item" data-view="settings"><span class="nav-ic">⚙️</span><span class="nav-lb">Настройки</span></button>
+  </nav>
 </div>
 
 <!-- модалка добавления задания -->
@@ -310,6 +525,21 @@
     <input type="text" id="taskName" placeholder="Например: Уборка в комнате" maxlength="40">
     <label>Выбери картинку</label>
     <div class="emoji-pick" id="emojiPick"></div>
+    <label>Повторение</label>
+    <div class="repeat-pick" id="repeatPick">
+      <button type="button" data-rep="once" class="sel">Не повторять</button>
+      <button type="button" data-rep="daily">Каждый день</button>
+      <button type="button" data-rep="weekly">По дням недели</button>
+    </div>
+    <div class="weekday-pick" id="weekdayPick" hidden>
+      <button type="button" data-d="1">Пн</button>
+      <button type="button" data-d="2">Вт</button>
+      <button type="button" data-d="3">Ср</button>
+      <button type="button" data-d="4">Чт</button>
+      <button type="button" data-d="5">Пт</button>
+      <button type="button" data-d="6">Сб</button>
+      <button type="button" data-d="0">Вс</button>
+    </div>
     <div class="sheet-actions">
       <button class="cancel" id="cancelAdd">Отмена</button>
       <button class="ok" id="saveTask">Готово 💖</button>
@@ -323,26 +553,70 @@
 <script>
 //==== данные ====
 const STORE_KEY='unicornTasks_v1';
-let state=loadState();
-
-function loadState(){
-  try{
-    const s=JSON.parse(localStorage.getItem(STORE_KEY));
-    if(s&&s.tasks){
-      if(typeof s.trophies!=='number')s.trophies=0;   // совместимость со старыми сохранениями
-      if(typeof s.muted!=='boolean')s.muted=false;
-      // флаги «награда уже начислена» — чтобы старые сохранения не давали очки повторно
-      s.tasks.forEach(t=>{
-        if(typeof t.awarded!=='boolean')t.awarded=t.subs.length>0&&t.subs.every(x=>x.done);
-        t.subs.forEach(x=>{if(typeof x.awarded!=='boolean')x.awarded=x.done;});
-      });
-      return s;
-    }
-  }catch(e){}
-  return {tasks:[],stars:0,points:0,trophies:0,muted:false};
-}
-function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function defaultRewards(){
+  return [
+    {id:uid(),emoji:'🎮',name:'15 минут игры',cost:90},
+    {id:uid(),emoji:'📺',name:'15 минут мультфильма',cost:60},
+    {id:uid(),emoji:'🎡',name:'Аттракцион',cost:300},
+  ];
+}
+
+// приводим любое сохранение/импорт к корректному виду (заполняем недостающие поля)
+function normalize(s){
+  s=s||{};
+  if(!Array.isArray(s.tasks))s.tasks=[];
+  s.stars=+s.stars||0; s.points=+s.points||0; s.trophies=+s.trophies||0;
+  s.muted=!!s.muted;
+  if(typeof s.lastSeenDate!=='string')s.lastSeenDate='';
+  if(!Array.isArray(s.rewards))s.rewards=defaultRewards();
+  if(!Array.isArray(s.claimed))s.claimed=[];
+  s.tasks.forEach(t=>{
+    if(typeof t.repeat!=='string'||(t.repeat!=='daily'&&t.repeat!=='weekly'))t.repeat='once';
+    if(!Array.isArray(t.days))t.days=[];
+    if(typeof t.streak!=='number')t.streak=0;
+    if(!('lastDoneDate'in t))t.lastDoneDate=null;
+    if(!Array.isArray(t.subs))t.subs=[];
+    if(typeof t.awarded!=='boolean')t.awarded=t.subs.length>0&&t.subs.every(x=>x.done);
+    t.subs.forEach(x=>{
+      if(typeof x.done!=='boolean')x.done=false;
+      if(typeof x.awarded!=='boolean')x.awarded=!!x.done;
+    });
+  });
+  return s;
+}
+function loadState(){
+  try{const s=JSON.parse(localStorage.getItem(STORE_KEY));if(s&&s.tasks)return normalize(s);}catch(e){}
+  return normalize({});
+}
+let state=loadState();
+function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+
+//==== даты и ежедневный сброс ====
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayDiff(a,b){const da=new Date(a+'T00:00:00'),db=new Date(b+'T00:00:00');return Math.round((db-da)/86400000);}
+// сколько дней подряд для отображения 🔥 (0 если стрик прерван)
+function streakInfo(t){
+  if(t.repeat!=='daily'||!t.lastDoneDate)return 0;
+  const d=dayDiff(t.lastDoneDate,todayStr());
+  return (d===0||d===1)?(t.streak||0):0;   // сделано сегодня или вчера — стрик жив
+}
+// при новом дне сбрасываем ежедневные дела, чтобы их можно было выполнить снова
+function dailyRollover(){
+  const today=todayStr();
+  if(state.lastSeenDate===today)return;
+  const dow=new Date().getDay();
+  state.tasks.forEach(t=>{
+    if(t.repeat==='daily'||(t.repeat==='weekly'&&t.days&&t.days.includes(dow))){
+      t.subs.forEach(s=>{s.done=false;s.awarded=false;});
+      t.awarded=false;
+    }
+  });
+  state.lastSeenDate=today;
+  save();
+}
+dailyRollover();
 
 //==== фон: плавающие штучки ====
 const bgIcons=['🌸','⭐','💖','🦄','🌈','✨','🍬','🎀','💎','🌷'];
@@ -371,14 +645,14 @@ EMOJIS.forEach(em=>{
 //==== типовые (готовые) дела ====
 const PRESETS=[
   {name:'Уборка в комнате',emoji:'🧹',subs:['Убрать игрушки','Застелить кровать','Протереть пыль','Пропылесосить']},
-  {name:'Уроки',emoji:'📚',subs:['Математика','Чтение','Письмо','Проверить дневник']},
+  {name:'Уроки',emoji:'📚',daily:true,subs:['Математика','Чтение','Письмо','Проверить дневник']},
   {name:'Принять ванну',emoji:'🛁',subs:['Намочить волосы','Помыть голову','Помыться','Вытереться насухо']},
-  {name:'Почистить зубы',emoji:'🪥',subs:['Щётка с пастой','Чистить 2 минуты','Прополоскать рот']},
-  {name:'Накрыть на стол',emoji:'🍽️',subs:['Тарелки','Вилки и ложки','Салфетки']},
-  {name:'Покормить питомца',emoji:'🐶',subs:['Насыпать корм','Налить свежей воды']},
-  {name:'Собрать рюкзак',emoji:'🎒',subs:['Учебники','Тетради','Пенал','Форма для физкультуры']},
+  {name:'Почистить зубы',emoji:'🪥',daily:true,subs:['Щётка с пастой','Чистить 2 минуты','Прополоскать рот']},
+  {name:'Накрыть на стол',emoji:'🍽️',daily:true,subs:['Тарелки','Вилки и ложки','Салфетки']},
+  {name:'Покормить питомца',emoji:'🐶',daily:true,subs:['Насыпать корм','Налить свежей воды']},
+  {name:'Собрать рюкзак',emoji:'🎒',daily:true,subs:['Учебники','Тетради','Пенал','Форма для физкультуры']},
   {name:'Полить цветы',emoji:'🌱',subs:['Проверить землю','Полить водой']},
-  {name:'Заправить кровать',emoji:'🛏️',subs:['Расправить простыню','Поправить подушку','Накрыть покрывалом']},
+  {name:'Заправить кровать',emoji:'🛏️',daily:true,subs:['Расправить простыню','Поправить подушку','Накрыть покрывалом']},
   {name:'Помочь на кухне',emoji:'🍎',subs:['Помыть фрукты','Убрать со стола','Помыть посуду']},
 ];
 let pendingSubs=[];   // подзадачи выбранного готового дела (добавятся при сохранении нового дела)
@@ -390,6 +664,7 @@ PRESETS.forEach(p=>{
     taskName.value=p.name;
     pickEmoji(p.emoji);
     pendingSubs=p.subs.slice();
+    pickedDays.clear();setRepeat(p.daily?'daily':'once');renderDays();   // авто-режим для ежедневных
     [...presetPick.children].forEach(c=>c.classList.remove('sel'));
     b.classList.add('sel');
   };
@@ -412,61 +687,169 @@ document.getElementById('uni').onclick=()=>{
 const list=document.getElementById('list');
 function isDone(t){return t.subs.length>0&&t.subs.every(s=>s.done);}
 
+let taskTab='open';     // активная вкладка: open (открытые) | daily (режим дня) | done (закрытые)
+let currentView='tasks';// активный экран нижней навигации
+let detailId=null;      // id задания, открытого на весь экран (null — список)
+const DOW_SHORT=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+function daysLabel(days){
+  if(!days||!days.length)return 'по дням';
+  return [1,2,3,4,5,6,0].filter(d=>days.includes(d)).map(d=>DOW_SHORT[d]).join(' ');
+}
 function render(){
   document.getElementById('stars').textContent=state.stars;
   document.getElementById('points').textContent=state.points;
-  document.getElementById('trophies').textContent=state.trophies;
+  const once=state.tasks.filter(t=>t.repeat==='once');
+  const recurring=state.tasks.filter(t=>t.repeat==='daily'||t.repeat==='weekly');
+  const open=once.filter(t=>!isDone(t));
+  const done=once.filter(t=>isDone(t));
+  document.getElementById('cntOpen').textContent=open.length;
+  document.getElementById('cntDaily').textContent=recurring.length;
+  document.getElementById('cntDone').textContent=done.length;
+
+  const viewTasks=document.getElementById('viewTasks');
+  // полноэкранный просмотр одного задания
+  if(detailId){
+    const t=state.tasks.find(x=>x.id===detailId);
+    if(t){
+      viewTasks.classList.add('detail-mode');updateFab();
+      list.innerHTML='';
+      const back=document.createElement('button');back.className='detail-back';back.textContent='← Назад';back.onclick=closeDetail;
+      list.appendChild(back);
+      list.appendChild(taskCard(t,true));
+      return;
+    }
+    detailId=null;   // задание удалили — выходим из просмотра
+  }
+  viewTasks.classList.remove('detail-mode');updateFab();
+  const tabsEl=document.getElementById('taskTabs');     // подсветка вкладки всегда по taskTab
+  [...tabsEl.querySelectorAll('.tab')].forEach(tb=>tb.classList.toggle('active',tb.dataset.tab===taskTab));
+  const actTab=tabsEl.querySelector('.tab.active');if(actTab)actTab.scrollIntoView({inline:'nearest',block:'nearest'});
+
   list.innerHTML='';
   if(state.tasks.length===0){
-    list.innerHTML='<div class="empty"><span class="big">🦄</span>Пока нет заданий!<br>Нажми «Новое задание» 💕</div>';
+    list.innerHTML='<div class="empty"><span class="big">🦄</span>Пока нет заданий!<br>Нажми «➕» внизу справа 💕</div>';
     return;
   }
-  const open=state.tasks.filter(t=>!isDone(t));
-  const done=state.tasks.filter(t=>isDone(t));
-
-  // Открытые
-  const hOpen=document.createElement('div');
-  hOpen.className='section-title';
-  hOpen.innerHTML=`📋 Открытые <span class="count">${open.length}</span>`;
-  list.appendChild(hOpen);
-  if(open.length===0){
-    const e=document.createElement('div');e.className='done-empty';
-    e.textContent='Всё сделано! Ты умничка 🌈';list.appendChild(e);
+  const shown=taskTab==='open'?open:taskTab==='daily'?recurring:done;
+  if(shown.length===0){
+    const e=document.createElement('div');e.className='empty';
+    e.innerHTML=taskTab==='open'?'<span class="big">🌈</span>Открытых заданий нет 💖'
+      :taskTab==='daily'?'<span class="big">🗓️</span>Дел на каждый день пока нет'
+      :'<span class="big">💪</span>Пока пусто —<br>выполни задание целиком';
+    list.appendChild(e);
   }else{
-    open.forEach(t=>list.appendChild(taskCard(t)));
-  }
-
-  // Сделанные
-  const hDone=document.createElement('div');
-  hDone.className='section-title done-title';
-  hDone.innerHTML=`✅ Сделанные <span class="count">${done.length}</span>`;
-  list.appendChild(hDone);
-  if(done.length===0){
-    const e=document.createElement('div');e.className='done-empty';
-    e.textContent='Пока пусто — выполни задание целиком 💪';list.appendChild(e);
-  }else{
-    done.forEach(t=>list.appendChild(taskCard(t)));
+    shown.forEach(t=>list.appendChild(taskCard(t)));
   }
 }
+function updateFab(){fab.hidden=!(currentView==='tasks'&&!detailId);}
 
-function taskCard(t){
+//==== вкладки Открытые / Режим дня / Закрытые ====
+function setTab(name){
+  taskTab=name;
+  [...document.querySelectorAll('#taskTabs .tab')].forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  const act=document.querySelector('#taskTabs .tab.active');
+  if(act)act.scrollIntoView({inline:'center',block:'nearest'});   // активная вкладка всегда видна
+  document.querySelector('.content').scrollTop=0;
+  render();
+}
+document.getElementById('taskTabs').addEventListener('click',(e)=>{
+  const b=e.target.closest('.tab');if(!b||b.dataset.tab===taskTab)return;
+  sfxClick();setTab(b.dataset.tab);
+});
+// перетаскивание ленты вкладок мышью (палец скроллит нативно)
+(function(){
+  const el=document.getElementById('taskTabs');
+  let down=false,moved=false,startX=0,startScroll=0;
+  el.addEventListener('pointerdown',(e)=>{
+    if(e.pointerType!=='mouse')return;
+    down=true;moved=false;startX=e.clientX;startScroll=el.scrollLeft;
+  });
+  el.addEventListener('pointermove',(e)=>{
+    if(!down)return;
+    const dx=e.clientX-startX;
+    if(!moved&&Math.abs(dx)>5){moved=true;try{el.setPointerCapture(e.pointerId);}catch(_){}}
+    if(moved){el.scrollLeft=startScroll-dx;e.preventDefault();}
+  });
+  const end=()=>{down=false;};
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
+  el.addEventListener('lostpointercapture',end);
+  el.addEventListener('click',(e)=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);  // после протяжки не переключаем вкладку
+})();
+
+//==== полноэкранный просмотр задания (по тапу) ====
+function openDetail(id){detailId=id;sfxClick();document.querySelector('.content').scrollTop=0;render();}
+function closeDetail(){detailId=null;document.querySelector('.content').scrollTop=0;render();}
+
+//==== сделать копию закрытого задания заново в «Открытые» ====
+function recreateTask(id){
+  const t=state.tasks.find(x=>x.id===id);if(!t)return;
+  const nid=uid();
+  state.tasks.unshift({id:nid,name:t.name,emoji:t.emoji,repeat:'once',days:[],streak:0,lastDoneDate:null,awarded:false,
+    subs:t.subs.map(s=>({id:uid(),text:s.text,done:false,awarded:false}))});
+  save();sfxPop();speak('Задание создано заново! 💪');
+  taskTab='open';openDetail(nid);
+}
+
+//==== нижняя навигация: переключение экранов ====
+const fab=document.getElementById('openAdd');
+function switchView(name){
+  currentView=name;
+  detailId=null;                               // выходим из полноэкранного просмотра
+  const id='view'+name.charAt(0).toUpperCase()+name.slice(1);
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===name));
+  document.getElementById('viewTasks').classList.remove('detail-mode');
+  updateFab();
+  document.querySelector('.content').scrollTop=0;
+  if(name==='tasks')render();
+  if(name==='shop')renderShop();
+  if(name==='settings'){renderSettingsStats();renderMute();}
+}
+document.querySelector('.bottom-nav').addEventListener('click',(e)=>{
+  const b=e.target.closest('.nav-item');if(!b)return;
+  sfxClick();switchView(b.dataset.view);
+});
+
+function taskCard(t,detail){
   const total=t.subs.length;
   const done=t.subs.filter(s=>s.done).length;
   const pct=total?Math.round(done/total*100):0;
   const allDone=total>0&&done===total;
+  const streak=streakInfo(t);
 
   const card=document.createElement('div');
-  card.className='task'+(allDone?' done':'');
+  card.className='task'+(allDone?' done':'')+(detail?' detail':' collapsed');
   card.dataset.id=t.id;
 
+  // шапка
   const head=document.createElement('div');head.className='task-head';
-  head.innerHTML=`<span class="task-emoji">${t.emoji}</span><span class="task-title">${esc(t.name)}</span>`;
-  const edit=document.createElement('button');edit.className='icon-btn';edit.textContent='✏️';
-  edit.onclick=()=>openEdit(t.id);
-  const del=document.createElement('button');del.className='icon-btn del';del.textContent='🗑️';
-  del.onclick=()=>removeTask(t.id,card);
-  head.appendChild(edit);head.appendChild(del);
+  let handle=null;
+  if(!detail){handle=document.createElement('span');handle.className='drag-handle';handle.textContent='⠿';handle.title='Перетащи, чтобы поменять порядок';}
+  const emoji=document.createElement('span');emoji.className='task-emoji';emoji.textContent=t.emoji;
+  const title=document.createElement('span');title.className='task-title';title.textContent=t.name;
+  const edit=document.createElement('button');edit.className='icon-btn edit';edit.textContent='✏️';edit.onclick=(e)=>{e.stopPropagation();openEdit(t.id);};
+  const del=document.createElement('button');del.className='icon-btn del';del.textContent='🗑️';del.onclick=(e)=>{e.stopPropagation();removeTask(t.id,card);};
+  if(handle)head.append(handle);
+  head.append(emoji,title);
+  if(allDone&&t.repeat==='once'){     // в «Закрытых» — сделать копию задания заново в «Открытые»
+    const again=document.createElement('button');again.className='icon-btn again';again.textContent='🔄';again.title='Сделать снова';
+    again.onclick=(e)=>{e.stopPropagation();recreateTask(t.id);};
+    head.append(again);
+  }
+  head.append(edit,del);
+  if(!detail)head.onclick=(e)=>{if(e.target.closest('.icon-btn')||e.target.closest('.drag-handle'))return;openDetail(t.id);};
   card.appendChild(head);
+  if(!detail)attachDrag(card,handle);
+
+  // бейджи: повтор + стрик
+  if(t.repeat!=='once'||streak>0){
+    const b=document.createElement('div');b.className='task-badges';b.style.marginTop='8px';
+    if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
+    else if(t.repeat==='weekly'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 '+daysLabel(t.days);b.appendChild(r);}
+    if(streak>0){const sx=document.createElement('span');sx.className='badge streak';sx.textContent='🔥 '+streak+(streak%10===1&&streak%100!==11?' день':' дн.');b.appendChild(sx);}
+    card.appendChild(b);
+  }
 
   // прогресс
   const pw=document.createElement('div');pw.className='progress-wrap';
@@ -481,8 +864,8 @@ function taskCard(t){
     const ck=document.createElement('span');ck.className='check';ck.textContent=s.done?'✓':'';
     const tx=document.createElement('span');tx.className='sub-text';tx.textContent=s.text;
     const sd=document.createElement('button');sd.className='sub-del';sd.textContent='✕';
-    li.appendChild(ck);li.appendChild(tx);li.appendChild(sd);
-    li.onclick=(e)=>{if(e.target===sd)return;toggleSub(t.id,s.id,li);};
+    li.append(ck,tx,sd);
+    li.onclick=(e)=>{if(e.target.closest('.sub-del'))return;toggleSub(t.id,s.id,li);};
     sd.onclick=(e)=>{e.stopPropagation();removeSub(t.id,s.id);};
     ul.appendChild(li);
   });
@@ -513,17 +896,26 @@ function toggleSub(taskId,subId,li){
     cheer();sfxPop();burstAtEl(li,10);
     if(!s.awarded){              // награда только за ПЕРВОЕ выполнение шага (защита от накрутки)
       s.awarded=true;
-      state.points+=5;state.stars+=1;
-      bumpScore('points');bumpScore('stars');
+      state.stars+=1;            // ⭐ за шаг — валюта на виртуальные покупки (одевалка)
+      bumpScore('stars');
     }
   }
   const nowAllDone=t.subs.length>0&&t.subs.every(x=>x.done);
   save();render();
   if(nowAllDone&&!wasAllDone){
-    if(!t.awarded){             // кубок и крупные очки — только за первое полное выполнение
+    if(!t.awarded){             // кубок и крупные очки — только за первое полное выполнение (в этот день)
       t.awarded=true;
-      state.trophies+=1;state.points+=50;save();
-      bumpScore('trophies');bumpScore('points');
+      state.trophies+=1;state.points+=50;   // 🏆 счётчик за кадром (в настройках), 💎 алмазы → магазин реальных призов
+      // стрик для ежедневных дел — обновляем один раз в день
+      if(t.repeat==='daily'){
+        const today=todayStr();
+        if(t.lastDoneDate!==today){
+          t.streak=(t.lastDoneDate&&dayDiff(t.lastDoneDate,today)===1)?(t.streak||0)+1:1;
+          t.lastDoneDate=today;
+        }
+      }
+      save();
+      bumpScore('points');
       render();
     }
     bigCelebrate(t.name);
@@ -550,11 +942,26 @@ const overlay=document.getElementById('overlay');
 const taskName=document.getElementById('taskName');
 const presetWrap=document.getElementById('presetWrap');
 function clearPresetSel(){[...presetPick.children].forEach(c=>c.classList.remove('sel'));pendingSubs=[];}
+// выбор повторения: режим (Не повторять / Каждый день / По дням недели) + дни недели
+let pickedRepeat='once';
+let pickedDays=new Set();
+const repeatPick=document.getElementById('repeatPick');
+const weekdayPick=document.getElementById('weekdayPick');
+function setRepeat(rep){
+  pickedRepeat=rep;
+  [...repeatPick.children].forEach(b=>b.classList.toggle('sel',b.dataset.rep===rep));
+  weekdayPick.hidden=(rep!=='weekly');
+}
+function renderDays(){
+  [...weekdayPick.children].forEach(b=>b.classList.toggle('sel',pickedDays.has(+b.dataset.d)));
+}
+repeatPick.addEventListener('click',(e)=>{const b=e.target.closest('button');if(!b)return;sfxClick();setRepeat(b.dataset.rep);});
+weekdayPick.addEventListener('click',(e)=>{const b=e.target.closest('button');if(!b)return;const d=+b.dataset.d;pickedDays.has(d)?pickedDays.delete(d):pickedDays.add(d);renderDays();sfxClick();});
 function openAdd(){
   sfxClick();
   editingId=null;
   document.getElementById('sheetTitle').textContent='✨ Новое задание ✨';
-  taskName.value='';pickEmoji(EMOJIS[0]);clearPresetSel();
+  taskName.value='';pickEmoji(EMOJIS[0]);clearPresetSel();pickedDays.clear();setRepeat('once');renderDays();
   presetWrap.style.display='';     // готовые дела — только при создании
   overlay.classList.add('show');setTimeout(()=>taskName.focus(),300);
 }
@@ -563,6 +970,7 @@ function openEdit(id){
   editingId=id;
   document.getElementById('sheetTitle').textContent='✏️ Изменить задание';
   taskName.value=t.name;pickEmoji(t.emoji);clearPresetSel();
+  pickedDays=new Set(t.days||[]);setRepeat(t.repeat);renderDays();
   presetWrap.style.display='none'; // при редактировании готовые дела не нужны
   overlay.classList.add('show');
 }
@@ -573,16 +981,20 @@ function pickEmoji(em){
 function closeSheet(){overlay.classList.remove('show');}
 function saveTask(){
   const name=taskName.value.trim()||'Задание';
+  let repeat=pickedRepeat;
+  let days=repeat==='weekly'?[...pickedDays].sort((a,b)=>a-b):[];
+  if(repeat==='weekly'&&days.length===0)repeat='once';   // дни не выбраны — обычное
   if(editingId){
     const t=state.tasks.find(x=>x.id===editingId);
-    if(t){t.name=name;t.emoji=pickedEmoji;}
-  }else{
-    const subs=pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}));
-    state.tasks.unshift({id:uid(),name,emoji:pickedEmoji,awarded:false,subs});
+    if(t){t.name=name;t.emoji=pickedEmoji;t.repeat=repeat;t.days=days;}
+    pendingSubs=[];sfxPop();save();closeSheet();render();
+    return;
   }
-  pendingSubs=[];
-  sfxPop();
-  save();render();closeSheet();
+  const subs=pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}));
+  const nid=uid();
+  state.tasks.unshift({id:nid,name,emoji:pickedEmoji,repeat,days,streak:0,lastDoneDate:null,awarded:false,subs});
+  taskTab=(repeat==='once')?'open':'daily';        // во вкладке, куда попадёт после закрытия
+  pendingSubs=[];sfxPop();save();closeSheet();openDetail(nid);   // сразу открыть на весь экран — добавить/посмотреть шаги
 }
 document.getElementById('openAdd').onclick=openAdd;
 document.getElementById('cancelAdd').onclick=closeSheet;
@@ -660,11 +1072,11 @@ function sfxClick(){
   blip(360,520,0,0.09,.22);
 }
 
-// кнопка вкл/выкл звука
-const muteBtn=document.getElementById('muteBtn');
-function renderMute(){muteBtn.textContent=state.muted?'🔇':'🔊';muteBtn.classList.toggle('off',state.muted);}
-muteBtn.onclick=()=>{
-  state.muted=!state.muted;save();renderMute();
+// переключатель звука (в Настройках): отмечено = звук включён
+const muteChk=document.getElementById('muteChk');
+function renderMute(){muteChk.checked=!state.muted;}
+muteChk.onchange=()=>{
+  state.muted=!muteChk.checked;save();
   if(!state.muted){audio();sfxPop();}      // звук вернули — сразу слышно
 };
 renderMute();
@@ -739,10 +1151,146 @@ function bigCelebrate(name){
     setTimeout(()=>burstAt(Math.random()*innerWidth,innerHeight*0.7,18),i*120);
   }
   const r=document.getElementById('reward');
-  r.innerHTML=`<span class="big">🏆</span>Задание выполнено!<br>+1 🏆 и +50 💎<br><span style="font-size:15px;opacity:.7">${esc(name)}</span>`;
+  r.innerHTML=`<span class="big">🏆</span>Задание выполнено!<br>+50 💎<br><span style="font-size:15px;opacity:.7">${esc(name)}</span>`;
   r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
   speak('Ура! Целое задание готово! 🎉');
 }
+
+//==== перетаскивание заданий (зажать ручку ⠿ и двигать) ====
+let drag=null;
+function attachDrag(card,handle){
+  handle.addEventListener('pointerdown',(e)=>{
+    e.preventDefault();
+    const rect=card.getBoundingClientRect();
+    const ph=document.createElement('div');ph.className='task-placeholder';ph.style.height=rect.height+'px';
+    card.parentNode.insertBefore(ph,card.nextSibling);
+    card.classList.add('dragging');
+    Object.assign(card.style,{position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',margin:'0',zIndex:'200',pointerEvents:'none'});
+    drag={card,ph,offsetY:e.clientY-rect.top};
+    sfxClick();
+    window.addEventListener('pointermove',onDragMove);
+    window.addEventListener('pointerup',onDragEnd,{once:true});
+  });
+}
+function onDragMove(e){
+  if(!drag)return;
+  drag.card.style.top=(e.clientY-drag.offsetY)+'px';
+  const others=[...list.querySelectorAll('.task:not(.dragging)')];
+  let target=null;
+  for(const c of others){const r=c.getBoundingClientRect();if(e.clientY<r.top+r.height/2){target=c;break;}}
+  if(target)list.insertBefore(drag.ph,target);else list.appendChild(drag.ph);
+}
+function onDragEnd(){
+  window.removeEventListener('pointermove',onDragMove);
+  if(!drag)return;
+  const {card,ph}=drag;
+  list.insertBefore(card,ph);ph.remove();
+  card.classList.remove('dragging');
+  ['position','left','top','width','margin','zIndex','pointerEvents','transform'].forEach(p=>card.style[p]='');
+  drag=null;
+  // переупорядочиваем только видимые карточки (текущая вкладка), скрытые остаются на местах
+  const order=[...list.querySelectorAll('.task')].map(c=>c.dataset.id);
+  const byId=Object.fromEntries(state.tasks.map(t=>[t.id,t]));
+  const visible=new Set(order);
+  let oi=0;
+  state.tasks=state.tasks.map(t=>visible.has(t.id)?byId[order[oi++]]:t);
+  save();sfxPop();render();
+}
+
+//==== всплывашка-награда (универсальная) ====
+function popReward(html){
+  const r=document.getElementById('reward');
+  r.innerHTML=html;r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
+}
+
+//==== магазин наград (экран) ====
+const shopList=document.getElementById('shopList');
+const claimedWrap=document.getElementById('claimedWrap');
+const addRewardForm=document.getElementById('addRewardForm');
+function renderShop(){
+  shopList.innerHTML='';
+  if(!state.rewards.length){shopList.innerHTML='<div class="done-empty">Наград пока нет — добавь ниже 👇</div>';}
+  state.rewards.forEach(r=>{
+    const card=document.createElement('div');card.className='reward-card';
+    const top=document.createElement('div');top.className='reward-top';
+    const em=document.createElement('span');em.className='r-emoji';em.textContent=r.emoji;
+    const nm=document.createElement('span');nm.className='r-name';nm.textContent=r.name;
+    const cost=document.createElement('span');cost.className='r-cost';cost.textContent='💎 '+r.cost;
+    top.append(em,nm,cost);
+    const actions=document.createElement('div');actions.className='reward-actions';
+    const buy=document.createElement('button');buy.className='buy-btn';buy.textContent='Купить';buy.disabled=state.points<r.cost;
+    buy.onclick=()=>buyReward(r.id);
+    const del=document.createElement('button');del.className='r-del';del.textContent='✕';del.title='Удалить награду';
+    del.onclick=()=>{state.rewards=state.rewards.filter(x=>x.id!==r.id);save();renderShop();sfxClick();};
+    actions.append(buy,del);
+    card.append(top,actions);
+    shopList.appendChild(card);
+  });
+  claimedWrap.innerHTML='';
+  if(state.claimed.length){
+    const h=document.createElement('div');h.className='claimed-title';h.textContent='🎉 Уже получено:';claimedWrap.appendChild(h);
+    state.claimed.slice(-8).reverse().forEach(c=>{
+      const d=document.createElement('div');d.className='claimed-item';d.textContent=`${c.emoji} ${c.name} — ${c.date}`;claimedWrap.appendChild(d);
+    });
+  }
+}
+function buyReward(id){
+  const r=state.rewards.find(x=>x.id===id);if(!r)return;
+  if(state.points<r.cost){sfxClick();return;}
+  state.points-=r.cost;
+  state.claimed.push({id:uid(),emoji:r.emoji,name:r.name,date:todayStr()});
+  save();renderShop();render();bumpScore('points');
+  sfxWin();burstAt(innerWidth/2,innerHeight*0.5,26);
+  popReward(`<span class="big">${r.emoji}</span>Награда твоя!<br><span style="font-size:16px;opacity:.8">${esc(r.name)}</span>`);
+}
+// эмодзи для наград
+const REWARD_EMOJIS=['🍭','🍦','🍫','🧁','📺','🎮','🧸','🎁','🎨','🏞️','🎢','💅','📱','🐱','🛝','🍕'];
+let pickedRewardEmoji=REWARD_EMOJIS[0];
+const rewardEmojiPick=document.getElementById('rewardEmoji');
+REWARD_EMOJIS.forEach(em=>{
+  const b=document.createElement('button');b.textContent=em;
+  b.onclick=()=>{pickedRewardEmoji=em;[...rewardEmojiPick.children].forEach(c=>c.classList.remove('sel'));b.classList.add('sel');};
+  rewardEmojiPick.appendChild(b);
+});
+rewardEmojiPick.firstChild.classList.add('sel');
+document.getElementById('addRewardToggle').onclick=()=>{sfxClick();addRewardForm.hidden=!addRewardForm.hidden;};
+document.getElementById('saveReward').onclick=()=>{
+  const name=document.getElementById('rewardName').value.trim()||'Награда';
+  const cost=Math.max(1,Math.min(9999,parseInt(document.getElementById('rewardCost').value,10)||50));
+  state.rewards.push({id:uid(),emoji:pickedRewardEmoji,name,cost});
+  save();renderShop();sfxPop();
+  document.getElementById('rewardName').value='';
+  addRewardForm.hidden=true;
+};
+
+//==== настройки: бэкап (экспорт/импорт) ====
+function renderSettingsStats(){
+  document.getElementById('settingsStats').textContent='🏆 Заданий выполнено целиком: '+state.trophies;
+}
+document.getElementById('exportBtn').onclick=()=>{
+  sfxClick();
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='moi-zadaniya-backup.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  speak('Файл сохранён! 💾');
+};
+const importFile=document.getElementById('importFile');
+document.getElementById('importBtn').onclick=()=>{sfxClick();importFile.click();};
+importFile.onchange=async()=>{
+  const f=importFile.files[0];if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(!Array.isArray(data.tasks))throw new Error('bad');
+    state=normalize(data);
+    dailyRollover();save();
+    renderMute();renderSettingsStats();render();renderShop();
+    switchView('tasks');
+    speak('Данные загружены! 🎉');sfxWin();
+  }catch(e){alert('Не получилось загрузить файл 😢 Проверь, что это файл из этого приложения.');}
+  importFile.value='';
+};
 
 render();
 
