@@ -1,0 +1,9 @@
+{
+  "kind": "standard",
+  "color": "#ffffff",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "map": "UI Sprites/liquid_water",
+  "worldSpaceUV": true,
+  "textureSizeMeters": 4.61
+}

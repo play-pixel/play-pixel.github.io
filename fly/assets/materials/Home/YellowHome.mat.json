@@ -1,0 +1,7 @@
+{
+  "kind": "standard",
+  "color": "#ffd700",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "worldSpaceUV": true
+}

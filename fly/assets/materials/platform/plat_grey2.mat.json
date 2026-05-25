@@ -1,0 +1,9 @@
+{
+  "kind": "standard",
+  "color": "#9e9e9e",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "map": "UI Sprites/2x2 Textures/Diffuse Maps/Weld 2x2 AO Diffuse",
+  "normalMap": "UI Sprites/2x2 Textures/Plastic/Weld 2x2 Normal Plastic",
+  "worldSpaceUV": true
+}

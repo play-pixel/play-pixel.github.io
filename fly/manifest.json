@@ -1,0 +1,1160 @@
+{
+  "projectName": "@threenity/app-incremental-fly",
+  "generatedAt": 1779689708164,
+  "assets": [
+    {
+      "id": "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse.png",
+      "name": "Studs 2x2 AO Diffuse.png",
+      "folder": "UI Sprites/2x2 Textures/Diffuse Maps",
+      "sizeBytes": 54956,
+      "mtime": 1777837726067.718
+    },
+    {
+      "id": "UI Sprites/2x2 Textures/Diffuse Maps/Weld 2x2 AO Diffuse",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Diffuse Maps/Weld 2x2 AO Diffuse.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Diffuse Maps/Weld 2x2 AO Diffuse.png",
+      "name": "Weld 2x2 AO Diffuse.png",
+      "folder": "UI Sprites/2x2 Textures/Diffuse Maps",
+      "sizeBytes": 30263,
+      "mtime": 1777837726068.7183
+    },
+    {
+      "id": "UI Sprites/2x2 Textures/Plastic/Studs 2x2 Normal Plastic",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Plastic/Studs 2x2 Normal Plastic.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Plastic/Studs 2x2 Normal Plastic.png",
+      "name": "Studs 2x2 Normal Plastic.png",
+      "folder": "UI Sprites/2x2 Textures/Plastic",
+      "sizeBytes": 45318,
+      "mtime": 1777714932621.303
+    },
+    {
+      "id": "UI Sprites/2x2 Textures/Plastic/Universal 2x2 Normal Plastic",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Plastic/Universal 2x2 Normal Plastic.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Plastic/Universal 2x2 Normal Plastic.png",
+      "name": "Universal 2x2 Normal Plastic.png",
+      "folder": "UI Sprites/2x2 Textures/Plastic",
+      "sizeBytes": 120160,
+      "mtime": 1777986472823.1692
+    },
+    {
+      "id": "UI Sprites/2x2 Textures/Plastic/Weld 2x2 Normal Plastic",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Plastic/Weld 2x2 Normal Plastic.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Plastic/Weld 2x2 Normal Plastic.png",
+      "name": "Weld 2x2 Normal Plastic.png",
+      "folder": "UI Sprites/2x2 Textures/Plastic",
+      "sizeBytes": 566418,
+      "mtime": 1777986472827.6729
+    },
+    {
+      "id": "UI Sprites/2x2 Textures/Smooth/Studs 2x2 Normal",
+      "kind": "texture",
+      "path": "UI Sprites/2x2 Textures/Smooth/Studs 2x2 Normal.png",
+      "url": "./assets/UI Sprites/2x2 Textures/Smooth/Studs 2x2 Normal.png",
+      "name": "Studs 2x2 Normal.png",
+      "folder": "UI Sprites/2x2 Textures/Smooth",
+      "sizeBytes": 107603,
+      "mtime": 1777714932620.301
+    },
+    {
+      "id": "UI Sprites/Rebirth",
+      "kind": "texture",
+      "path": "UI Sprites/Rebirth.png",
+      "url": "./assets/UI Sprites/Rebirth.png",
+      "name": "Rebirth.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 6380,
+      "mtime": 1777918194200.7295
+    },
+    {
+      "id": "UI Sprites/Shoe",
+      "kind": "texture",
+      "path": "UI Sprites/Shoe.png",
+      "url": "./assets/UI Sprites/Shoe.png",
+      "name": "Shoe.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 5896,
+      "mtime": 1777918192689.842
+    },
+    {
+      "id": "UI Sprites/Skip",
+      "kind": "texture",
+      "path": "UI Sprites/Skip.png",
+      "url": "./assets/UI Sprites/Skip.png",
+      "name": "Skip.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 3933,
+      "mtime": 1777918197170.6582
+    },
+    {
+      "id": "UI Sprites/icon-coin",
+      "kind": "texture",
+      "path": "UI Sprites/icon-coin.png",
+      "url": "./assets/UI Sprites/icon-coin.png",
+      "name": "icon-coin.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 19908,
+      "mtime": 1777916513130.5867
+    },
+    {
+      "id": "UI Sprites/icon-cross",
+      "kind": "texture",
+      "path": "UI Sprites/icon-cross.png",
+      "url": "./assets/UI Sprites/icon-cross.png",
+      "name": "icon-cross.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 10747,
+      "mtime": 1777917071726.2932
+    },
+    {
+      "id": "UI Sprites/icon-skin",
+      "kind": "texture",
+      "path": "UI Sprites/icon-skin.png",
+      "url": "./assets/UI Sprites/icon-skin.png",
+      "name": "icon-skin.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 19638,
+      "mtime": 1777915753979.338
+    },
+    {
+      "id": "UI Sprites/icon-wings",
+      "kind": "texture",
+      "path": "UI Sprites/icon-wings.png",
+      "url": "./assets/UI Sprites/icon-wings.png",
+      "name": "icon-wings.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 10492,
+      "mtime": 1777915753969.303
+    },
+    {
+      "id": "UI Sprites/icon-wins",
+      "kind": "texture",
+      "path": "UI Sprites/icon-wins.png",
+      "url": "./assets/UI Sprites/icon-wins.png",
+      "name": "icon-wins.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 16484,
+      "mtime": 1777916513135.5847
+    },
+    {
+      "id": "UI Sprites/icon_calendar",
+      "kind": "texture",
+      "path": "UI Sprites/icon_calendar.png",
+      "url": "./assets/UI Sprites/icon_calendar.png",
+      "name": "icon_calendar.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 7198,
+      "mtime": 1777918190960.072
+    },
+    {
+      "id": "UI Sprites/icon_check",
+      "kind": "texture",
+      "path": "UI Sprites/icon_check.png",
+      "url": "./assets/UI Sprites/icon_check.png",
+      "name": "icon_check.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 2277,
+      "mtime": 1777918196732.25
+    },
+    {
+      "id": "UI Sprites/icon_gift",
+      "kind": "texture",
+      "path": "UI Sprites/icon_gift.png",
+      "url": "./assets/UI Sprites/icon_gift.png",
+      "name": "icon_gift.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 6864,
+      "mtime": 1777918191658.3225
+    },
+    {
+      "id": "UI Sprites/icon_house",
+      "kind": "texture",
+      "path": "UI Sprites/icon_house.png",
+      "url": "./assets/UI Sprites/icon_house.png",
+      "name": "icon_house.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 2024,
+      "mtime": 1777918193581.72
+    },
+    {
+      "id": "UI Sprites/icon_player",
+      "kind": "texture",
+      "path": "UI Sprites/icon_player.png",
+      "url": "./assets/UI Sprites/icon_player.png",
+      "name": "icon_player.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 7024,
+      "mtime": 1777918196225.3652
+    },
+    {
+      "id": "UI Sprites/icon_settings",
+      "kind": "texture",
+      "path": "UI Sprites/icon_settings.png",
+      "url": "./assets/UI Sprites/icon_settings.png",
+      "name": "icon_settings.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 6536,
+      "mtime": 1777918194304.9531
+    },
+    {
+      "id": "UI Sprites/icon_trails",
+      "kind": "texture",
+      "path": "UI Sprites/icon_trails.png",
+      "url": "./assets/UI Sprites/icon_trails.png",
+      "name": "icon_trails.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 5950,
+      "mtime": 1777918189916.2256
+    },
+    {
+      "id": "UI Sprites/icon_upgrade",
+      "kind": "texture",
+      "path": "UI Sprites/icon_upgrade.png",
+      "url": "./assets/UI Sprites/icon_upgrade.png",
+      "name": "icon_upgrade.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 4601,
+      "mtime": 1777918194948.157
+    },
+    {
+      "id": "UI Sprites/liquid_lava",
+      "kind": "texture",
+      "path": "UI Sprites/liquid_lava.png",
+      "url": "./assets/UI Sprites/liquid_lava.png",
+      "name": "liquid_lava.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 57392,
+      "mtime": 1778074337050.4692
+    },
+    {
+      "id": "UI Sprites/liquid_water",
+      "kind": "texture",
+      "path": "UI Sprites/liquid_water.png",
+      "url": "./assets/UI Sprites/liquid_water.png",
+      "name": "liquid_water.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 60381,
+      "mtime": 1778073182484.164
+    },
+    {
+      "id": "UI Sprites/wing1",
+      "kind": "texture",
+      "path": "UI Sprites/wing1.png",
+      "url": "./assets/UI Sprites/wing1.png",
+      "name": "wing1.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 6317,
+      "mtime": 1777714932613.3025
+    },
+    {
+      "id": "UI Sprites/wing1_1",
+      "kind": "texture",
+      "path": "UI Sprites/wing1_1.png",
+      "url": "./assets/UI Sprites/wing1_1.png",
+      "name": "wing1_1.png",
+      "folder": "UI Sprites",
+      "sizeBytes": 10910,
+      "mtime": 1777714932612.3022
+    },
+    {
+      "id": "audio/ambient",
+      "kind": "audio",
+      "path": "audio/ambient.ogg",
+      "url": "./assets/audio/ambient.ogg",
+      "name": "ambient.ogg",
+      "folder": "audio",
+      "sizeBytes": 220483,
+      "mtime": 1777714932689.814
+    },
+    {
+      "id": "audio/ui_menu_popup_04",
+      "kind": "audio",
+      "path": "audio/ui_menu_popup_04.ogg",
+      "url": "./assets/audio/ui_menu_popup_04.ogg",
+      "name": "ui_menu_popup_04.ogg",
+      "folder": "audio",
+      "sizeBytes": 5618,
+      "mtime": 1779280510871.5015
+    },
+    {
+      "id": "fonts/Rubik-400-arabic",
+      "kind": "font",
+      "path": "fonts/Rubik-400-arabic.woff2",
+      "url": "./assets/fonts/Rubik-400-arabic.woff2",
+      "name": "Rubik-400-arabic.woff2",
+      "folder": "fonts",
+      "sizeBytes": 17400,
+      "mtime": 1777959492109.789
+    },
+    {
+      "id": "materials/ButtonGreen",
+      "kind": "material",
+      "path": "materials/ButtonGreen.mat.json",
+      "url": "./assets/materials/ButtonGreen.mat.json",
+      "name": "ButtonGreen.mat.json",
+      "folder": "materials",
+      "sizeBytes": 257,
+      "mtime": 1779360971601.3787
+    },
+    {
+      "id": "materials/Home/Blue1",
+      "kind": "material",
+      "path": "materials/Home/Blue1.mat.json",
+      "url": "./assets/materials/Home/Blue1.mat.json",
+      "name": "Blue1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971677.2407
+    },
+    {
+      "id": "materials/Home/Blue2",
+      "kind": "material",
+      "path": "materials/Home/Blue2.mat.json",
+      "url": "./assets/materials/Home/Blue2.mat.json",
+      "name": "Blue2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971680.2678
+    },
+    {
+      "id": "materials/Home/Brown",
+      "kind": "material",
+      "path": "materials/Home/Brown.mat.json",
+      "url": "./assets/materials/Home/Brown.mat.json",
+      "name": "Brown.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971683.7808
+    },
+    {
+      "id": "materials/Home/Bush",
+      "kind": "material",
+      "path": "materials/Home/Bush.mat.json",
+      "url": "./assets/materials/Home/Bush.mat.json",
+      "name": "Bush.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 261,
+      "mtime": 1779360971686.7793
+    },
+    {
+      "id": "materials/Home/Gray1",
+      "kind": "material",
+      "path": "materials/Home/Gray1.mat.json",
+      "url": "./assets/materials/Home/Gray1.mat.json",
+      "name": "Gray1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 119,
+      "mtime": 1779382246297.656
+    },
+    {
+      "id": "materials/Home/Gray2",
+      "kind": "material",
+      "path": "materials/Home/Gray2.mat.json",
+      "url": "./assets/materials/Home/Gray2.mat.json",
+      "name": "Gray2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971693.121
+    },
+    {
+      "id": "materials/Home/GraySt1",
+      "kind": "material",
+      "path": "materials/Home/GraySt1.mat.json",
+      "url": "./assets/materials/Home/GraySt1.mat.json",
+      "name": "GraySt1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 182,
+      "mtime": 1779360971697.1228
+    },
+    {
+      "id": "materials/Home/GraySt2",
+      "kind": "material",
+      "path": "materials/Home/GraySt2.mat.json",
+      "url": "./assets/materials/Home/GraySt2.mat.json",
+      "name": "GraySt2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 182,
+      "mtime": 1779360971701.246
+    },
+    {
+      "id": "materials/Home/Green1",
+      "kind": "material",
+      "path": "materials/Home/Green1.mat.json",
+      "url": "./assets/materials/Home/Green1.mat.json",
+      "name": "Green1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 94,
+      "mtime": 1779382246298.184
+    },
+    {
+      "id": "materials/Home/Green2",
+      "kind": "material",
+      "path": "materials/Home/Green2.mat.json",
+      "url": "./assets/materials/Home/Green2.mat.json",
+      "name": "Green2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 88,
+      "mtime": 1779360971707.2485
+    },
+    {
+      "id": "materials/Home/Violet1",
+      "kind": "material",
+      "path": "materials/Home/Violet1.mat.json",
+      "url": "./assets/materials/Home/Violet1.mat.json",
+      "name": "Violet1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971711.2578
+    },
+    {
+      "id": "materials/Home/Violet2",
+      "kind": "material",
+      "path": "materials/Home/Violet2.mat.json",
+      "url": "./assets/materials/Home/Violet2.mat.json",
+      "name": "Violet2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971714.2573
+    },
+    {
+      "id": "materials/Home/WallHome",
+      "kind": "material",
+      "path": "materials/Home/WallHome.mat.json",
+      "url": "./assets/materials/Home/WallHome.mat.json",
+      "name": "WallHome.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 142,
+      "mtime": 1779360971717.2595
+    },
+    {
+      "id": "materials/Home/Window",
+      "kind": "material",
+      "path": "materials/Home/Window.mat.json",
+      "url": "./assets/materials/Home/Window.mat.json",
+      "name": "Window.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 119,
+      "mtime": 1779382246298.6733
+    },
+    {
+      "id": "materials/Home/Wood1",
+      "kind": "material",
+      "path": "materials/Home/Wood1.mat.json",
+      "url": "./assets/materials/Home/Wood1.mat.json",
+      "name": "Wood1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971724.276
+    },
+    {
+      "id": "materials/Home/Wood2",
+      "kind": "material",
+      "path": "materials/Home/Wood2.mat.json",
+      "url": "./assets/materials/Home/Wood2.mat.json",
+      "name": "Wood2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971727.2778
+    },
+    {
+      "id": "materials/Home/WoodSt1",
+      "kind": "material",
+      "path": "materials/Home/WoodSt1.mat.json",
+      "url": "./assets/materials/Home/WoodSt1.mat.json",
+      "name": "WoodSt1.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 257,
+      "mtime": 1779360971730.3652
+    },
+    {
+      "id": "materials/Home/WoodSt2",
+      "kind": "material",
+      "path": "materials/Home/WoodSt2.mat.json",
+      "url": "./assets/materials/Home/WoodSt2.mat.json",
+      "name": "WoodSt2.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 182,
+      "mtime": 1779360971733.364
+    },
+    {
+      "id": "materials/Home/YellowHome",
+      "kind": "material",
+      "path": "materials/Home/YellowHome.mat.json",
+      "url": "./assets/materials/Home/YellowHome.mat.json",
+      "name": "YellowHome.mat.json",
+      "folder": "materials/Home",
+      "sizeBytes": 112,
+      "mtime": 1779360971736.3667
+    },
+    {
+      "id": "materials/Simple/GrassSimp",
+      "kind": "material",
+      "path": "materials/Simple/GrassSimp.mat.json",
+      "url": "./assets/materials/Simple/GrassSimp.mat.json",
+      "name": "GrassSimp.mat.json",
+      "folder": "materials/Simple",
+      "sizeBytes": 182,
+      "mtime": 1779360971762.1997
+    },
+    {
+      "id": "materials/Simple/PlatWallSimp",
+      "kind": "material",
+      "path": "materials/Simple/PlatWallSimp.mat.json",
+      "url": "./assets/materials/Simple/PlatWallSimp.mat.json",
+      "name": "PlatWallSimp.mat.json",
+      "folder": "materials/Simple",
+      "sizeBytes": 182,
+      "mtime": 1779360971765.1968
+    },
+    {
+      "id": "materials/Simple/WhiteSimp",
+      "kind": "material",
+      "path": "materials/Simple/WhiteSimp.mat.json",
+      "url": "./assets/materials/Simple/WhiteSimp.mat.json",
+      "name": "WhiteSimp.mat.json",
+      "folder": "materials/Simple",
+      "sizeBytes": 182,
+      "mtime": 1779360971768.7043
+    },
+    {
+      "id": "materials/Teadmill/metall",
+      "kind": "material",
+      "path": "materials/Teadmill/metall.mat.json",
+      "url": "./assets/materials/Teadmill/metall.mat.json",
+      "name": "metall.mat.json",
+      "folder": "materials/Teadmill",
+      "sizeBytes": 88,
+      "mtime": 1777798111425.5623
+    },
+    {
+      "id": "materials/Treadmill",
+      "kind": "material",
+      "path": "materials/Treadmill.mat.json",
+      "url": "./assets/materials/Treadmill.mat.json",
+      "name": "Treadmill.mat.json",
+      "folder": "materials",
+      "sizeBytes": 266,
+      "mtime": 1779382246299.1792
+    },
+    {
+      "id": "materials/TreeCrown",
+      "kind": "material",
+      "path": "materials/TreeCrown.mat.json",
+      "url": "./assets/materials/TreeCrown.mat.json",
+      "name": "TreeCrown.mat.json",
+      "folder": "materials",
+      "sizeBytes": 182,
+      "mtime": 1779360971665.071
+    },
+    {
+      "id": "materials/black",
+      "kind": "material",
+      "path": "materials/black.mat.json",
+      "url": "./assets/materials/black.mat.json",
+      "name": "black.mat.json",
+      "folder": "materials",
+      "sizeBytes": 293,
+      "mtime": 1779382246299.1792
+    },
+    {
+      "id": "materials/blue",
+      "kind": "material",
+      "path": "materials/blue.mat.json",
+      "url": "./assets/materials/blue.mat.json",
+      "name": "blue.mat.json",
+      "folder": "materials",
+      "sizeBytes": 283,
+      "mtime": 1779360971598.224
+    },
+    {
+      "id": "materials/cyan",
+      "kind": "material",
+      "path": "materials/cyan.mat.json",
+      "url": "./assets/materials/cyan.mat.json",
+      "name": "cyan.mat.json",
+      "folder": "materials",
+      "sizeBytes": 283,
+      "mtime": 1779360971609.925
+    },
+    {
+      "id": "materials/gold",
+      "kind": "material",
+      "path": "materials/gold.mat.json",
+      "url": "./assets/materials/gold.mat.json",
+      "name": "gold.mat.json",
+      "folder": "materials",
+      "sizeBytes": 308,
+      "mtime": 1779360971620.0347
+    },
+    {
+      "id": "materials/grass1",
+      "kind": "material",
+      "path": "materials/grass1.mat.json",
+      "url": "./assets/materials/grass1.mat.json",
+      "name": "grass1.mat.json",
+      "folder": "materials",
+      "sizeBytes": 257,
+      "mtime": 1779360971623.0376
+    },
+    {
+      "id": "materials/liquid_lava",
+      "kind": "material",
+      "path": "materials/liquid_lava.mat.json",
+      "url": "./assets/materials/liquid_lava.mat.json",
+      "name": "liquid_lava.mat.json",
+      "folder": "materials",
+      "sizeBytes": 225,
+      "mtime": 1779382246299.1792
+    },
+    {
+      "id": "materials/liquid_water",
+      "kind": "material",
+      "path": "materials/liquid_water.mat.json",
+      "url": "./assets/materials/liquid_water.mat.json",
+      "name": "liquid_water.mat.json",
+      "folder": "materials",
+      "sizeBytes": 186,
+      "mtime": 1779382246300.1843
+    },
+    {
+      "id": "materials/mechanic/violet_emissive",
+      "kind": "material",
+      "path": "materials/mechanic/violet_emissive.mat.json",
+      "url": "./assets/materials/mechanic/violet_emissive.mat.json",
+      "name": "violet_emissive.mat.json",
+      "folder": "materials/mechanic",
+      "sizeBytes": 123,
+      "mtime": 1779338453418.718
+    },
+    {
+      "id": "materials/mechanic/yellow_emissive",
+      "kind": "material",
+      "path": "materials/mechanic/yellow_emissive.mat.json",
+      "url": "./assets/materials/mechanic/yellow_emissive.mat.json",
+      "name": "yellow_emissive.mat.json",
+      "folder": "materials/mechanic",
+      "sizeBytes": 123,
+      "mtime": 1779338453419.7185
+    },
+    {
+      "id": "materials/orange",
+      "kind": "material",
+      "path": "materials/orange.mat.json",
+      "url": "./assets/materials/orange.mat.json",
+      "name": "orange.mat.json",
+      "folder": "materials",
+      "sizeBytes": 283,
+      "mtime": 1779360971639.0857
+    },
+    {
+      "id": "materials/platform/plat_grey2",
+      "kind": "material",
+      "path": "materials/platform/plat_grey2.mat.json",
+      "url": "./assets/materials/platform/plat_grey2.mat.json",
+      "name": "plat_grey2.mat.json",
+      "folder": "materials/platform",
+      "sizeBytes": 264,
+      "mtime": 1779382246300.1843
+    },
+    {
+      "id": "materials/platform/platform_darkgrey",
+      "kind": "material",
+      "path": "materials/platform/platform_darkgrey.mat.json",
+      "url": "./assets/materials/platform/platform_darkgrey.mat.json",
+      "name": "platform_darkgrey.mat.json",
+      "folder": "materials/platform",
+      "sizeBytes": 311,
+      "mtime": 1779382246301.186
+    },
+    {
+      "id": "materials/platform/platform_grey",
+      "kind": "material",
+      "path": "materials/platform/platform_grey.mat.json",
+      "url": "./assets/materials/platform/platform_grey.mat.json",
+      "name": "platform_grey.mat.json",
+      "folder": "materials/platform",
+      "sizeBytes": 255,
+      "mtime": 1779360971746.455
+    },
+    {
+      "id": "materials/platform/platform_lightgrey",
+      "kind": "material",
+      "path": "materials/platform/platform_lightgrey.mat.json",
+      "url": "./assets/materials/platform/platform_lightgrey.mat.json",
+      "name": "platform_lightgrey.mat.json",
+      "folder": "materials/platform",
+      "sizeBytes": 257,
+      "mtime": 1779382246301.186
+    },
+    {
+      "id": "materials/platform/platform_wall",
+      "kind": "material",
+      "path": "materials/platform/platform_wall.mat.json",
+      "url": "./assets/materials/platform/platform_wall.mat.json",
+      "name": "platform_wall.mat.json",
+      "folder": "materials/platform",
+      "sizeBytes": 257,
+      "mtime": 1779360971752.959
+    },
+    {
+      "id": "materials/red",
+      "kind": "material",
+      "path": "materials/red.mat.json",
+      "url": "./assets/materials/red.mat.json",
+      "name": "red.mat.json",
+      "folder": "materials",
+      "sizeBytes": 286,
+      "mtime": 1779360971648.2827
+    },
+    {
+      "id": "materials/sky.skybox",
+      "kind": "skybox",
+      "path": "materials/sky.skybox.json",
+      "url": "./assets/materials/sky.skybox.json",
+      "name": "sky.skybox.json",
+      "folder": "materials",
+      "sizeBytes": 227,
+      "mtime": 1779360971651.5696
+    },
+    {
+      "id": "materials/tint/wallBig",
+      "kind": "material",
+      "path": "materials/tint/wallBig.mat.json",
+      "url": "./assets/materials/tint/wallBig.mat.json",
+      "name": "wallBig.mat.json",
+      "folder": "materials/tint",
+      "sizeBytes": 368,
+      "mtime": 1779115953811.0603
+    },
+    {
+      "id": "materials/yellow",
+      "kind": "material",
+      "path": "materials/yellow.mat.json",
+      "url": "./assets/materials/yellow.mat.json",
+      "name": "yellow.mat.json",
+      "folder": "materials",
+      "sizeBytes": 283,
+      "mtime": 1779360971671.2412
+    },
+    {
+      "id": "models/ObbyModels/male_skin_nubik_mat1",
+      "kind": "material",
+      "path": "models/ObbyModels/male_skin_nubik_mat1.mat.json",
+      "url": "./assets/models/ObbyModels/male_skin_nubik_mat1.mat.json",
+      "name": "male_skin_nubik_mat1.mat.json",
+      "folder": "models/ObbyModels",
+      "sizeBytes": 128,
+      "mtime": 1777714932666.8137
+    },
+    {
+      "id": "models/ObbyModels/mine_main2",
+      "kind": "model",
+      "path": "models/ObbyModels/mine_main2.glb",
+      "url": "./assets/models/ObbyModels/mine_main2.glb",
+      "name": "mine_main2.glb",
+      "folder": "models/ObbyModels",
+      "sizeBytes": 686328,
+      "mtime": 1777714932668.8147
+    },
+    {
+      "id": "models/ObbyModels/nubik_tex",
+      "kind": "texture",
+      "path": "models/ObbyModels/nubik_tex.png",
+      "url": "./assets/models/ObbyModels/nubik_tex.png",
+      "name": "nubik_tex.png",
+      "folder": "models/ObbyModels",
+      "sizeBytes": 8392,
+      "mtime": 1777714932672.8142
+    },
+    {
+      "id": "models/ObbyModels/skins1_tex",
+      "kind": "texture",
+      "path": "models/ObbyModels/skins1_tex.png",
+      "url": "./assets/models/ObbyModels/skins1_tex.png",
+      "name": "skins1_tex.png",
+      "folder": "models/ObbyModels",
+      "sizeBytes": 10376,
+      "mtime": 1777714932666.8137
+    },
+    {
+      "id": "palettes/default.palette",
+      "kind": "palette",
+      "path": "palettes/default.palette.json",
+      "url": "./assets/palettes/default.palette.json",
+      "name": "default.palette.json",
+      "folder": "palettes",
+      "sizeBytes": 24526,
+      "mtime": 1778499217583.566
+    },
+    {
+      "id": "prefabs/Box.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Box.prefab.json",
+      "url": "./assets/prefabs/Box.prefab.json",
+      "name": "Box.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 18055,
+      "mtime": 1779360972006.763
+    },
+    {
+      "id": "prefabs/Bush.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Bush.prefab.json",
+      "url": "./assets/prefabs/Bush.prefab.json",
+      "name": "Bush.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 2884,
+      "mtime": 1779360972009.7737
+    },
+    {
+      "id": "prefabs/Button.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Button.prefab.json",
+      "url": "./assets/prefabs/Button.prefab.json",
+      "name": "Button.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1999,
+      "mtime": 1779360972012.5527
+    },
+    {
+      "id": "prefabs/Cliff.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Cliff.prefab.json",
+      "url": "./assets/prefabs/Cliff.prefab.json",
+      "name": "Cliff.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 2076,
+      "mtime": 1779382246302.6956
+    },
+    {
+      "id": "prefabs/Column.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Column.prefab.json",
+      "url": "./assets/prefabs/Column.prefab.json",
+      "name": "Column.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 3931,
+      "mtime": 1779360972021.0608
+    },
+    {
+      "id": "prefabs/Column2.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Column2.prefab.json",
+      "url": "./assets/prefabs/Column2.prefab.json",
+      "name": "Column2.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 7838,
+      "mtime": 1779360972024.0588
+    },
+    {
+      "id": "prefabs/Fence.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Fence.prefab.json",
+      "url": "./assets/prefabs/Fence.prefab.json",
+      "name": "Fence.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 6121,
+      "mtime": 1779382246303.7063
+    },
+    {
+      "id": "prefabs/FinishPlat.prefab",
+      "kind": "prefab",
+      "path": "prefabs/FinishPlat.prefab.json",
+      "url": "./assets/prefabs/FinishPlat.prefab.json",
+      "name": "FinishPlat.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1978,
+      "mtime": 1779382246303.7063
+    },
+    {
+      "id": "prefabs/HomeBrick.prefab",
+      "kind": "prefab",
+      "path": "prefabs/HomeBrick.prefab.json",
+      "url": "./assets/prefabs/HomeBrick.prefab.json",
+      "name": "HomeBrick.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1570,
+      "mtime": 1779360972045.316
+    },
+    {
+      "id": "prefabs/HomeBrick2.prefab",
+      "kind": "prefab",
+      "path": "prefabs/HomeBrick2.prefab.json",
+      "url": "./assets/prefabs/HomeBrick2.prefab.json",
+      "name": "HomeBrick2.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1583,
+      "mtime": 1779360972050.3958
+    },
+    {
+      "id": "prefabs/HomeBrick3.prefab",
+      "kind": "prefab",
+      "path": "prefabs/HomeBrick3.prefab.json",
+      "url": "./assets/prefabs/HomeBrick3.prefab.json",
+      "name": "HomeBrick3.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1585,
+      "mtime": 1779360972055.402
+    },
+    {
+      "id": "prefabs/HomeBrick4.prefab",
+      "kind": "prefab",
+      "path": "prefabs/HomeBrick4.prefab.json",
+      "url": "./assets/prefabs/HomeBrick4.prefab.json",
+      "name": "HomeBrick4.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1585,
+      "mtime": 1779360972058.401
+    },
+    {
+      "id": "prefabs/Lava.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Lava.prefab.json",
+      "url": "./assets/prefabs/Lava.prefab.json",
+      "name": "Lava.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 2545,
+      "mtime": 1779360972061.6262
+    },
+    {
+      "id": "prefabs/MessageBoard.prefab",
+      "kind": "prefab",
+      "path": "prefabs/MessageBoard.prefab.json",
+      "url": "./assets/prefabs/MessageBoard.prefab.json",
+      "name": "MessageBoard.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 5280,
+      "mtime": 1779360972065.6272
+    },
+    {
+      "id": "prefabs/Path.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Path.prefab.json",
+      "url": "./assets/prefabs/Path.prefab.json",
+      "name": "Path.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1065,
+      "mtime": 1779382246303.7063
+    },
+    {
+      "id": "prefabs/Platform1.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform1.prefab.json",
+      "url": "./assets/prefabs/Platform1.prefab.json",
+      "name": "Platform1.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 2927,
+      "mtime": 1779360972072.1567
+    },
+    {
+      "id": "prefabs/Platform2.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform2.prefab.json",
+      "url": "./assets/prefabs/Platform2.prefab.json",
+      "name": "Platform2.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 2958,
+      "mtime": 1779360972075.1565
+    },
+    {
+      "id": "prefabs/Platform3.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform3.prefab.json",
+      "url": "./assets/prefabs/Platform3.prefab.json",
+      "name": "Platform3.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 3121,
+      "mtime": 1779382246304.7043
+    },
+    {
+      "id": "prefabs/Platform4.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform4.prefab.json",
+      "url": "./assets/prefabs/Platform4.prefab.json",
+      "name": "Platform4.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 8762,
+      "mtime": 1779360972082.2407
+    },
+    {
+      "id": "prefabs/Platform5.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform5.prefab.json",
+      "url": "./assets/prefabs/Platform5.prefab.json",
+      "name": "Platform5.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 8822,
+      "mtime": 1779360972085.7507
+    },
+    {
+      "id": "prefabs/Platform6.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Platform6.prefab.json",
+      "url": "./assets/prefabs/Platform6.prefab.json",
+      "name": "Platform6.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 8779,
+      "mtime": 1779360972088.2554
+    },
+    {
+      "id": "prefabs/SpikeTrapTop.prefab",
+      "kind": "prefab",
+      "path": "prefabs/SpikeTrapTop.prefab.json",
+      "url": "./assets/prefabs/SpikeTrapTop.prefab.json",
+      "name": "SpikeTrapTop.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 61158,
+      "mtime": 1779360972091.773
+    },
+    {
+      "id": "prefabs/Track.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Track.prefab.json",
+      "url": "./assets/prefabs/Track.prefab.json",
+      "name": "Track.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1054,
+      "mtime": 1779360972094.7708
+    },
+    {
+      "id": "prefabs/Tree.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Tree.prefab.json",
+      "url": "./assets/prefabs/Tree.prefab.json",
+      "name": "Tree.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 12681,
+      "mtime": 1779360972101.588
+    },
+    {
+      "id": "prefabs/Walls.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Walls.prefab.json",
+      "url": "./assets/prefabs/Walls.prefab.json",
+      "name": "Walls.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1075,
+      "mtime": 1779382246304.7043
+    },
+    {
+      "id": "prefabs/Walls2.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Walls2.prefab.json",
+      "url": "./assets/prefabs/Walls2.prefab.json",
+      "name": "Walls2.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 1032,
+      "mtime": 1779360972109.1072
+    },
+    {
+      "id": "prefabs/Window.prefab",
+      "kind": "prefab",
+      "path": "prefabs/Window.prefab.json",
+      "url": "./assets/prefabs/Window.prefab.json",
+      "name": "Window.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 7347,
+      "mtime": 1779360972112.1125
+    },
+    {
+      "id": "prefabs/WingGiver.prefab",
+      "kind": "prefab",
+      "path": "prefabs/WingGiver.prefab.json",
+      "url": "./assets/prefabs/WingGiver.prefab.json",
+      "name": "WingGiver.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 5533,
+      "mtime": 1779569276867.799
+    },
+    {
+      "id": "prefabs/WinsFree.prefab",
+      "kind": "prefab",
+      "path": "prefabs/WinsFree.prefab.json",
+      "url": "./assets/prefabs/WinsFree.prefab.json",
+      "name": "WinsFree.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 6258,
+      "mtime": 1779338453419.7185
+    },
+    {
+      "id": "prefabs/WinsPrefab.prefab",
+      "kind": "prefab",
+      "path": "prefabs/WinsPrefab.prefab.json",
+      "url": "./assets/prefabs/WinsPrefab.prefab.json",
+      "name": "WinsPrefab.prefab.json",
+      "folder": "prefabs",
+      "sizeBytes": 6255,
+      "mtime": 1779338453419.7185
+    },
+    {
+      "id": "textures/SkyCartoon",
+      "kind": "texture",
+      "path": "textures/SkyCartoon.png",
+      "url": "./assets/textures/SkyCartoon.png",
+      "name": "SkyCartoon.png",
+      "folder": "textures",
+      "sizeBytes": 138190,
+      "mtime": 1777714932690.8142
+    }
+  ],
+  "scenes": [
+    {
+      "id": "fly_scene_map",
+      "name": "fly_scene_map.scene.json",
+      "path": "fly_scene_map.scene.json",
+      "url": "./scenes/fly_scene_map.scene.json",
+      "sizeBytes": 1371462,
+      "mtime": 1779569079337.5815
+    },
+    {
+      "id": "fly_scene_main_wings",
+      "name": "fly_scene_main_wings.scene.json",
+      "path": "fly_scene_main_wings.scene.json",
+      "url": "./scenes/fly_scene_main_wings.scene.json",
+      "sizeBytes": 836149,
+      "mtime": 1779464485504.0713
+    }
+  ],
+  "folders": [
+    "UI Sprites",
+    "UI Sprites/2x2 Textures",
+    "UI Sprites/2x2 Textures/Diffuse Maps",
+    "UI Sprites/2x2 Textures/Plastic",
+    "UI Sprites/2x2 Textures/Smooth",
+    "atlas",
+    "audio",
+    "fonts",
+    "locales",
+    "materials",
+    "materials/Home",
+    "materials/Simple",
+    "materials/Teadmill",
+    "materials/mechanic",
+    "materials/palette",
+    "materials/platform",
+    "materials/tint",
+    "models",
+    "models/ObbyModels",
+    "models/Textures",
+    "models/obby-character",
+    "palettes",
+    "prefabs",
+    "scripts",
+    "textures"
+  ],
+  "sidecars": [
+    "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse.png.tex.json",
+    "UI Sprites/2x2 Textures/Diffuse Maps/Weld 2x2 AO Diffuse.png.tex.json",
+    "models/ObbyModels/mine_main2.glb.meta.json",
+    "models/ObbyModels/nubik_tex.png.tex.json",
+    "models/ObbyModels/skins1_tex.png.tex.json"
+  ],
+  "defaultShadowProfile": "Low",
+  "startScene": "fly_scene_map"
+}

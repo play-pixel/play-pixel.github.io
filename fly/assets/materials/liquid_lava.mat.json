@@ -1,0 +1,13 @@
+{
+  "kind": "standard",
+  "color": "#ffffff",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "map": "UI Sprites/liquid_lava",
+  "worldSpaceUV": true,
+  "mapTiling": [
+    1,
+    1
+  ],
+  "textureSizeMeters": 12.01
+}

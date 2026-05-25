@@ -1,0 +1,8 @@
+{
+  "kind": "standard",
+  "color": "#a4add1",
+  "roughness": 0.84,
+  "metalness": 0.04,
+  "emissiveIntensity": 0.35,
+  "worldSpaceUV": true
+}

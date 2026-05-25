@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "model": {
+    "scaleFactor": 0.6
+  },
+  "rig": {
+    "animationType": "generic"
+  },
+  "animation": {
+    "importAnimation": true,
+    "preset": "balanced",
+    "compressTolerance": 0,
+    "clips": [
+      {
+        "name": "Armature|mixamo.com|Layer0",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Crouch Idle",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Crouched Walking",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Flying",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Idle",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Jump",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Jump Loop",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Left Strafe Walk",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Right Strafe Walk",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Running",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Standing Jump",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Walking",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Walking Backwards",
+        "enabled": true,
+        "loop": true
+      },
+      {
+        "name": "Wave Hip Hop Dance",
+        "enabled": true,
+        "loop": true
+      }
+    ]
+  },
+  "materials": {
+    "overrides": {},
+    "textureCompression": {
+      "maxSize": 1024,
+      "recompress": true
+    }
+  }
+}

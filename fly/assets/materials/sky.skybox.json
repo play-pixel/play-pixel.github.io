@@ -1,0 +1,14 @@
+{
+  "type": "panoramic",
+  "texture": "textures/SkyCartoon",
+  "faces": {
+    "px": null,
+    "nx": null,
+    "py": null,
+    "ny": null,
+    "pz": null,
+    "nz": null
+  },
+  "tint": "#ffffff",
+  "rotation": 0
+}

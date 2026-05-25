@@ -1,0 +1,15 @@
+{
+  "kind": "standard",
+  "color": "#cccccc",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "map": "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse",
+  "normalMap": "UI Sprites/2x2 Textures/Plastic/Studs 2x2 Normal Plastic",
+  "cellTint": {
+    "mode": "checker",
+    "cellSize": 2,
+    "intensity": 0.15
+  },
+  "worldSpaceUV": true,
+  "textureSizeMeters": 2
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "standard",
+  "color": "#ffc53d",
+  "roughness": 0.5,
+  "metalness": 0.4,
+  "emissiveIntensity": 2,
+  "map": "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse",
+  "normalMap": "UI Sprites/2x2 Textures/Plastic/Studs 2x2 Normal Plastic",
+  "worldSpaceUV": true,
+  "textureSizeMeters": 1
+}

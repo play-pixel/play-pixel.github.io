@@ -1,0 +1,8 @@
+{
+  "kind": "standard",
+  "color": "#00f727",
+  "roughness": 0.8,
+  "metalness": 0.05,
+  "map": "UI Sprites/2x2 Textures/Diffuse Maps/Studs 2x2 AO Diffuse",
+  "worldSpaceUV": true
+}
