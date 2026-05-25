@@ -70,7 +70,6 @@
   /* табы Открытые / Сделанные — прилипают к верху при прокрутке */
   .tabs{
     position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:8px 0 6px;margin:0 0 2px;
-    background:rgba(252,233,245,.92);backdrop-filter:blur(6px);
     overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;
   }
   .tabs::-webkit-scrollbar{display:none;}
@@ -305,6 +304,16 @@
   }
   .emoji-pick button:active{transform:scale(.85);}
   .emoji-pick button.sel{border-color:var(--pink);background:var(--pink-soft);transform:scale(1.1);}
+  /* переопределение награды задачи (режим родителя) */
+  #rewardOverride{margin-top:8px;border:2px dashed var(--lilac);border-radius:16px;padding:10px 12px;}
+  #rewardOverride label{margin-top:0;color:var(--purple);}
+  .ovr-grid{display:flex;gap:10px;}
+  .ovr-cell{flex:1;display:flex;flex-direction:column;gap:4px;}
+  .ovr-cell span{font-size:13px;font-weight:bold;color:var(--ink);}
+  .ovr-cell input{width:100%;border:3px solid var(--pink-soft);border-radius:14px;padding:10px;font-size:18px;
+    font-family:inherit;color:var(--ink);outline:none;background:#fff;text-align:center;}
+  .ovr-cell input:focus{border-color:var(--pink);}
+  .ovr-hint{font-size:12px;color:#a98abf;margin-top:6px;}
   .sheet-actions{display:flex;gap:10px;margin-top:20px;}
   .sheet-actions button{
     flex:1;border:none;border-radius:18px;padding:14px;font-size:18px;font-weight:bold;
@@ -353,6 +362,8 @@
   }
   .badge.repeat{background:var(--lilac);color:var(--purple);}
   .badge.streak{background:#fff0d6;color:#e8730c;border:2px solid #ffd9a0;}
+  .badge.bonus{background:#e7faf1;color:#0a8a5f;border:2px solid #a9ecd0;}
+  .task-badges{flex-wrap:wrap;}
 
   /* ручка перетаскивания */
   .drag-handle{
@@ -430,13 +441,6 @@
   }
   .shop-lock-btn:active{transform:scale(.95);}
   .shop-lock-btn.unlocked{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-deep);}
-  .shop-parent-form{background:#fff;border:3px solid var(--lilac);border-radius:18px;padding:12px;margin:0 0 12px;}
-  .shop-parent-form input{
-    width:100%;border:3px solid var(--pink-soft);border-radius:14px;padding:11px;font-size:17px;
-    font-family:inherit;color:var(--ink);outline:none;background:#fff;
-  }
-  .shop-parent-form input:focus{border-color:var(--pink);}
-  .shop-parent-form .parent-apply{margin-top:8px;}
   .add-reward-toggle,.settings-btn-row button{
     display:block;width:100%;border:3px dashed var(--purple);background:#fff;color:var(--purple);
     font-family:inherit;font-weight:bold;font-size:16px;border-radius:16px;padding:12px;margin-top:10px;cursor:pointer;
@@ -459,10 +463,31 @@
     text-align:center;font-size:15px;font-weight:bold;color:var(--purple);
     background:#fff;border:3px solid var(--pink-soft);border-radius:14px;padding:9px;margin:0 0 14px;
   }
-  .settings-btn-row button{border-style:solid;border-color:var(--pink-soft);}
+  .backup-title{font-weight:bold;color:var(--purple);font-size:15px;margin:14px 0 6px;display:flex;align-items:center;gap:6px;}
+  .settings-btn-row{display:flex;gap:10px;}
+  .settings-btn-row button{flex:1;width:auto;margin-top:0;border-style:solid;border-color:var(--pink-soft);font-size:15px;padding:11px 8px;}
   /* ===== родительский блок ===== */
   .parent-block{background:#fff;border:3px solid var(--lilac);border-radius:18px;padding:12px;margin:14px 0;}
-  .parent-block h3{margin:0 0 8px;color:var(--purple);font-size:17px;}
+  .parent-block h3{margin:0;color:var(--purple);font-size:17px;}
+  .parent-head{display:flex;align-items:center;gap:8px;}
+  .parent-head h3{flex:1;}
+  .cfg-sub{font-weight:bold;color:var(--purple);font-size:14px;margin:12px 0 2px;opacity:.85;}
+  #parentPanel .cfg-sub:first-child{margin-top:0;}
+  .parent-row.btn-row{margin-top:6px;}
+  .parent-secondary{width:100%;border:2px solid var(--lilac);background:#fff;color:var(--purple);
+    border-radius:14px;padding:10px;font-family:inherit;font-weight:bold;font-size:15px;cursor:pointer;}
+  .parent-secondary:active{transform:scale(.97);}
+  .reset-log{margin-top:10px;font-size:13px;color:#9a7b90;}
+  .reset-log .rl-title{font-weight:bold;color:var(--purple);margin-bottom:3px;}
+  .reset-log .rl-item{padding:2px 0;}
+  /* модалка родительского доступа */
+  .ps-desc{margin:0 0 10px;font-size:15px;color:var(--ink);text-align:center;line-height:1.4;}
+  .parent-sheet input{width:100%;border:3px solid var(--pink-soft);border-radius:14px;padding:13px;font-size:20px;
+    font-family:inherit;color:var(--ink);outline:none;background:#fff;text-align:center;}
+  .parent-sheet input:focus{border-color:var(--pink);}
+  .ps-link{display:block;margin:12px auto 0;border:none;background:transparent;color:var(--purple);
+    text-decoration:underline;font-family:inherit;font-size:14px;cursor:pointer;}
+  .ps-link[hidden]{display:none;}   /* иначе display:block перебивает атрибут hidden */
   .parent-row{display:flex;align-items:center;gap:8px;margin:8px 0;}
   .parent-row .lb{flex:1;font-weight:bold;color:var(--ink);font-size:16px;}
   .parent-row input[type=number],.parent-block input[type=password]{
@@ -538,11 +563,6 @@
     <section class="view" id="viewShop">
       <h2 class="view-title"><svg class="uic"><use href="#i-shop"/></svg>Магазин наград</h2>
       <div class="shop-lockbar"><button id="shopLockBtn" class="shop-lock-btn"></button></div>
-      <div id="shopParentForm" class="shop-parent-form" hidden>
-        <input type="password" id="shopParentPass" inputmode="numeric" placeholder="Пароль родителя" maxlength="12">
-        <button class="parent-apply" id="shopParentEnter">Войти</button>
-        <div class="parent-msg" id="shopParentMsg"></div>
-      </div>
       <div id="shopList"></div>
       <button class="add-reward-toggle" id="addRewardToggle" hidden><svg class="uic"><use href="#i-add"/></svg> Добавить награду</button>
       <div id="addRewardForm" hidden>
@@ -562,9 +582,10 @@
       <h2 class="view-title"><svg class="uic"><use href="#i-settings"/></svg>Настройки</h2>
       <div class="settings-stats" id="settingsStats"></div>
       <label class="switch-row" for="muteChk"><input type="checkbox" id="muteChk"> <svg class="uic"><use href="#i-sound-on"/></svg> Звуки</label>
+      <div class="backup-title"><svg class="uic"><use href="#i-save"/></svg>Резервная копия данных</div>
       <div class="settings-btn-row">
-        <button id="exportBtn"><svg class="uic"><use href="#i-save"/></svg>Сохранить данные в файл</button>
-        <button id="importBtn"><svg class="uic"><use href="#i-load"/></svg>Загрузить данные из файла</button>
+        <button id="exportBtn"><svg class="uic"><use href="#i-save"/></svg>Сохранить</button>
+        <button id="importBtn"><svg class="uic"><use href="#i-load"/></svg>Загрузить</button>
       </div>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
       <button class="install-btn" id="installBtn" hidden><svg class="uic"><use href="#i-install"/></svg>Установить приложение</button>
@@ -572,13 +593,24 @@
 
       <!-- РОДИТЕЛЬСКИЙ РАЗДЕЛ -->
       <div class="parent-block">
-        <h3><svg class="uic"><use href="#i-parent"/></svg>Для родителя</h3>
-        <div id="parentLock">
-          <input type="password" id="parentPass" inputmode="numeric" placeholder="Введите пароль" maxlength="12">
-          <button class="parent-apply" id="parentEnter">Войти</button>
-          <div class="parent-msg" id="parentLockMsg"></div>
+        <div class="parent-head">
+          <h3><svg class="uic"><use href="#i-parent"/></svg>Для родителя</h3>
+          <button id="settingsLockBtn" class="shop-lock-btn"></button>
         </div>
         <div id="parentPanel" hidden>
+          <div class="cfg-sub">Сколько давать по умолчанию</div>
+          <div class="parent-row">
+            <span class="lb">⭐ за шаг</span>
+            <input type="number" id="cfgStars" min="0" max="999">
+          </div>
+          <div class="parent-row">
+            <span class="lb">💎 за задание</span>
+            <input type="number" id="cfgGems" min="0" max="9999">
+          </div>
+          <button class="parent-apply" id="cfgApply">Сохранить награды</button>
+          <div class="parent-msg" id="cfgMsg"></div>
+
+          <div class="cfg-sub">Изменить баланс вручную</div>
           <div class="parent-row">
             <span class="lb">⭐ Звёздочки</span>
             <div class="step-btns"><button id="starMinus">−</button></div>
@@ -593,6 +625,8 @@
           </div>
           <button class="parent-apply" id="parentApply">Применить</button>
           <div class="parent-msg" id="parentMsg"></div>
+          <div class="parent-row btn-row"><button class="parent-secondary" id="changePassBtn">Сменить пароль</button></div>
+          <div class="reset-log" id="resetLog"></div>
         </div>
       </div>
 
@@ -641,10 +675,33 @@
       <button type="button" data-d="6">Сб</button>
       <button type="button" data-d="0">Вс</button>
     </div>
+    <div id="rewardOverride" hidden>
+      <label><svg class="uic"><use href="#i-parent"/></svg> Награда за это задание</label>
+      <div class="ovr-grid">
+        <div class="ovr-cell"><span>⭐ за шаг</span><input type="number" id="ovrStars" min="0" max="999"></div>
+        <div class="ovr-cell"><span>💎 за задание</span><input type="number" id="ovrGems" min="0" max="9999"></div>
+      </div>
+      <div class="ovr-hint">Пусто — как у всех (по умолчанию)</div>
+    </div>
     <div class="sheet-actions">
       <button class="cancel" id="cancelAdd">Отмена</button>
       <button class="ok" id="saveTask">Готово 💖</button>
     </div>
+  </div>
+</div>
+
+<!-- модалка родительского доступа: создать / ввести пароль / сброс через пример -->
+<div class="overlay" id="parentOverlay">
+  <div class="sheet parent-sheet">
+    <h2 id="psTitle"><svg class="uic"><use href="#i-parent"/></svg> Для родителя</h2>
+    <p id="psDesc" class="ps-desc"></p>
+    <input type="password" id="psInput" inputmode="numeric" autocomplete="off" placeholder="">
+    <div class="parent-msg" id="psMsg"></div>
+    <div class="sheet-actions">
+      <button class="cancel" id="psCancel">Отмена</button>
+      <button class="ok" id="psOk">OK</button>
+    </div>
+    <button class="ps-link" id="psForgot" hidden>Забыли пароль?</button>
   </div>
 </div>
 
@@ -674,11 +731,20 @@ function normalize(s){
   if(!Array.isArray(s.rewards))s.rewards=defaultRewards();
   if(!Array.isArray(s.claimed))s.claimed=[];
   if(!Array.isArray(s.history))s.history=[];
+  if(typeof s.parentPass!=='string')s.parentPass='';   // '' = пароль ещё не задан (первый запуск)
+  if(!Array.isArray(s.passResets))s.passResets=[];      // журнал сбросов пароля {date}
+  // глобальный конфиг наград (по умолчанию ⭐1/шаг, 💎10/задание — как было)
+  if(!s.cfg||typeof s.cfg!=='object')s.cfg={};
+  s.cfg.starsPerStep=(Number.isFinite(+s.cfg.starsPerStep)&&+s.cfg.starsPerStep>=0)?+s.cfg.starsPerStep:1;
+  s.cfg.gemsPerTask =(Number.isFinite(+s.cfg.gemsPerTask) &&+s.cfg.gemsPerTask >=0)?+s.cfg.gemsPerTask :10;
+  const numOrNull=v=>(v==null||v===''||!Number.isFinite(+v)||+v<0)?null:+v;   // override либо число≥0, либо null (=глобально)
   s.tasks.forEach(t=>{
     if(typeof t.repeat!=='string'||(t.repeat!=='daily'&&t.repeat!=='weekly'))t.repeat='once';
     if(!Array.isArray(t.days))t.days=[];
     if(typeof t.streak!=='number')t.streak=0;
     if(!('lastDoneDate'in t))t.lastDoneDate=null;
+    t.gems=numOrNull(t.gems);                 // 💎 за это задание (null = глобально)
+    t.starsPerStep=numOrNull(t.starsPerStep); // ⭐ за шаг этого задания (null = глобально)
     if(!Array.isArray(t.subs))t.subs=[];
     if(typeof t.awarded!=='boolean')t.awarded=t.subs.length>0&&t.subs.every(x=>x.done);
     t.subs.forEach(x=>{
@@ -694,6 +760,9 @@ function loadState(){
 }
 let state=loadState();
 function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+// эффективная награда: переопределение задачи, иначе глобальный конфиг
+function stepStars(t){return (t&&t.starsPerStep!=null)?t.starsPerStep:state.cfg.starsPerStep;}
+function taskGems(t){return (t&&t.gems!=null)?t.gems:state.cfg.gemsPerTask;}
 
 //==== даты и ежедневный сброс ====
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -894,6 +963,7 @@ function recreateTask(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
   const nid=uid();
   state.tasks.unshift({id:nid,name:t.name,emoji:t.emoji,repeat:'once',days:[],streak:0,lastDoneDate:null,awarded:false,
+    gems:t.gems,starsPerStep:t.starsPerStep,
     subs:t.subs.map(s=>({id:uid(),text:s.text,done:false,awarded:false}))});
   save();sfxPop();speak('Задание создано заново! 💪');
   taskTab='open';openDetail(nid);
@@ -950,12 +1020,15 @@ function taskCard(t,detail){
   card.appendChild(head);
   if(!detail)attachDrag(card,handle);
 
-  // бейджи: повтор + стрик
-  if(t.repeat!=='once'||streak>0){
+  // бейджи: повтор + стрик + кастомная награда (если задана)
+  const hasOvr=(t.gems!=null||t.starsPerStep!=null);
+  if(t.repeat!=='once'||streak>0||hasOvr){
     const b=document.createElement('div');b.className='task-badges';b.style.marginTop='8px';
     if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
     else if(t.repeat==='weekly'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 '+daysLabel(t.days);b.appendChild(r);}
     if(streak>0){const sx=document.createElement('span');sx.className='badge streak';sx.textContent='🔥 '+streak+(streak%10===1&&streak%100!==11?' день':' дн.');b.appendChild(sx);}
+    if(t.gems!=null){const g=document.createElement('span');g.className='badge bonus';g.textContent='💎 '+t.gems;b.appendChild(g);}
+    if(t.starsPerStep!=null){const sps=document.createElement('span');sps.className='badge bonus';sps.textContent='⭐ '+t.starsPerStep+'/шаг';b.appendChild(sps);}
     card.appendChild(b);
   }
 
@@ -1004,9 +1077,8 @@ function toggleSub(taskId,subId,li){
     cheer();sfxPop();burstAtEl(li,10);
     if(!s.awarded){              // награда только за ПЕРВОЕ выполнение шага (защита от накрутки)
       s.awarded=true;
-      state.stars+=1;            // ⭐ за шаг — валюта на виртуальные покупки (одевалка)
-      logHistory('Шаг: '+t.name,1,0);
-      bumpScore('stars');
+      const sp=stepStars(t);     // ⭐ за шаг — глобально или переопределение задачи
+      if(sp>0){state.stars+=sp;logHistory('Шаг: '+t.name,sp,0);bumpScore('stars');}
     }
   }
   const nowAllDone=t.subs.length>0&&t.subs.every(x=>x.done);
@@ -1014,8 +1086,9 @@ function toggleSub(taskId,subId,li){
   if(nowAllDone&&!wasAllDone){
     if(!t.awarded){             // кубок и крупные очки — только за первое полное выполнение (в этот день)
       t.awarded=true;
-      state.trophies+=1;state.points+=10;   // 🏆 счётчик за кадром (в настройках), 💎 алмазы → магазин реальных призов
-      logHistory('Задание выполнено: '+t.name,0,10);
+      const tg=taskGems(t);      // 💎 за задание — глобально или переопределение задачи
+      state.trophies+=1;if(tg>0){state.points+=tg;}   // 🏆 счётчик за кадром, 💎 алмазы → магазин реальных призов
+      logHistory('Задание выполнено: '+t.name,0,tg);
       // стрик для ежедневных дел — обновляем один раз в день
       if(t.repeat==='daily'){
         const today=todayStr();
@@ -1025,10 +1098,10 @@ function toggleSub(taskId,subId,li){
         }
       }
       save();
-      bumpScore('points');
+      if(tg>0)bumpScore('points');
       render();
     }
-    bigCelebrate(t.name);
+    bigCelebrate(t.name,taskGems(t));
   }
 }
 
@@ -1073,7 +1146,21 @@ function openAdd(){
   document.getElementById('sheetTitle').textContent='✨ Новое задание ✨';
   taskName.value='';pickEmoji(EMOJIS[0]);clearPresetSel();pickedDays.clear();setRepeat('once');renderDays();
   presetWrap.style.display='';     // готовые дела — только при создании
+  setupOverride(null);
   overlay.classList.add('show');   // без автофокуса: клавиатура не должна закрывать чипы готовых дел — фокус по тапу пользователя
+}
+// секция «награда за это задание» — только в режиме родителя
+function setupOverride(t){
+  const wrap=document.getElementById('rewardOverride');if(!wrap)return;
+  wrap.hidden=!parentUnlocked;
+  const os=document.getElementById('ovrStars'),og=document.getElementById('ovrGems');
+  os.placeholder=state.cfg.starsPerStep; og.placeholder=state.cfg.gemsPerTask;
+  os.value=(t&&t.starsPerStep!=null)?t.starsPerStep:'';
+  og.value=(t&&t.gems!=null)?t.gems:'';
+}
+function readOverride(){   // вызывать только в режиме родителя; '' → null (= глобально)
+  const num=(id,max)=>{const v=document.getElementById(id).value.trim();return v===''?null:Math.max(0,Math.min(max,parseInt(v,10)||0));};
+  return {starsPerStep:num('ovrStars',999), gems:num('ovrGems',9999)};
 }
 function openEdit(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
@@ -1082,6 +1169,7 @@ function openEdit(id){
   taskName.value=t.name;pickEmoji(t.emoji);clearPresetSel();
   pickedDays=new Set(t.days||[]);setRepeat(t.repeat);renderDays();
   presetWrap.style.display='none'; // при редактировании готовые дела не нужны
+  setupOverride(t);
   overlay.classList.add('show');
 }
 function pickEmoji(em){
@@ -1096,13 +1184,16 @@ function saveTask(){
   if(repeat==='weekly'&&days.length===0)repeat='once';   // дни не выбраны — обычное
   if(editingId){
     const t=state.tasks.find(x=>x.id===editingId);
-    if(t){t.name=name;t.emoji=pickedEmoji;t.repeat=repeat;t.days=days;}
+    if(t){t.name=name;t.emoji=pickedEmoji;t.repeat=repeat;t.days=days;
+      if(parentUnlocked){const o=readOverride();t.starsPerStep=o.starsPerStep;t.gems=o.gems;}}
     pendingSubs=[];sfxPop();save();closeSheet();render();
     return;
   }
   const subs=pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}));
   const nid=uid();
-  state.tasks.unshift({id:nid,name,emoji:pickedEmoji,repeat,days,streak:0,lastDoneDate:null,awarded:false,subs});
+  const o=parentUnlocked?readOverride():{starsPerStep:null,gems:null};
+  state.tasks.unshift({id:nid,name,emoji:pickedEmoji,repeat,days,streak:0,lastDoneDate:null,awarded:false,
+    starsPerStep:o.starsPerStep,gems:o.gems,subs});
   taskTab=(repeat==='once')?'open':'daily';        // во вкладке, куда попадёт после закрытия
   pendingSubs=[];sfxPop();save();closeSheet();openDetail(nid);   // сразу открыть на весь экран — добавить/посмотреть шаги
 }
@@ -1255,13 +1346,14 @@ function loop(){
 }
 
 //==== большой праздник при завершении задания ====
-function bigCelebrate(name){
+function bigCelebrate(name,gems){
   sfxWin();
   for(let i=0;i<5;i++){
     setTimeout(()=>burstAt(Math.random()*innerWidth,innerHeight*0.7,18),i*120);
   }
   const r=document.getElementById('reward');
-  r.innerHTML=`<span class="big">🏆</span>Задание выполнено!<br>+10 💎<br><span style="font-size:15px;opacity:.7">${esc(name)}</span>`;
+  const gemLine=(gems>0)?`+${gems} 💎<br>`:'';
+  r.innerHTML=`<span class="big">🏆</span>Задание выполнено!<br>${gemLine}<span style="font-size:15px;opacity:.7">${esc(name)}</span>`;
   r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
   speak('Ура! Целое задание готово! 🎉');
 }
@@ -1433,54 +1525,112 @@ function renderHistory(){
   });
 }
 document.getElementById('histPeriod').onchange=(e)=>{histFilter=e.target.value;renderHistory();sfxClick();};
-//==== режим родителя (единый замок: пароль открывает магазин-правки И панель баланса) ====
-const PARENT_PASS='0513';
+//==== режим родителя: единый замок + пароль в localStorage + сброс через пример ====
 let parentUnlocked=false;   // на сессию: при перезапуске приложения снова заблокировано
 // синхронизирует UI магазина и настроек с текущим состоянием замка
 function applyParentMode(){
-  // магазин: кнопка-замок
-  const lb=document.getElementById('shopLockBtn');
-  if(lb){
+  ['shopLockBtn','settingsLockBtn'].forEach(id=>{
+    const lb=document.getElementById(id);if(!lb)return;
     lb.innerHTML='<svg class="uic"><use href="#i-parent"/></svg>'+(parentUnlocked?'Заблокировать':'Родитель');
     lb.classList.toggle('unlocked',parentUnlocked);
-  }
-  // магазин: форма пароля прячется в открытом режиме; кнопка «добавить» только для родителя
-  const spf=document.getElementById('shopParentForm');if(spf&&parentUnlocked)spf.hidden=true;
+  });
   const art=document.getElementById('addRewardToggle');if(art)art.hidden=!parentUnlocked;
   if(!parentUnlocked){const arf=document.getElementById('addRewardForm');if(arf)arf.hidden=true;}
-  // настройки: лок/панель баланса
-  const lock=document.getElementById('parentLock'),panel=document.getElementById('parentPanel');
-  if(lock)lock.hidden=parentUnlocked; if(panel)panel.hidden=!parentUnlocked;
-  // при блокировке — чистим введённые пароли/сообщения
-  if(!parentUnlocked){
-    ['parentPass','shopParentPass'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-    ['parentLockMsg','shopParentMsg'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='';});
-  }
-  // перерисовать карточки (кнопки удаления зависят от режима)
-  if(document.getElementById('shopList'))renderShop();
+  const panel=document.getElementById('parentPanel');if(panel)panel.hidden=!parentUnlocked;
+  if(parentUnlocked){renderResetLog();fillParentConfig();}
+  if(document.getElementById('shopList'))renderShop();   // кнопки удаления зависят от режима
 }
-function unlockParent(){parentUnlocked=true;document.getElementById('starDelta').value=0;document.getElementById('gemDelta').value=0;document.getElementById('parentMsg').textContent='';applyParentMode();}
-// вход через настройки
-document.getElementById('parentEnter').onclick=()=>{
-  sfxClick();
-  if(document.getElementById('parentPass').value.trim()===PARENT_PASS)unlockParent();
-  else document.getElementById('parentLockMsg').textContent='Неверный пароль 🙈';
-};
-// замок в магазине: открыт → блокируем; закрыт → показываем форму пароля
-document.getElementById('shopLockBtn').onclick=()=>{
-  sfxClick();
-  if(parentUnlocked){parentUnlocked=false;applyParentMode();return;}
-  const f=document.getElementById('shopParentForm');f.hidden=!f.hidden;
-  if(!f.hidden){document.getElementById('shopParentMsg').textContent='';setTimeout(()=>document.getElementById('shopParentPass').focus(),50);}
-};
-document.getElementById('shopParentEnter').onclick=()=>{
-  sfxClick();
-  if(document.getElementById('shopParentPass').value.trim()===PARENT_PASS)unlockParent();
-  else document.getElementById('shopParentMsg').textContent='Неверный пароль 🙈';
-};
-// Enter в полях пароля = «Войти»
-document.getElementById('parentPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('parentEnter').click();});
-document.getElementById('shopParentPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('shopParentEnter').click();});
+// подставить текущие значения глобального конфига наград в поля
+function fillParentConfig(){
+  const cs=document.getElementById('cfgStars'),cg=document.getElementById('cfgGems');
+  if(cs)cs.value=state.cfg.starsPerStep;
+  if(cg)cg.value=state.cfg.gemsPerTask;
+  const m=document.getElementById('cfgMsg');if(m)m.textContent='';
+}
+function lockParent(){parentUnlocked=false;applyParentMode();}
+function unlockParent(){
+  parentUnlocked=true;
+  const sd=document.getElementById('starDelta');if(sd)sd.value=0;
+  const gd=document.getElementById('gemDelta');if(gd)gd.value=0;
+  const pm=document.getElementById('parentMsg');if(pm)pm.textContent='';
+  closeParentSheet();applyParentMode();
+}
+// журнал сбросов пароля (в панели, после разблокировки)
+function renderResetLog(){
+  const box=document.getElementById('resetLog');if(!box)return;
+  if(!state.passResets.length){box.innerHTML='';return;}
+  const fmt=s=>{const p=(s||'').split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:esc(s);};
+  box.innerHTML='<div class="rl-title">🔑 Сбросы пароля:</div>'+
+    state.passResets.slice().reverse().map(r=>`<div class="rl-item">• ${fmt(r.date)}</div>`).join('');
+}
+
+// — модалка авторизации: создать / ввести / сброс через пример —
+const parentOverlay=document.getElementById('parentOverlay');
+let psMode='enter';   // 'create' | 'enter' | 'forgot'
+let psAnswer=0;       // ожидаемый ответ примера при сбросе
+function renderParentSheet(){
+  const inp=document.getElementById('psInput'),desc=document.getElementById('psDesc'),
+        forgot=document.getElementById('psForgot'),ok=document.getElementById('psOk');
+  document.getElementById('psMsg').textContent='';inp.value='';inp.inputMode='numeric';
+  if(psMode==='create'){
+    desc.textContent='Придумайте родительский пароль. Его будут спрашивать перед правками магазина и баланса.';
+    inp.placeholder='Новый пароль';ok.textContent='Сохранить';forgot.hidden=true;
+  }else if(psMode==='enter'){
+    desc.textContent='Введите родительский пароль.';
+    inp.placeholder='Пароль';ok.textContent='Войти';forgot.hidden=false;
+  }else{   // forgot — пример, который ребёнок не решит
+    const a=12+Math.floor(Math.random()*28), b=11+Math.floor(Math.random()*19);
+    psAnswer=a*b;
+    desc.innerHTML='Чтобы сбросить пароль, решите пример:<br><b style="font-size:22px">'+a+' × '+b+' = ?</b>';
+    inp.placeholder='Ответ';ok.textContent='Сбросить';forgot.hidden=true;
+  }
+  setTimeout(()=>inp.focus(),60);
+}
+function openParentSheet(){
+  psMode = state.parentPass ? 'enter' : 'create';
+  parentOverlay.classList.add('show');renderParentSheet();
+}
+function closeParentSheet(){
+  parentOverlay.classList.remove('show');
+  document.getElementById('psInput').value='';document.getElementById('psMsg').textContent='';
+}
+function psSubmit(){
+  const inp=document.getElementById('psInput'),msg=document.getElementById('psMsg'),v=inp.value.trim();
+  if(psMode==='create'){
+    sfxClick();
+    if(v.length<3){msg.textContent='Слишком короткий (минимум 3 символа)';return;}
+    state.parentPass=v;save();unlockParent();return;
+  }
+  if(psMode==='enter'){
+    sfxClick();
+    if(v===state.parentPass)unlockParent();
+    else msg.textContent='Неверный пароль 🙈';
+    return;
+  }
+  // forgot
+  if(parseInt(v,10)===psAnswer){
+    sfxWin();
+    state.passResets.push({date:todayStr()});
+    state.parentPass='';save();
+    psMode='create';renderParentSheet();
+    document.getElementById('psMsg').textContent='Пароль сброшен ✅ Придумайте новый.';
+  }else{
+    sfxClick();
+    renderParentSheet();   // новый пример
+    document.getElementById('psMsg').textContent='Неверно. Попробуйте ещё раз 🙈';
+  }
+}
+document.getElementById('psOk').onclick=psSubmit;
+document.getElementById('psCancel').onclick=()=>{sfxClick();closeParentSheet();};
+document.getElementById('psForgot').onclick=()=>{sfxClick();psMode='forgot';renderParentSheet();};
+document.getElementById('psInput').addEventListener('keydown',e=>{if(e.key==='Enter')psSubmit();});
+parentOverlay.onclick=(e)=>{if(e.target===parentOverlay)closeParentSheet();};
+// кнопки-замки в магазине и настройках: разблокировано → блокируем; заблокировано → модалка
+function lockBtnClick(){sfxClick();if(parentUnlocked)lockParent();else openParentSheet();}
+document.getElementById('shopLockBtn').onclick=lockBtnClick;
+document.getElementById('settingsLockBtn').onclick=lockBtnClick;
+// смена пароля из панели (уже разблокировано)
+document.getElementById('changePassBtn').onclick=()=>{sfxClick();psMode='create';parentOverlay.classList.add('show');renderParentSheet();};
 function stepInput(id,d){const el=document.getElementById(id);el.value=(parseInt(el.value,10)||0)+d;}
 document.getElementById('starPlus').onclick =()=>stepInput('starDelta',1);
 document.getElementById('starMinus').onclick=()=>stepInput('starDelta',-1);
@@ -1502,6 +1652,15 @@ document.getElementById('parentApply').onclick=()=>{
   if(ds)parts.push((ds>0?'+':'')+ds+' ⭐');
   if(dp)parts.push((dp>0?'+':'')+dp+' 💎');
   document.getElementById('parentMsg').textContent='Готово: '+parts.join(' ')+' ✅';
+  sfxPop();
+};
+// сохранить глобальный конфиг наград (⭐ за шаг / 💎 за задание)
+document.getElementById('cfgApply').onclick=()=>{
+  const sp=Math.max(0,Math.min(999,parseInt(document.getElementById('cfgStars').value,10)||0));
+  const gp=Math.max(0,Math.min(9999,parseInt(document.getElementById('cfgGems').value,10)||0));
+  state.cfg.starsPerStep=sp;state.cfg.gemsPerTask=gp;
+  save();fillParentConfig();
+  document.getElementById('cfgMsg').textContent='Сохранено: ⭐'+sp+'/шаг, 💎'+gp+'/задание ✅';
   sfxPop();
 };
 document.getElementById('exportBtn').onclick=()=>{
@@ -1531,6 +1690,19 @@ importFile.onchange=async()=>{
 
 render();
 applyParentMode();   // выставить замок магазина/настроек в стартовое (заблокированное) состояние
+
+//==== не гасить экран, пока приложение открыто (Screen Wake Lock) ====
+let wakeLock=null;
+async function requestWakeLock(){
+  if(!('wakeLock'in navigator)||document.visibilityState!=='visible')return;
+  try{
+    wakeLock=await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release',()=>{wakeLock=null;});   // система сама сняла лок
+  }catch(e){/* отказ (например, низкий заряд) — не критично */}
+}
+// лок снимается при сворачивании/гашении — запрашиваем снова, когда приложение опять активно
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')requestWakeLock();});
+requestWakeLock();
 
 //==== PWA: оффлайн + установка на домашний экран ====
 if('serviceWorker' in navigator){
