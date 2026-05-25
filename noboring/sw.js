@@ -1,5 +1,5 @@
 // Service worker для PWA «Мои Задания» — оффлайн-кэш оболочки приложения.
-const CACHE = 'noboring-v15';
+const CACHE = 'noboring-v16';
 const ASSETS = [
   './',
   './index.html',

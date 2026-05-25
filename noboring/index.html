@@ -422,10 +422,26 @@
   .buy-btn:active{transform:scale(.95);}
   .buy-btn:disabled{background:var(--lilac);color:#b6a8cf;cursor:default;}
   .r-del{border:none;background:#ffe0e9;color:var(--pink-deep);border-radius:14px;width:46px;height:40px;cursor:pointer;font-size:16px;flex:0 0 auto;}
+  /* замок «режим родителя» в магазине */
+  .shop-lockbar{display:flex;justify-content:flex-end;margin:-6px 0 10px;}
+  .shop-lock-btn{
+    display:inline-flex;align-items:center;gap:5px;border:2px solid var(--lilac);background:#fff;color:var(--purple);
+    border-radius:14px;padding:7px 13px;font-family:inherit;font-weight:bold;font-size:14px;cursor:pointer;transition:transform .15s;
+  }
+  .shop-lock-btn:active{transform:scale(.95);}
+  .shop-lock-btn.unlocked{border-color:var(--pink);background:var(--pink-soft);color:var(--pink-deep);}
+  .shop-parent-form{background:#fff;border:3px solid var(--lilac);border-radius:18px;padding:12px;margin:0 0 12px;}
+  .shop-parent-form input{
+    width:100%;border:3px solid var(--pink-soft);border-radius:14px;padding:11px;font-size:17px;
+    font-family:inherit;color:var(--ink);outline:none;background:#fff;
+  }
+  .shop-parent-form input:focus{border-color:var(--pink);}
+  .shop-parent-form .parent-apply{margin-top:8px;}
   .add-reward-toggle,.settings-btn-row button{
     display:block;width:100%;border:3px dashed var(--purple);background:#fff;color:var(--purple);
     font-family:inherit;font-weight:bold;font-size:16px;border-radius:16px;padding:12px;margin-top:10px;cursor:pointer;
   }
+  .add-reward-toggle[hidden]{display:none;}   /* иначе display:block перебивает атрибут hidden */
   #addRewardForm label{font-size:15px;font-weight:bold;display:block;margin:10px 0 5px;color:var(--ink);}
   #addRewardForm input[type=text],#addRewardForm input[type=number]{
     width:100%;border:3px solid var(--pink-soft);border-radius:16px;padding:12px;font-size:18px;
@@ -521,8 +537,14 @@
     <!-- ЭКРАН: МАГАЗИН -->
     <section class="view" id="viewShop">
       <h2 class="view-title"><svg class="uic"><use href="#i-shop"/></svg>Магазин наград</h2>
+      <div class="shop-lockbar"><button id="shopLockBtn" class="shop-lock-btn"></button></div>
+      <div id="shopParentForm" class="shop-parent-form" hidden>
+        <input type="password" id="shopParentPass" inputmode="numeric" placeholder="Пароль родителя" maxlength="12">
+        <button class="parent-apply" id="shopParentEnter">Войти</button>
+        <div class="parent-msg" id="shopParentMsg"></div>
+      </div>
       <div id="shopList"></div>
-      <button class="add-reward-toggle" id="addRewardToggle"><svg class="uic"><use href="#i-add"/></svg> Добавить награду</button>
+      <button class="add-reward-toggle" id="addRewardToggle" hidden><svg class="uic"><use href="#i-add"/></svg> Добавить награду</button>
       <div id="addRewardForm" hidden>
         <label>Название награды</label>
         <input type="text" id="rewardName" placeholder="Например: Мороженое" maxlength="30">
@@ -890,7 +912,7 @@ function switchView(name){
   document.querySelector('.content').scrollTop=0;
   if(name==='tasks')render();
   if(name==='shop')renderShop();
-  if(name==='settings'){renderSettingsStats();renderMute();resetParentLock();}
+  if(name==='settings'){renderSettingsStats();renderMute();applyParentMode();}
 }
 document.querySelector('.bottom-nav').addEventListener('click',(e)=>{
   const b=e.target.closest('.nav-item');if(!b)return;
@@ -1051,7 +1073,7 @@ function openAdd(){
   document.getElementById('sheetTitle').textContent='✨ Новое задание ✨';
   taskName.value='';pickEmoji(EMOJIS[0]);clearPresetSel();pickedDays.clear();setRepeat('once');renderDays();
   presetWrap.style.display='';     // готовые дела — только при создании
-  overlay.classList.add('show');setTimeout(()=>taskName.focus(),300);
+  overlay.classList.add('show');   // без автофокуса: клавиатура не должна закрывать чипы готовых дел — фокус по тапу пользователя
 }
 function openEdit(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
@@ -1308,9 +1330,12 @@ function renderShop(){
     const actions=document.createElement('div');actions.className='reward-actions';
     const buy=document.createElement('button');buy.className='buy-btn';buy.textContent='Купить';buy.disabled=state.points<r.cost;
     buy.onclick=()=>buyReward(r.id);
-    const del=document.createElement('button');del.className='r-del';del.textContent='✕';del.title='Удалить награду';
-    del.onclick=()=>{state.rewards=state.rewards.filter(x=>x.id!==r.id);save();renderShop();sfxClick();};
-    actions.append(buy,del);
+    actions.append(buy);
+    if(parentUnlocked){   // удалять награды — только в режиме родителя
+      const del=document.createElement('button');del.className='r-del';del.textContent='✕';del.title='Удалить награду';
+      del.onclick=()=>{state.rewards=state.rewards.filter(x=>x.id!==r.id);save();renderShop();sfxClick();};
+      actions.append(del);
+    }
     card.append(top,actions);
     shopList.appendChild(card);
   });
@@ -1408,27 +1433,54 @@ function renderHistory(){
   });
 }
 document.getElementById('histPeriod').onchange=(e)=>{histFilter=e.target.value;renderHistory();sfxClick();};
-//==== родительский раздел (пароль + правка баланса) ====
+//==== режим родителя (единый замок: пароль открывает магазин-правки И панель баланса) ====
 const PARENT_PASS='0513';
-function resetParentLock(){
+let parentUnlocked=false;   // на сессию: при перезапуске приложения снова заблокировано
+// синхронизирует UI магазина и настроек с текущим состоянием замка
+function applyParentMode(){
+  // магазин: кнопка-замок
+  const lb=document.getElementById('shopLockBtn');
+  if(lb){
+    lb.innerHTML='<svg class="uic"><use href="#i-parent"/></svg>'+(parentUnlocked?'Заблокировать':'Родитель');
+    lb.classList.toggle('unlocked',parentUnlocked);
+  }
+  // магазин: форма пароля прячется в открытом режиме; кнопка «добавить» только для родителя
+  const spf=document.getElementById('shopParentForm');if(spf&&parentUnlocked)spf.hidden=true;
+  const art=document.getElementById('addRewardToggle');if(art)art.hidden=!parentUnlocked;
+  if(!parentUnlocked){const arf=document.getElementById('addRewardForm');if(arf)arf.hidden=true;}
+  // настройки: лок/панель баланса
   const lock=document.getElementById('parentLock'),panel=document.getElementById('parentPanel');
-  if(lock)lock.hidden=false; if(panel)panel.hidden=true;
-  const pass=document.getElementById('parentPass');if(pass)pass.value='';
-  const m=document.getElementById('parentLockMsg');if(m)m.textContent='';
+  if(lock)lock.hidden=parentUnlocked; if(panel)panel.hidden=!parentUnlocked;
+  // при блокировке — чистим введённые пароли/сообщения
+  if(!parentUnlocked){
+    ['parentPass','shopParentPass'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    ['parentLockMsg','shopParentMsg'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='';});
+  }
+  // перерисовать карточки (кнопки удаления зависят от режима)
+  if(document.getElementById('shopList'))renderShop();
 }
+function unlockParent(){parentUnlocked=true;document.getElementById('starDelta').value=0;document.getElementById('gemDelta').value=0;document.getElementById('parentMsg').textContent='';applyParentMode();}
+// вход через настройки
 document.getElementById('parentEnter').onclick=()=>{
   sfxClick();
-  const v=document.getElementById('parentPass').value.trim();
-  if(v===PARENT_PASS){
-    document.getElementById('parentLock').hidden=true;
-    document.getElementById('parentPanel').hidden=false;
-    document.getElementById('starDelta').value=0;
-    document.getElementById('gemDelta').value=0;
-    document.getElementById('parentMsg').textContent='';
-  }else{
-    document.getElementById('parentLockMsg').textContent='Неверный пароль 🙈';
-  }
+  if(document.getElementById('parentPass').value.trim()===PARENT_PASS)unlockParent();
+  else document.getElementById('parentLockMsg').textContent='Неверный пароль 🙈';
 };
+// замок в магазине: открыт → блокируем; закрыт → показываем форму пароля
+document.getElementById('shopLockBtn').onclick=()=>{
+  sfxClick();
+  if(parentUnlocked){parentUnlocked=false;applyParentMode();return;}
+  const f=document.getElementById('shopParentForm');f.hidden=!f.hidden;
+  if(!f.hidden){document.getElementById('shopParentMsg').textContent='';setTimeout(()=>document.getElementById('shopParentPass').focus(),50);}
+};
+document.getElementById('shopParentEnter').onclick=()=>{
+  sfxClick();
+  if(document.getElementById('shopParentPass').value.trim()===PARENT_PASS)unlockParent();
+  else document.getElementById('shopParentMsg').textContent='Неверный пароль 🙈';
+};
+// Enter в полях пароля = «Войти»
+document.getElementById('parentPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('parentEnter').click();});
+document.getElementById('shopParentPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('shopParentEnter').click();});
 function stepInput(id,d){const el=document.getElementById(id);el.value=(parseInt(el.value,10)||0)+d;}
 document.getElementById('starPlus').onclick =()=>stepInput('starDelta',1);
 document.getElementById('starMinus').onclick=()=>stepInput('starDelta',-1);
@@ -1478,6 +1530,7 @@ importFile.onchange=async()=>{
 };
 
 render();
+applyParentMode();   // выставить замок магазина/настроек в стартовое (заблокированное) состояние
 
 //==== PWA: оффлайн + установка на домашний экран ====
 if('serviceWorker' in navigator){
