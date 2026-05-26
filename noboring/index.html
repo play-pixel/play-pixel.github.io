@@ -505,6 +505,15 @@
     font-family:inherit;font-weight:bold;font-size:16px;border-radius:16px;padding:12px;margin-top:10px;cursor:pointer;
   }
   .add-reward-toggle[hidden]{display:none;}   /* иначе display:block перебивает атрибут hidden */
+  /* нижняя кнопка «Родитель» в магазине — только ВКЛЮЧАЕТ режим (выход — через верхнюю плашку) */
+  .shop-parent-bottom{
+    display:flex;align-items:center;justify-content:center;gap:6px;width:fit-content;margin:24px auto 4px;
+    border:2px solid var(--lilac);background:#fff;color:var(--purple);font-family:inherit;font-weight:bold;
+    font-size:15px;border-radius:16px;padding:11px 22px;cursor:pointer;transition:transform .15s;
+  }
+  .shop-parent-bottom .uic{width:17px;height:17px;}
+  .shop-parent-bottom:active{transform:scale(.96);}
+  .shop-parent-bottom[hidden]{display:none;}
   #addRewardForm label{font-size:15px;font-weight:bold;display:block;margin:10px 0 5px;color:var(--ink);}
   #addRewardForm input[type=text],#addRewardForm input[type=number]{
     width:100%;border:3px solid var(--pink-soft);border-radius:16px;padding:12px;font-size:18px;
@@ -621,7 +630,6 @@
     <!-- ЭКРАН: МАГАЗИН -->
     <section class="view" id="viewShop">
       <h2 class="view-title"><svg class="uic"><use href="#i-shop"/></svg>Магазин наград</h2>
-      <div class="shop-lockbar"><button id="shopLockBtn" class="shop-lock-btn"></button></div>
       <div id="shopList"></div>
       <button class="add-reward-toggle" id="addRewardToggle" hidden><svg class="uic"><use href="#i-add"/></svg> Добавить награду</button>
       <div id="addRewardForm" hidden>
@@ -634,6 +642,7 @@
         <button id="saveReward">Сохранить награду 💖</button>
       </div>
       <div id="claimedWrap"></div>
+      <button class="shop-parent-bottom" id="shopParentBtn"><svg class="uic"><use href="#i-parent"/></svg> Родитель</button>
     </section>
 
     <!-- ЭКРАН: НАСТРОЙКИ -->
@@ -1085,14 +1094,16 @@ function taskCard(t,detail){
   card.appendChild(head);
   if(!detail)attachDrag(card,handle);
 
-  // бейджи: повтор + стрик + кастомная награда (если задана)
-  const hasOvr=(t.gems!=null);
-  if(t.repeat!=='once'||streak>0||hasOvr){
+  // бейджи: награда (всегда, актуальная) + повтор + стрик
+  {
     const b=document.createElement('div');b.className='task-badges';b.style.marginTop='8px';
+    // сколько задание принесёт: 💎 за всё задание + ⭐ суммарно за все шаги
+    const totalStars=stepStars(t)*t.subs.length;
+    const g=document.createElement('span');g.className='badge bonus';g.textContent='💎 '+taskGems(t);b.appendChild(g);
+    const s=document.createElement('span');s.className='badge bonus';s.textContent='⭐ '+totalStars;b.appendChild(s);
     if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
     else if(t.repeat==='weekly'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 '+daysLabel(t.days);b.appendChild(r);}
     if(streak>0){const sx=document.createElement('span');sx.className='badge streak';sx.textContent='🔥 '+streak+(streak%10===1&&streak%100!==11?' день':' дн.');b.appendChild(sx);}
-    if(t.gems!=null){const g=document.createElement('span');g.className='badge bonus';g.textContent='💎 '+t.gems;b.appendChild(g);}
     card.appendChild(b);
   }
 
@@ -1681,6 +1692,7 @@ function applyParentMode(){
     lb.classList.toggle('unlocked',parentUnlocked);
   });
   const banner=document.getElementById('parentBanner');if(banner)banner.classList.toggle('show',parentUnlocked);
+  const spb=document.getElementById('shopParentBtn');if(spb)spb.hidden=parentUnlocked;   // в режиме родителя кнопку прячем — выход через плашку
   const art=document.getElementById('addRewardToggle');if(art)art.hidden=!parentUnlocked;
   if(!parentUnlocked){const arf=document.getElementById('addRewardForm');if(arf)arf.hidden=true;}
   const panel=document.getElementById('parentPanel');if(panel)panel.hidden=!parentUnlocked;
@@ -1773,8 +1785,9 @@ document.getElementById('psInput').addEventListener('keydown',e=>{if(e.key==='En
 parentOverlay.onclick=(e)=>{if(e.target===parentOverlay)closeParentSheet();};
 // кнопки-замки в магазине и настройках: разблокировано → блокируем; заблокировано → модалка
 function lockBtnClick(){sfxClick();if(parentUnlocked)lockParent();else openParentSheet();}
-document.getElementById('shopLockBtn').onclick=lockBtnClick;
 document.getElementById('settingsLockBtn').onclick=lockBtnClick;
+// нижняя кнопка магазина «Родитель» — только ВКЛЮЧАЕТ режим (выход — через верхнюю плашку)
+document.getElementById('shopParentBtn').onclick=()=>{sfxClick();if(!parentUnlocked)openParentSheet();};
 // глобальная плашка сверху: клик — выход из режима родителя
 document.getElementById('parentBanner').onclick=()=>{sfxClick();lockParent();};
 // смена пароля из панели (уже разблокировано)
