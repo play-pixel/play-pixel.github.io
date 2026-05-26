@@ -1063,10 +1063,13 @@ function taskCard(t,detail){
     const li=document.createElement('li');li.className='sub'+(s.done?' checked':'');
     const ck=document.createElement('span');ck.className='check';ck.textContent=s.done?'✓':'';
     const tx=document.createElement('span');tx.className='sub-text';tx.textContent=s.text;
-    const sd=document.createElement('button');sd.className='sub-del';sd.textContent='✕';
-    li.append(ck,tx,sd);
+    li.append(ck,tx);
+    if(!s.auto){   // у авто-шага (моно-задача) нет крестика — он всё равно не удаляется
+      const sd=document.createElement('button');sd.className='sub-del';sd.textContent='✕';
+      sd.onclick=(e)=>{e.stopPropagation();removeSub(t.id,s.id);};
+      li.append(sd);
+    }
     li.onclick=(e)=>{if(e.target.closest('.sub-del'))return;toggleSub(t.id,s.id,li);};
-    sd.onclick=(e)=>{e.stopPropagation();removeSub(t.id,s.id);};
     ul.appendChild(li);
   });
   card.appendChild(ul);
