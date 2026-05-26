@@ -384,6 +384,22 @@
   .undo-bar.show::after{animation:undoCountdown 10s linear forwards;}
   @keyframes undoCountdown{from{transform:scaleX(1);}to{transform:scaleX(0);}}
 
+  /* глобальная плашка «Режим родителя» — свисает сверху на всех экранах, по клику выходит из режима.
+     z-index ниже шкалы ⭐💎 не нужен: плашка узкая по высоте и стоит над заголовком, до счёта не достаёт */
+  .parent-banner{
+    position:fixed;top:0;left:50%;transform:translate(-50%,-120%);z-index:70;
+    display:inline-flex;align-items:center;gap:7px;
+    background:linear-gradient(135deg,var(--purple),var(--pink-deep));color:#fff;
+    border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:13px;
+    padding:6px 16px 8px;border-radius:0 0 18px 18px;
+    box-shadow:0 5px 16px rgba(122,61,104,.42);
+    transition:transform .35s cubic-bezier(.3,1.5,.5,1);white-space:nowrap;
+  }
+  .parent-banner.show{transform:translate(-50%,0);}
+  .parent-banner:not(.show){pointer-events:none;}
+  .parent-banner .uic{width:15px;height:15px;}
+  .parent-banner:active.show{transform:translate(-50%,0) scale(.95);}
+
   /* ===== новые элементы ===== */
   .mute-btn.gear{left:0;right:auto;}
 
@@ -747,6 +763,7 @@
 <canvas id="confetti"></canvas>
 <div class="reward" id="reward"></div>
 <div class="undo-bar" id="undoBar"><span class="undo-text"></span><button class="undo-btn" id="undoBtn">↩ Отменить</button></div>
+<button class="parent-banner" id="parentBanner" title="Выйти из режима родителя"><svg class="uic"><use href="#i-parent"/></svg> Режим родителя · выйти ✕</button>
 
 <script>
 //==== данные ====
@@ -1663,6 +1680,7 @@ function applyParentMode(){
     lb.innerHTML='<svg class="uic"><use href="#i-parent"/></svg>'+(parentUnlocked?'Заблокировать':'Родитель');
     lb.classList.toggle('unlocked',parentUnlocked);
   });
+  const banner=document.getElementById('parentBanner');if(banner)banner.classList.toggle('show',parentUnlocked);
   const art=document.getElementById('addRewardToggle');if(art)art.hidden=!parentUnlocked;
   if(!parentUnlocked){const arf=document.getElementById('addRewardForm');if(arf)arf.hidden=true;}
   const panel=document.getElementById('parentPanel');if(panel)panel.hidden=!parentUnlocked;
@@ -1757,6 +1775,8 @@ parentOverlay.onclick=(e)=>{if(e.target===parentOverlay)closeParentSheet();};
 function lockBtnClick(){sfxClick();if(parentUnlocked)lockParent();else openParentSheet();}
 document.getElementById('shopLockBtn').onclick=lockBtnClick;
 document.getElementById('settingsLockBtn').onclick=lockBtnClick;
+// глобальная плашка сверху: клик — выход из режима родителя
+document.getElementById('parentBanner').onclick=()=>{sfxClick();lockParent();};
 // смена пароля из панели (уже разблокировано)
 document.getElementById('changePassBtn').onclick=()=>{sfxClick();psMode='create';parentOverlay.classList.add('show');renderParentSheet();};
 function stepInput(id,d){const el=document.getElementById(id);el.value=(parseInt(el.value,10)||0)+d;}
