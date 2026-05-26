@@ -13,6 +13,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Задания">
 <style>
+  /* Nunito (вариативный, локально — офлайн через SW). Один файл на subset обслуживает все толщины. */
+  @font-face{
+    font-family:'Nunito';font-style:normal;font-weight:200 1000;font-display:swap;
+    src:url(fonts/nunito-latin.woff2) format('woff2');
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  }
+  @font-face{
+    font-family:'Nunito';font-style:normal;font-weight:200 1000;font-display:swap;
+    src:url(fonts/nunito-cyrillic.woff2) format('woff2');
+    unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+  }
   :root{
     --pink:#ff8fc7;
     --pink-deep:#ff5fa8;
@@ -28,24 +39,29 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;height:100%;overflow:hidden;}   /* страница не скроллится */
   body{
-    font-family:'Comic Sans MS','Segoe UI Rounded','Baloo',system-ui,sans-serif;
+    font-family:'Nunito','Segoe UI Rounded',system-ui,sans-serif;
+    font-weight:600;                 /* базовое начертание — semibold (округло и читаемо) */
     color:var(--ink);
     background:linear-gradient(160deg,#ffe3f3 0%,#f3e2ff 50%,#e2f6ff 100%);
     position:relative;
     -webkit-user-select:none;user-select:none;
     overscroll-behavior:none;
   }
+  /* иерархия начертаний Nunito: заголовки — экстражирные, текст — полужирный, подсказки — мягче */
+  header h1,.view-title,.section-title,.sheet h2,#sheetTitle,.parent-block h3,
+  .score-pill,.task-title,.task.detail .task-title,.reward,.tab-count{font-weight:800;}
+  .settings-note,.ovr-hint,.claimed-item,.hint,.streak-hint{font-weight:500;}
 
   /* плавающие фоновые штучки */
   .floaty{
-    position:fixed;font-size:26px;opacity:.5;pointer-events:none;
+    position:fixed;font-size:31px;opacity:.5;pointer-events:none;
     animation:floatUp linear infinite;z-index:0;
   }
   @keyframes floatUp{
-    0%{transform:translateY(110vh) rotate(0deg);opacity:0;}
-    10%{opacity:.6;}
-    90%{opacity:.6;}
-    100%{transform:translateY(-15vh) rotate(360deg);opacity:0;}
+    0%{transform:translateY(108vh) rotate(0deg);opacity:0;}
+    8%{opacity:.6;}
+    94%{opacity:.6;}
+    100%{transform:translateY(-28vh) rotate(360deg);opacity:0;}
   }
 
   .app{
@@ -600,13 +616,10 @@
         <div id="parentPanel" hidden>
           <div class="cfg-sub">Сколько давать по умолчанию</div>
           <div class="parent-row">
-            <span class="lb">⭐ за шаг</span>
-            <input type="number" id="cfgStars" min="0" max="999">
-          </div>
-          <div class="parent-row">
             <span class="lb">💎 за задание</span>
             <input type="number" id="cfgGems" min="0" max="9999">
           </div>
+          <div class="ovr-hint">⭐ за шаги начислятся сами: всего ⭐ за задание = 💎 за задание, поровну на шаги (минимум 1).</div>
           <button class="parent-apply" id="cfgApply">Сохранить награды</button>
           <div class="parent-msg" id="cfgMsg"></div>
 
@@ -678,10 +691,9 @@
     <div id="rewardOverride" hidden>
       <label><svg class="uic"><use href="#i-parent"/></svg> Награда за это задание</label>
       <div class="ovr-grid">
-        <div class="ovr-cell"><span>⭐ за шаг</span><input type="number" id="ovrStars" min="0" max="999"></div>
         <div class="ovr-cell"><span>💎 за задание</span><input type="number" id="ovrGems" min="0" max="9999"></div>
       </div>
-      <div class="ovr-hint">Пусто — как у всех (по умолчанию)</div>
+      <div class="ovr-hint">Пусто — как у всех. ⭐ за шаги начислятся сами (всего = 💎 за задание).</div>
     </div>
     <div class="sheet-actions">
       <button class="cancel" id="cancelAdd">Отмена</button>
@@ -712,6 +724,8 @@
 //==== данные ====
 const STORE_KEY='unicornTasks_v1';
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+// авто-шаг: каждое задание имеет хотя бы один шаг (=имя задания). Заменяется, как только добавляют настоящие шаги.
+function autoSub(name){return {id:uid(),text:name||'Готово',done:false,awarded:false,auto:true};}
 
 function defaultRewards(){
   return [
@@ -746,6 +760,7 @@ function normalize(s){
     t.gems=numOrNull(t.gems);                 // 💎 за это задание (null = глобально)
     t.starsPerStep=numOrNull(t.starsPerStep); // ⭐ за шаг этого задания (null = глобально)
     if(!Array.isArray(t.subs))t.subs=[];
+    if(t.subs.length===0)t.subs=[autoSub(t.name)];   // старые задания без шагов → один авто-шаг (иначе невыполнимы)
     if(typeof t.awarded!=='boolean')t.awarded=t.subs.length>0&&t.subs.every(x=>x.done);
     t.subs.forEach(x=>{
       if(typeof x.done!=='boolean')x.done=false;
@@ -761,8 +776,13 @@ function loadState(){
 let state=loadState();
 function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
 // эффективная награда: переопределение задачи, иначе глобальный конфиг
-function stepStars(t){return (t&&t.starsPerStep!=null)?t.starsPerStep:state.cfg.starsPerStep;}
 function taskGems(t){return (t&&t.gems!=null)?t.gems:state.cfg.gemsPerTask;}
+// ⭐ за шаг выводится из 💎 базы задания: всего ⭐ за задание ≈ 💎 за задание, поровну на шаги (минимум 1).
+// 1 шаг → вся база; 5 шагов при базе 10 → по 2; шагов больше базы → по 1.
+function stepStars(t){
+  const n=(t&&t.subs&&t.subs.length)||1;
+  return Math.max(1,Math.round(taskGems(t)/n));
+}
 
 //==== даты и ежедневный сброс ====
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -803,12 +823,12 @@ for(let i=0;i<14;i++){
   e.style.left=Math.random()*100+'vw';
   e.style.animationDuration=(10+Math.random()*12)+'s';
   e.style.animationDelay=(-Math.random()*15)+'s';
-  e.style.fontSize=(18+Math.random()*22)+'px';
+  e.style.fontSize=(22+Math.random()*26)+'px';
   document.body.appendChild(e);
 }
 
 //==== эмодзи для выбора ====
-const EMOJIS=['🧹','🧺','🛏️','🪥','🛁','🍽️','📚','✏️','🌱','🐶','🧸','👗','🎨','🎒','💧','🍎','🧼','🗑️','📦','🎹'];
+const EMOJIS=['🪮','🧹','🧺','🛏️','🪥','🛁','🚿','🧴','🦷','🍽️','🥣','📚','✏️','📝','🌱','🪴','🐶','🐱','🐟','🧸','👗','🧦','👟','🎨','🖍️','✂️','🎒','🧩','💧','🍎','🍅','🧼','🗑️','📦','🛒','🎹','🎵','⚽','🚲','💊'];
 let pickedEmoji=EMOJIS[0];
 let editingId=null;
 
@@ -1021,14 +1041,13 @@ function taskCard(t,detail){
   if(!detail)attachDrag(card,handle);
 
   // бейджи: повтор + стрик + кастомная награда (если задана)
-  const hasOvr=(t.gems!=null||t.starsPerStep!=null);
+  const hasOvr=(t.gems!=null);
   if(t.repeat!=='once'||streak>0||hasOvr){
     const b=document.createElement('div');b.className='task-badges';b.style.marginTop='8px';
     if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
     else if(t.repeat==='weekly'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 '+daysLabel(t.days);b.appendChild(r);}
     if(streak>0){const sx=document.createElement('span');sx.className='badge streak';sx.textContent='🔥 '+streak+(streak%10===1&&streak%100!==11?' день':' дн.');b.appendChild(sx);}
     if(t.gems!=null){const g=document.createElement('span');g.className='badge bonus';g.textContent='💎 '+t.gems;b.appendChild(g);}
-    if(t.starsPerStep!=null){const sps=document.createElement('span');sps.className='badge bonus';sps.textContent='⭐ '+t.starsPerStep+'/шаг';b.appendChild(sps);}
     card.appendChild(b);
   }
 
@@ -1107,12 +1126,14 @@ function toggleSub(taskId,subId,li){
 
 function addSub(taskId,text){
   const t=state.tasks.find(x=>x.id===taskId);if(!t)return;
+  if(t.subs.length===1&&t.subs[0].auto)t.subs=[];   // первый настоящий шаг заменяет авто-шаг
   t.subs.push({id:uid(),text,done:false,awarded:false});
   save();render();
 }
 function removeSub(taskId,subId){
   const t=state.tasks.find(x=>x.id===taskId);if(!t)return;
   t.subs=t.subs.filter(x=>x.id!==subId);
+  if(t.subs.length===0)t.subs=[autoSub(t.name)];   // задание всегда имеет хотя бы один шаг
   save();render();
 }
 function removeTask(id,card){
@@ -1153,14 +1174,13 @@ function openAdd(){
 function setupOverride(t){
   const wrap=document.getElementById('rewardOverride');if(!wrap)return;
   wrap.hidden=!parentUnlocked;
-  const os=document.getElementById('ovrStars'),og=document.getElementById('ovrGems');
-  os.placeholder=state.cfg.starsPerStep; og.placeholder=state.cfg.gemsPerTask;
-  os.value=(t&&t.starsPerStep!=null)?t.starsPerStep:'';
+  const og=document.getElementById('ovrGems');
+  og.placeholder=state.cfg.gemsPerTask;
   og.value=(t&&t.gems!=null)?t.gems:'';
 }
 function readOverride(){   // вызывать только в режиме родителя; '' → null (= глобально)
   const num=(id,max)=>{const v=document.getElementById(id).value.trim();return v===''?null:Math.max(0,Math.min(max,parseInt(v,10)||0));};
-  return {starsPerStep:num('ovrStars',999), gems:num('ovrGems',9999)};
+  return {gems:num('ovrGems',9999)};
 }
 function openEdit(id){
   const t=state.tasks.find(x=>x.id===id);if(!t)return;
@@ -1185,15 +1205,18 @@ function saveTask(){
   if(editingId){
     const t=state.tasks.find(x=>x.id===editingId);
     if(t){t.name=name;t.emoji=pickedEmoji;t.repeat=repeat;t.days=days;
-      if(parentUnlocked){const o=readOverride();t.starsPerStep=o.starsPerStep;t.gems=o.gems;}}
+      if(t.subs.length===1&&t.subs[0].auto)t.subs[0].text=name;   // моно-задача: единственный авто-шаг = имя
+      if(parentUnlocked){const o=readOverride();t.gems=o.gems;}}
     pendingSubs=[];sfxPop();save();closeSheet();render();
     return;
   }
-  const subs=pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}));
+  const subs=pendingSubs.length
+    ? pendingSubs.map(text=>({id:uid(),text,done:false,awarded:false}))
+    : [autoSub(name)];   // без готового дела — один авто-шаг (= имя задания)
   const nid=uid();
-  const o=parentUnlocked?readOverride():{starsPerStep:null,gems:null};
+  const o=parentUnlocked?readOverride():{gems:null};
   state.tasks.unshift({id:nid,name,emoji:pickedEmoji,repeat,days,streak:0,lastDoneDate:null,awarded:false,
-    starsPerStep:o.starsPerStep,gems:o.gems,subs});
+    starsPerStep:null,gems:o.gems,subs});
   taskTab=(repeat==='once')?'open':'daily';        // во вкладке, куда попадёт после закрытия
   pendingSubs=[];sfxPop();save();closeSheet();openDetail(nid);   // сразу открыть на весь экран — добавить/посмотреть шаги
 }
@@ -1210,67 +1233,75 @@ function bumpScore(which){
 }
 
 //==== звуки (Web Audio — генерируются в коде, без файлов) ====
-let actx=null;
+let actx=null,master=null,revIn=null;
+// короткий «зал» для сочности — импульс генерим программно
+function makeImpulse(a,dur,decay){
+  const len=Math.floor(a.sampleRate*dur),buf=a.createBuffer(2,len,a.sampleRate);
+  for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  return buf;
+}
 function audio(){
-  if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(!actx){try{
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    master=actx.createGain();master.gain.value=0.85;master.connect(actx.destination);
+    const rev=actx.createConvolver();rev.buffer=makeImpulse(actx,1.3,3);   // мягкий шиммер-хвост
+    const revOut=actx.createGain();revOut.gain.value=0.9;
+    revIn=actx.createGain();revIn.gain.value=1;                             // вход реверба (посыл с голосов)
+    revIn.connect(rev);rev.connect(revOut);revOut.connect(master);
+  }catch(e){}}
   if(actx&&actx.state==='suspended')actx.resume();
   return actx;
 }
-// одна нота с мягкой атакой и затуханием
-function tone(freq,start,dur,type,vol){
-  const a=audio();if(!a)return;
+// один голос: осциллятор → ФНЧ → огибающая → сухо в мастер + посыл в реверб
+// o: {to:гайд-частота, type, detune, cutoff, atk, wet:доля в реверб}
+function voice(freq,start,dur,vol,o){
+  const a=audio();if(!a)return;o=o||{};
   const t0=a.currentTime+start;
-  const osc=a.createOscillator();
-  const g=a.createGain();
-  osc.type=type||'sine';
+  const osc=a.createOscillator(),g=a.createGain(),lp=a.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=o.cutoff||6500;lp.Q.value=0.7;
+  osc.type=o.type||'sine';if(o.detune)osc.detune.value=o.detune;
   osc.frequency.setValueAtTime(freq,t0);
+  if(o.to)osc.frequency.exponentialRampToValueAtTime(o.to,t0+dur*0.85);
+  const atk=o.atk||0.005;
   g.gain.setValueAtTime(0,t0);
-  g.gain.linearRampToValueAtTime(vol||.25,t0+0.012);          // быстрый удар = «сочно»
-  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);          // плавный хвост
-  osc.connect(g);g.connect(a.destination);
-  osc.start(t0);osc.stop(t0+dur+0.02);
-}
-// нота со скольжением вверх (звонкий «поп»)
-function blip(f1,f2,start,dur,vol){
-  const a=audio();if(!a)return;
-  const t0=a.currentTime+start;
-  const osc=a.createOscillator();const g=a.createGain();
-  osc.type='triangle';
-  osc.frequency.setValueAtTime(f1,t0);
-  osc.frequency.exponentialRampToValueAtTime(f2,t0+dur*0.8);
-  g.gain.setValueAtTime(0,t0);
-  g.gain.linearRampToValueAtTime(vol||.3,t0+0.01);
+  g.gain.linearRampToValueAtTime(vol||.25,t0+atk);                          // снэп-атака = «сочно»
   g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
-  osc.connect(g);g.connect(a.destination);
-  osc.start(t0);osc.stop(t0+dur+0.02);
+  osc.connect(lp);lp.connect(g);g.connect(master);
+  if(o.wet&&revIn){const w=a.createGain();w.gain.value=o.wet;g.connect(w);w.connect(revIn);}
+  osc.start(t0);osc.stop(t0+dur+0.05);
 }
 function canPlay(){return !state.muted;}
 
-// галочка на шаге — звонкий весёлый «дзынь-поп»
+// галочка на шаге — сочный «карамельный» поп: тёплое тело + звонкий колокольчик + шиммер
 function sfxPop(){
   if(!canPlay())return;
-  blip(520,880,0,0.16,.32);
-  tone(1320,0.05,0.18,'sine',.18);
+  voice(300,0,0.13,.24,{to:560,type:'sine',cutoff:3200,wet:.12});
+  voice(880,0.015,0.20,.18,{to:1180,type:'triangle',detune:5,cutoff:7500,wet:.22});
+  voice(1760,0.03,0.26,.10,{type:'sine',cutoff:9000,wet:.35});
 }
-// большое задание выполнено — радостное арпеджио + финальный аккорд
+// большое задание выполнено — пышное арпеджио (двойные голоса) + тёплый аккорд + каскад искр
 function sfxWin(){
   if(!canPlay())return;
   const notes=[523.25,659.25,783.99,1046.5];        // до-ми-соль-до (мажор)
-  notes.forEach((f,i)=>tone(f,i*0.1,0.32,'triangle',.28));
-  // искристые верхушки
-  [1568,2093].forEach((f,i)=>tone(f,0.42+i*0.06,0.4,'sine',.16));
+  notes.forEach((f,i)=>{
+    voice(f,i*0.09,0.5,.20,{type:'triangle',cutoff:6500,wet:.3});
+    voice(f,i*0.09,0.5,.10,{type:'sine',detune:7,wet:.28});   // лёгкий хорус = «толще»
+  });
   // тёплый финальный аккорд
-  [523.25,659.25,783.99].forEach(f=>tone(f,0.46,0.6,'sine',.14));
+  [523.25,659.25,783.99,1046.5].forEach(f=>voice(f,0.42,0.9,.11,{type:'sine',cutoff:5000,wet:.4}));
+  // каскад искр сверху
+  [1568,2093,2637].forEach((f,i)=>voice(f,0.44+i*0.07,0.55,.08,{type:'sine',cutoff:11000,wet:.5}));
 }
-// тык в единорога — нежные искорки
+// тык в единорога — нежные искорки с эхом
 function sfxSparkle(){
   if(!canPlay())return;
-  for(let i=0;i<4;i++)tone(900+Math.random()*1400,i*0.05,0.22,'sine',.14);
+  for(let i=0;i<5;i++)voice(1000+Math.random()*1500,i*0.04,0.3,.10,{type:'sine',cutoff:10000,wet:.45});
 }
-// нажатие кнопки — мягкий «туп»
+// нажатие кнопки — мягкий округлый «блуп»
 function sfxClick(){
   if(!canPlay())return;
-  blip(360,520,0,0.09,.22);
+  voice(440,0,0.10,.18,{to:300,type:'sine',cutoff:2600,wet:.08});
 }
 
 // переключатель звука (в Настройках): отмечено = звук включён
@@ -1542,8 +1573,7 @@ function applyParentMode(){
 }
 // подставить текущие значения глобального конфига наград в поля
 function fillParentConfig(){
-  const cs=document.getElementById('cfgStars'),cg=document.getElementById('cfgGems');
-  if(cs)cs.value=state.cfg.starsPerStep;
+  const cg=document.getElementById('cfgGems');
   if(cg)cg.value=state.cfg.gemsPerTask;
   const m=document.getElementById('cfgMsg');if(m)m.textContent='';
 }
@@ -1656,11 +1686,10 @@ document.getElementById('parentApply').onclick=()=>{
 };
 // сохранить глобальный конфиг наград (⭐ за шаг / 💎 за задание)
 document.getElementById('cfgApply').onclick=()=>{
-  const sp=Math.max(0,Math.min(999,parseInt(document.getElementById('cfgStars').value,10)||0));
   const gp=Math.max(0,Math.min(9999,parseInt(document.getElementById('cfgGems').value,10)||0));
-  state.cfg.starsPerStep=sp;state.cfg.gemsPerTask=gp;
+  state.cfg.gemsPerTask=gp;
   save();fillParentConfig();
-  document.getElementById('cfgMsg').textContent='Сохранено: ⭐'+sp+'/шаг, 💎'+gp+'/задание ✅';
+  document.getElementById('cfgMsg').textContent='Сохранено: 💎'+gp+'/задание ✅';
   sfxPop();
 };
 document.getElementById('exportBtn').onclick=()=>{
