@@ -220,6 +220,7 @@
   /* свёрнутые задания: видны только шапка и прогресс; шаги — по тапу */
   .task.collapsed .subs,.task.collapsed .add-sub{display:none;}
   .task.collapsed .icon-btn.edit{display:none;}   /* карандаш — только когда развёрнуто */
+  .task.collapsed{cursor:pointer;}   /* открытие по тапу в любом месте карточки */
   .task.collapsed .task-head{cursor:pointer;}
   .task.collapsed .progress-wrap{margin-bottom:0;}
   .task:not(.collapsed) .subs{animation:fade .25s;}
@@ -359,6 +360,30 @@
     100%{transform:translate(-50%,-60%) scale(.8);opacity:0;}
   }
 
+  /* всплывашка «Удалено — Отменить» (10 секунд) */
+  .undo-bar{
+    position:fixed;left:50%;transform:translateX(-50%) translateY(16px);
+    bottom:calc(94px + env(safe-area-inset-bottom));z-index:120;
+    display:flex;align-items:center;gap:12px;width:calc(100% - 28px);max-width:460px;
+    background:#5a2f4e;color:#fff;border-radius:18px;padding:12px 14px 16px;
+    box-shadow:0 12px 34px rgba(0,0,0,.35);
+    transition:transform .3s cubic-bezier(.3,1.3,.5,1),opacity .25s ease,visibility .25s;
+    font-size:15px;font-weight:bold;opacity:0;visibility:hidden;pointer-events:none;
+  }
+  .undo-bar.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible;pointer-events:auto;}
+  .undo-bar .undo-text{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .undo-btn{
+    flex:0 0 auto;border:none;background:var(--mint);color:#0a6b4e;font-weight:bold;
+    font-family:inherit;font-size:15px;border-radius:12px;padding:9px 16px;cursor:pointer;transition:transform .15s;
+  }
+  .undo-btn:active{transform:scale(.92);}
+  .undo-bar::after{
+    content:'';position:absolute;left:14px;right:14px;bottom:7px;height:3px;border-radius:3px;
+    background:rgba(255,255,255,.55);transform-origin:left;transform:scaleX(0);
+  }
+  .undo-bar.show::after{animation:undoCountdown 10s linear forwards;}
+  @keyframes undoCountdown{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+
   /* ===== новые элементы ===== */
   .mute-btn.gear{left:0;right:auto;}
 
@@ -449,6 +474,8 @@
   .buy-btn:active{transform:scale(.95);}
   .buy-btn:disabled{background:var(--lilac);color:#b6a8cf;cursor:default;}
   .r-del{border:none;background:#ffe0e9;color:var(--pink-deep);border-radius:14px;width:46px;height:40px;cursor:pointer;font-size:16px;flex:0 0 auto;}
+  .r-edit{border:none;background:var(--lilac);color:var(--purple);border-radius:14px;width:46px;height:40px;cursor:pointer;font-size:16px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .r-edit:active,.r-del:active{transform:scale(.9);}
   /* замок «режим родителя» в магазине */
   .shop-lockbar{display:flex;justify-content:flex-end;margin:-6px 0 10px;}
   .shop-lock-btn{
@@ -719,6 +746,7 @@
 
 <canvas id="confetti"></canvas>
 <div class="reward" id="reward"></div>
+<div class="undo-bar" id="undoBar"><span class="undo-text"></span><button class="undo-btn" id="undoBtn">↩ Отменить</button></div>
 
 <script>
 //==== данные ====
@@ -1036,7 +1064,7 @@ function taskCard(t,detail){
     head.append(again);
   }
   head.append(edit,del);
-  if(!detail)head.onclick=(e)=>{if(e.target.closest('.icon-btn')||e.target.closest('.drag-handle'))return;openDetail(t.id);};
+  if(!detail)card.onclick=(e)=>{if(e.target.closest('.icon-btn')||e.target.closest('.drag-handle')||e.target.closest('.sub')||e.target.closest('.add-sub'))return;openDetail(t.id);};
   card.appendChild(head);
   if(!detail)attachDrag(card,handle);
 
@@ -1139,10 +1167,41 @@ function removeSub(taskId,subId){
   if(t.subs.length===0)t.subs=[autoSub(t.name)];   // задание всегда имеет хотя бы один шаг
   save();render();
 }
+// удаление с возможностью отмены в течение 10 секунд
+let pendingDel=null;   // {task,idx,timer} — задача уже убрана из state, но восстановима
 function removeTask(id,card){
+  const idx=state.tasks.findIndex(x=>x.id===id);if(idx<0)return;
+  commitPendingDel();                 // если уже что-то ждёт отмены — фиксируем (остаётся удалённым)
+  const task=state.tasks[idx];
   card.classList.add('removing');
-  setTimeout(()=>{state.tasks=state.tasks.filter(x=>x.id!==id);save();render();},340);
+  setTimeout(()=>{
+    state.tasks=state.tasks.filter(x=>x.id!==id);
+    save();render();
+    showUndo(task,idx);
+  },340);
 }
+function showUndo(task,idx){
+  commitPendingDel();                 // предыдущее (если было) — остаётся удалённым
+  pendingDel={task,idx,timer:null};
+  const bar=document.getElementById('undoBar');
+  bar.querySelector('.undo-text').textContent='Удалено: '+task.name;
+  bar.classList.remove('show');void bar.offsetWidth;   // перезапустить анимацию отсчёта
+  bar.classList.add('show');
+  pendingDel.timer=setTimeout(commitPendingDel,10000);
+}
+function hideUndo(){const bar=document.getElementById('undoBar');if(bar)bar.classList.remove('show');}
+function commitPendingDel(){   // окончательно: задача уже удалена и сохранена — просто убираем плашку
+  if(!pendingDel)return;
+  clearTimeout(pendingDel.timer);pendingDel=null;hideUndo();
+}
+function undoDelete(){
+  if(!pendingDel)return;
+  clearTimeout(pendingDel.timer);
+  const i=Math.min(pendingDel.idx,state.tasks.length);
+  state.tasks.splice(i,0,pendingDel.task);
+  pendingDel=null;hideUndo();save();render();sfxPop();
+}
+document.getElementById('undoBtn').onclick=()=>{sfxClick();undoDelete();};
 
 //==== модалка ====
 const overlay=document.getElementById('overlay');
@@ -1457,10 +1516,12 @@ function renderShop(){
     const buy=document.createElement('button');buy.className='buy-btn';buy.textContent='Купить';buy.disabled=state.points<r.cost;
     buy.onclick=()=>buyReward(r.id);
     actions.append(buy);
-    if(parentUnlocked){   // удалять награды — только в режиме родителя
+    if(parentUnlocked){   // изменять/удалять награды — только в режиме родителя
+      const ed=document.createElement('button');ed.className='r-edit';ed.innerHTML='<svg class="uic"><use href="#i-edit"/></svg>';ed.title='Изменить награду';
+      ed.onclick=()=>openRewardEdit(r.id);
       const del=document.createElement('button');del.className='r-del';del.textContent='✕';del.title='Удалить награду';
       del.onclick=()=>{state.rewards=state.rewards.filter(x=>x.id!==r.id);save();renderShop();sfxClick();};
-      actions.append(del);
+      actions.append(ed,del);
     }
     card.append(top,actions);
     shopList.appendChild(card);
@@ -1469,7 +1530,7 @@ function renderShop(){
   if(state.claimed.length){
     const h=document.createElement('div');h.className='claimed-title';h.textContent='🎉 Уже получено:';claimedWrap.appendChild(h);
     state.claimed.slice(-8).reverse().forEach(c=>{
-      const d=document.createElement('div');d.className='claimed-item';d.textContent=`${c.emoji} ${c.name} — ${c.date}`;claimedWrap.appendChild(d);
+      const d=document.createElement('div');d.className='claimed-item';d.textContent=`${c.emoji} ${c.name}${c.cost!=null?' · 💎'+c.cost:''} — ${c.date}`;claimedWrap.appendChild(d);
     });
   }
 }
@@ -1477,7 +1538,8 @@ function buyReward(id){
   const r=state.rewards.find(x=>x.id===id);if(!r)return;
   if(state.points<r.cost){sfxClick();return;}
   state.points-=r.cost;
-  state.claimed.push({id:uid(),emoji:r.emoji,name:r.name,date:todayStr()});
+  // снимок на момент покупки — название и цена фиксируются и не меняются при правке товара
+  state.claimed.push({id:uid(),emoji:r.emoji,name:r.name,cost:r.cost,date:todayStr()});
   logHistory('Покупка: '+r.emoji+' '+r.name,0,-r.cost);
   save();renderShop();render();bumpScore('points');
   sfxWin();burstAt(innerWidth/2,innerHeight*0.5,26);
@@ -1486,21 +1548,54 @@ function buyReward(id){
 // эмодзи для наград
 const REWARD_EMOJIS=['🍭','🍦','🍫','🧁','📺','🎮','🧸','🎁','🎨','🏞️','🎢','💅','📱','🐱','🛝','🍕'];
 let pickedRewardEmoji=REWARD_EMOJIS[0];
+let editingRewardId=null;   // null = добавление новой; иначе id редактируемой награды
 const rewardEmojiPick=document.getElementById('rewardEmoji');
+function pickRewardEmoji(em){
+  pickedRewardEmoji=em;   // если эмодзи вне набора — просто не подсветится ни одна кнопка, но сохранится
+  [...rewardEmojiPick.children].forEach(c=>c.classList.toggle('sel',c.textContent===pickedRewardEmoji));
+}
 REWARD_EMOJIS.forEach(em=>{
   const b=document.createElement('button');b.textContent=em;
   b.onclick=()=>{pickedRewardEmoji=em;[...rewardEmojiPick.children].forEach(c=>c.classList.remove('sel'));b.classList.add('sel');};
   rewardEmojiPick.appendChild(b);
 });
 rewardEmojiPick.firstChild.classList.add('sel');
-document.getElementById('addRewardToggle').onclick=()=>{sfxClick();addRewardForm.hidden=!addRewardForm.hidden;};
+function resetRewardForm(){
+  editingRewardId=null;
+  document.getElementById('rewardName').value='';
+  document.getElementById('rewardCost').value=50;
+  pickRewardEmoji(REWARD_EMOJIS[0]);
+  document.getElementById('saveReward').textContent='Сохранить награду 💖';
+}
+// открыть форму на редактирование существующей награды (только каталог; купленное в истории не трогается)
+function openRewardEdit(id){
+  const r=state.rewards.find(x=>x.id===id);if(!r)return;
+  sfxClick();
+  editingRewardId=id;
+  document.getElementById('rewardName').value=r.name;
+  document.getElementById('rewardCost').value=r.cost;
+  pickRewardEmoji(r.emoji);
+  document.getElementById('saveReward').textContent='Сохранить изменения 💾';
+  addRewardForm.hidden=false;
+  addRewardForm.scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.getElementById('addRewardToggle').onclick=()=>{
+  sfxClick();
+  if(addRewardForm.hidden)resetRewardForm();   // открываем для ДОБАВЛЕНИЯ — сбрасываем режим правки
+  addRewardForm.hidden=!addRewardForm.hidden;
+};
 document.getElementById('saveReward').onclick=()=>{
   const name=document.getElementById('rewardName').value.trim()||'Награда';
   const cost=Math.max(1,Math.min(9999,parseInt(document.getElementById('rewardCost').value,10)||50));
-  state.rewards.push({id:uid(),emoji:pickedRewardEmoji,name,cost});
+  if(editingRewardId){
+    const r=state.rewards.find(x=>x.id===editingRewardId);
+    if(r){r.emoji=pickedRewardEmoji;r.name=name;r.cost=cost;}   // правим только каталог
+  }else{
+    state.rewards.push({id:uid(),emoji:pickedRewardEmoji,name,cost});
+  }
   save();renderShop();sfxPop();
-  document.getElementById('rewardName').value='';
   addRewardForm.hidden=true;
+  resetRewardForm();
 };
 
 //==== настройки: бэкап (экспорт/импорт) ====
