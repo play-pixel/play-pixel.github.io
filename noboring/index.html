@@ -420,7 +420,11 @@
   .badge.repeat{background:var(--lilac);color:var(--purple);}
   .badge.streak{background:#fff0d6;color:#e8730c;border:2px solid #ffd9a0;}
   .badge.bonus{background:#e7faf1;color:#0a8a5f;border:2px solid #a9ecd0;}
+  .badge.yesterday{background:#fff3d6;color:#a06600;border:2px solid #ffd98a;}
   .task-badges{flex-wrap:wrap;}
+  .carry-sep{margin:18px 4px 8px;font-size:13px;font-weight:800;color:#a06600;letter-spacing:.2px;
+    display:flex;align-items:center;gap:8px;}
+  .carry-sep::before,.carry-sep::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,transparent,#ffd98a,transparent);}
 
   /* ручка перетаскивания */
   .drag-handle{
@@ -527,6 +531,26 @@
   .claimed-title{margin:16px 0 4px;font-weight:bold;color:var(--ink);}
   .claimed-item{font-size:14px;color:#9a7b90;padding:3px 0;}
   .settings-note{font-size:13px;color:#a98abf;text-align:center;margin-top:12px;}
+  /* статус резервной копии: спокойный при свежей, тёплое предупреждение при устаревшей */
+  .backup-status{font-size:13px;font-weight:bold;text-align:center;margin:8px 0 0;color:#9a7b90;}
+  .backup-status.stale{color:#c2410c;background:#fff3e6;border:2px solid #ffd9a0;border-radius:12px;padding:8px 10px;}
+  /* тост «появилось обновление» — выезжает снизу, кнопка перезагружает на свежую версию */
+  .update-toast{
+    position:fixed;left:50%;transform:translateX(-50%) translateY(140%);
+    bottom:calc(94px + env(safe-area-inset-bottom));z-index:120;
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(135deg,var(--purple),var(--pink-deep));color:#fff;
+    border-radius:18px;padding:11px 14px;box-shadow:0 12px 34px rgba(0,0,0,.3);
+    font-size:15px;font-weight:800;white-space:nowrap;
+    opacity:0;visibility:hidden;pointer-events:none;   /* в скрытом состоянии — полностью убран, не перекрывает навигацию */
+    transition:transform .35s cubic-bezier(.3,1.3,.5,1),opacity .25s ease,visibility .25s;
+  }
+  .update-toast.show{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible;pointer-events:auto;}
+  .update-toast button{
+    border:none;background:#fff;color:var(--pink-deep);font-family:inherit;font-weight:bold;
+    font-size:14px;border-radius:12px;padding:8px 14px;cursor:pointer;transition:transform .15s;
+  }
+  .update-toast button:active{transform:scale(.92);}
   .settings-stats{
     text-align:center;font-size:15px;font-weight:bold;color:var(--purple);
     background:#fff;border:3px solid var(--pink-soft);border-radius:14px;padding:9px;margin:0 0 14px;
@@ -656,6 +680,7 @@
         <button id="importBtn"><svg class="uic"><use href="#i-load"/></svg>Загрузить</button>
       </div>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <div class="backup-status" id="backupStatus"></div>
       <button class="install-btn" id="installBtn" hidden><svg class="uic"><use href="#i-install"/></svg>Установить приложение</button>
       <p class="settings-note">Сохрани файл, чтобы не потерять прогресс или перенести его на другое устройство. Загрузка заменит текущие данные.</p>
 
@@ -772,11 +797,15 @@
 <canvas id="confetti"></canvas>
 <div class="reward" id="reward"></div>
 <div class="undo-bar" id="undoBar"><span class="undo-text"></span><button class="undo-btn" id="undoBtn">↩ Отменить</button></div>
+<div class="update-toast" id="updateToast">🦄 Появилось обновление! <button id="updateBtn">Обновить</button></div>
 <button class="parent-banner" id="parentBanner" title="Выйти из режима родителя"><svg class="uic"><use href="#i-parent"/></svg> Режим родителя · выйти ✕</button>
 
 <script>
 //==== данные ====
 const STORE_KEY='unicornTasks_v1';
+// был ли localStorage пуст в самый первый момент (до любых save) — признак вычистки/первого запуска
+const LS_WAS_EMPTY=!localStorage.getItem(STORE_KEY);
+let idbSaveReady=false;   // не зеркалим в IndexedDB, пока восстановление не приняло решение (иначе затрём копию)
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 // авто-шаг: каждое задание имеет хотя бы один шаг (=имя задания). Заменяется, как только добавляют настоящие шаги.
 function autoSub(name){return {id:uid(),text:name||'Готово',done:false,awarded:false,auto:true};}
@@ -799,6 +828,7 @@ function normalize(s){
   if(!Array.isArray(s.rewards))s.rewards=defaultRewards();
   if(!Array.isArray(s.claimed))s.claimed=[];
   if(!Array.isArray(s.history))s.history=[];
+  if(typeof s.lastBackup!=='string')s.lastBackup='';    // дата последнего экспорта-копии (YYYY-MM-DD)
   if(typeof s.parentPass!=='string')s.parentPass='';   // '' = пароль ещё не задан (первый запуск)
   if(!Array.isArray(s.passResets))s.passResets=[];      // журнал сбросов пароля {date}
   // глобальный конфиг наград (по умолчанию ⭐1/шаг, 💎10/задание — как было)
@@ -828,7 +858,23 @@ function loadState(){
   return normalize({});
 }
 let state=loadState();
-function save(){localStorage.setItem(STORE_KEY,JSON.stringify(state));}
+//==== вторая копия в IndexedDB (переживает вычистку localStorage надёжнее) ====
+const IDB_NAME='unicornTasks',IDB_STORE='kv',IDB_KEY='state';
+function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);
+  r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+function idbSet(val){return idbOpen().then(db=>new Promise((res,rej)=>{
+  const tx=db.transaction(IDB_STORE,'readwrite');tx.objectStore(IDB_STORE).put(val,IDB_KEY);
+  tx.oncomplete=res;tx.onerror=()=>rej(tx.error);})).catch(()=>{});}
+function idbGet(){return idbOpen().then(db=>new Promise((res,rej)=>{
+  const tx=db.transaction(IDB_STORE,'readonly');const g=tx.objectStore(IDB_STORE).get(IDB_KEY);
+  g.onsuccess=()=>res(g.result);g.onerror=()=>rej(g.error);})).catch(()=>null);}
+
+function save(){
+  const json=JSON.stringify(state);
+  localStorage.setItem(STORE_KEY,json);
+  if(idbSaveReady)idbSet(json);   // зеркалим во вторую копию — только после решения о восстановлении
+}
 // эффективная награда: переопределение задачи, иначе глобальный конфиг
 function taskGems(t){return (t&&t.gems!=null)?t.gems:state.cfg.gemsPerTask;}
 // ⭐ за шаг выводится из 💎 базы задания: всего ⭐ за задание ≈ 💎 за задание, поровну на шаги (минимум 1).
@@ -857,8 +903,30 @@ function streakInfo(t){
 function dailyRollover(){
   const today=todayStr();
   if(state.lastSeenDate===today)return;
+  const prev=state.lastSeenDate;
+  // чистим вчерашние «за вчера»-переносы (их время прошло — либо закрыли, либо просрочили)
+  state.tasks=state.tasks.filter(t=>!t.carry);
+  // если прошёл ровно один день — переносим незакрытые применимые задачи как «за вчера»
+  if(prev&&dayDiff(prev,today)===1){
+    const prevDow=new Date(prev+'T00:00:00').getDay();
+    const carries=[];
+    state.tasks.forEach(t=>{
+      const wasYesterday=(t.repeat==='daily')||(t.repeat==='weekly'&&t.days&&t.days.includes(prevDow));
+      if(wasYesterday&&!t.awarded){
+        carries.push({
+          id:uid(),name:t.name,emoji:t.emoji,
+          repeat:'once',days:[],streak:0,lastDoneDate:null,awarded:false,
+          subs:t.subs.map(s=>({id:s.id,text:s.text,done:!!s.done,awarded:!!s.awarded})),
+          gems:t.gems,starsPerStep:t.starsPerStep,
+          carry:true,carryFrom:prev,
+        });
+      }
+    });
+    state.tasks.push(...carries);
+  }
   const dow=new Date().getDay();
   state.tasks.forEach(t=>{
+    if(t.carry)return;
     if(t.repeat==='daily'||(t.repeat==='weekly'&&t.days&&t.days.includes(dow))){
       t.subs.forEach(s=>{s.done=false;s.awarded=false;});
       t.awarded=false;
@@ -867,7 +935,12 @@ function dailyRollover(){
   state.lastSeenDate=today;
   save();
 }
+// «За вчера» показываем только до полудня
+function carryVisible(){return new Date().getHours()<12;}
 dailyRollover();
+// PWA часто живёт в фоне через смену суток — проверяем дату при возврате в приложение
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){dailyRollover();render&&render();}});
+window.addEventListener('focus',()=>{dailyRollover();render&&render();});
 
 //==== фон: плавающие штучки ====
 const bgIcons=['🌸','⭐','💖','🦄','🌈','✨','🍬','🎀','💎','🌷'];
@@ -949,12 +1022,13 @@ function daysLabel(days){
 function render(){
   document.getElementById('stars').textContent=state.stars;
   document.getElementById('points').textContent=state.points;
-  const once=state.tasks.filter(t=>t.repeat==='once');
-  const recurring=state.tasks.filter(t=>t.repeat==='daily'||t.repeat==='weekly');
+  const once=state.tasks.filter(t=>t.repeat==='once'&&!t.carry);
+  const recurring=state.tasks.filter(t=>(t.repeat==='daily'||t.repeat==='weekly')&&!t.carry);
+  const carries=carryVisible()?state.tasks.filter(t=>t.carry):[];
   const open=once.filter(t=>!isDone(t));
   const done=once.filter(t=>isDone(t));
   document.getElementById('cntOpen').textContent=open.length;
-  document.getElementById('cntDaily').textContent=recurring.length;
+  document.getElementById('cntDaily').textContent=recurring.length+carries.length;
   document.getElementById('cntDone').textContent=done.length;
 
   const viewTasks=document.getElementById('viewTasks');
@@ -982,7 +1056,7 @@ function render(){
     return;
   }
   const shown=taskTab==='open'?open:taskTab==='daily'?recurring:done;
-  if(shown.length===0){
+  if(shown.length===0&&!(taskTab==='daily'&&carries.length)){
     const e=document.createElement('div');e.className='empty';
     e.innerHTML=taskTab==='open'?'<span class="big">🌈</span>Открытых заданий нет 💖'
       :taskTab==='daily'?'<span class="big">🗓️</span>Дел на каждый день пока нет'
@@ -990,6 +1064,12 @@ function render(){
     list.appendChild(e);
   }else{
     shown.forEach(t=>list.appendChild(taskCard(t)));
+  }
+  if(taskTab==='daily'&&carries.length){
+    const h=document.createElement('div');h.className='carry-sep';
+    h.innerHTML='<span>🗓️ За вчера — успей закрыть до обеда</span>';
+    list.appendChild(h);
+    carries.forEach(t=>list.appendChild(taskCard(t)));
   }
 }
 function updateFab(){fab.hidden=!(currentView==='tasks'&&!detailId);}
@@ -1101,7 +1181,8 @@ function taskCard(t,detail){
     const totalStars=stepStars(t)*t.subs.length;
     const g=document.createElement('span');g.className='badge bonus';g.textContent='💎 '+taskGems(t);b.appendChild(g);
     const s=document.createElement('span');s.className='badge bonus';s.textContent='⭐ '+totalStars;b.appendChild(s);
-    if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
+    if(t.carry){const r=document.createElement('span');r.className='badge yesterday';r.textContent='🗓️ За вчера ('+ddmm(t.carryFrom)+')';b.appendChild(r);}
+    else if(t.repeat==='daily'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 каждый день';b.appendChild(r);}
     else if(t.repeat==='weekly'){const r=document.createElement('span');r.className='badge repeat';r.textContent='🔁 '+daysLabel(t.days);b.appendChild(r);}
     if(streak>0){const sx=document.createElement('span');sx.className='badge streak';sx.textContent='🔥 '+streak+(streak%10===1&&streak%100!==11?' день':' дн.');b.appendChild(sx);}
     card.appendChild(b);
@@ -1180,6 +1261,10 @@ function toggleSub(taskId,subId,li){
       render();
     }
     bigCelebrate(t.name,taskGems(t));
+    if(t.carry){
+      // «За вчера» — задача одноразовая, после празднования убираем из списка
+      setTimeout(()=>{state.tasks=state.tasks.filter(x=>x.id!==t.id);save();render();},2400);
+    }
   }
 }
 
@@ -1313,7 +1398,23 @@ function saveTask(){
 document.getElementById('openAdd').onclick=openAdd;
 document.getElementById('cancelAdd').onclick=closeSheet;
 document.getElementById('saveTask').onclick=saveTask;
-overlay.onclick=(e)=>{if(e.target===overlay)closeSheet();};
+// тап по фону модалки: 1-й тап (если открыта клавиатура) прячет её, 2-й — закрывает модалку.
+// На pointerdown фокус ещё на инпуте → снимаем его и «гасим» этот тап, чтобы click не закрыл.
+function overlayTapClose(ov, closeFn){
+  let usedForBlur=false;
+  ov.addEventListener('pointerdown',(e)=>{
+    if(e.target!==ov){usedForBlur=false;return;}     // тап внутри карточки — не наше дело
+    const ae=document.activeElement;
+    usedForBlur=!!(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ov.contains(ae));
+    if(usedForBlur)ae.blur();                          // первый тап — спрятать клавиатуру
+  });
+  ov.addEventListener('click',(e)=>{
+    if(e.target!==ov)return;
+    if(usedForBlur){usedForBlur=false;return;}          // этот тап ушёл на скрытие клавиатуры
+    closeFn();                                          // клавиатура уже закрыта — закрываем модалку
+  });
+}
+overlayTapClose(overlay, closeSheet);
 
 //==== анимация счёта ====
 function bumpScore(which){
@@ -1629,7 +1730,26 @@ document.getElementById('saveReward').onclick=()=>{
 //==== настройки: бэкап (экспорт/импорт) ====
 function renderSettingsStats(){
   document.getElementById('settingsStats').textContent='🏆 Заданий выполнено целиком: '+state.trophies;
+  renderBackupStatus();
   renderHistory();
+}
+// напоминание о резервной копии: тёплое предупреждение, если копии нет или ей >14 дней
+function renderBackupStatus(){
+  const el=document.getElementById('backupStatus');if(!el)return;
+  const hasProgress=state.tasks.length>0||state.stars>0||state.points>0||state.history.length>0;
+  el.classList.remove('stale');
+  if(!state.lastBackup){
+    if(!hasProgress){el.textContent='';return;}   // терять ещё нечего — не пугаем
+    el.textContent='⚠️ Копию ещё не делали — сохрани, чтобы не потерять прогресс';
+    el.classList.add('stale');return;
+  }
+  const days=dayDiff(state.lastBackup,todayStr());
+  if(days>14){
+    el.textContent='⚠️ Последняя копия '+ddmm(state.lastBackup)+' ('+days+ ' дн. назад) — пора обновить';
+    el.classList.add('stale');
+  }else{
+    el.textContent='✓ Копия от '+ddmm(state.lastBackup);
+  }
 }
 //==== журнал истории ====
 function amtHtml(n,emoji){
@@ -1782,7 +1902,7 @@ document.getElementById('psOk').onclick=psSubmit;
 document.getElementById('psCancel').onclick=()=>{sfxClick();closeParentSheet();};
 document.getElementById('psForgot').onclick=()=>{sfxClick();psMode='forgot';renderParentSheet();};
 document.getElementById('psInput').addEventListener('keydown',e=>{if(e.key==='Enter')psSubmit();});
-parentOverlay.onclick=(e)=>{if(e.target===parentOverlay)closeParentSheet();};
+overlayTapClose(parentOverlay, closeParentSheet);
 // кнопки-замки в магазине и настройках: разблокировано → блокируем; заблокировано → модалка
 function lockBtnClick(){sfxClick();if(parentUnlocked)lockParent();else openParentSheet();}
 document.getElementById('settingsLockBtn').onclick=lockBtnClick;
@@ -1830,6 +1950,8 @@ document.getElementById('exportBtn').onclick=()=>{
   const a=document.createElement('a');a.href=url;a.download='moi-zadaniya-backup.json';
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
+  state.lastBackup=todayStr();save();   // отметим, что копия свежая
+  renderSettingsStats();
   speak('Файл сохранён! 💾');
 };
 const importFile=document.getElementById('importFile');
@@ -1840,6 +1962,7 @@ importFile.onchange=async()=>{
     const data=JSON.parse(await f.text());
     if(!Array.isArray(data.tasks))throw new Error('bad');
     state=normalize(data);
+    state.lastBackup=todayStr();   // файл только что был на руках — копия свежая
     dailyRollover();save();
     renderMute();renderSettingsStats();render();renderShop();
     switchView('tasks');
@@ -1851,22 +1974,80 @@ importFile.onchange=async()=>{
 render();
 applyParentMode();   // выставить замок магазина/настроек в стартовое (заблокированное) состояние
 
-//==== не гасить экран, пока приложение открыто (Screen Wake Lock) ====
-let wakeLock=null;
+//==== не гасить экран, пока приложение активно (Screen Wake Lock с авто-отпуском) ====
+// Держим экран не дольше 5 минут после последнего касания — чтобы не жечь батарею при «забыли в кармане».
+const WAKE_IDLE_MS=5*60*1000;
+let wakeLock=null,wakeIdleTimer=null;
 async function requestWakeLock(){
-  if(!('wakeLock'in navigator)||document.visibilityState!=='visible')return;
+  if(!('wakeLock'in navigator)||document.visibilityState!=='visible'||wakeLock)return;
   try{
     wakeLock=await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release',()=>{wakeLock=null;});   // система сама сняла лок
+    wakeLock.addEventListener('release',()=>{wakeLock=null;});
   }catch(e){/* отказ (например, низкий заряд) — не критично */}
 }
-// лок снимается при сворачивании/гашении — запрашиваем снова, когда приложение опять активно
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')requestWakeLock();});
-requestWakeLock();
+async function releaseWakeLock(){try{if(wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}}
+function armWakeTimer(){
+  clearTimeout(wakeIdleTimer);
+  wakeIdleTimer=setTimeout(releaseWakeLock,WAKE_IDLE_MS);
+}
+function bumpWakeLock(){requestWakeLock();armWakeTimer();}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')bumpWakeLock();else clearTimeout(wakeIdleTimer);});
+// любой контакт ребёнка с экраном продлевает лок ещё на 5 минут
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,bumpWakeLock,{passive:true,capture:true}));
+bumpWakeLock();
+
+//==== сохранность данных: постоянное хранилище + восстановление из IndexedDB ====
+// Просим ОС не вычищать наши данные (на установленном PWA обычно даётся автоматически).
+if(navigator.storage&&navigator.storage.persist){
+  navigator.storage.persisted().then(p=>{if(!p)navigator.storage.persist();}).catch(()=>{});
+}
+// Если localStorage был пуст (вычистили браузером / iOS-eviction), но в IndexedDB есть копия — восстановим.
+(async()=>{
+  if(!LS_WAS_EMPTY){idbSaveReady=true;return;}        // localStorage был цел — просто включаем зеркалирование
+  const backup=await idbGet();
+  try{
+    const data=backup&&JSON.parse(backup);
+    const meaningful=data&&Array.isArray(data.tasks)&&(data.tasks.length||data.stars||data.points||(data.history&&data.history.length));
+    if(meaningful){
+      state=normalize(data);
+      dailyRollover();
+      renderMute();renderSettingsStats();render();renderShop();
+      speak('Данные восстановлены 💖');
+    }
+  }catch(e){}
+  idbSaveReady=true;save();   // теперь синхронизируем (восстановленное или подтверждаем актуальное) в IndexedDB
+})();
 
 //==== PWA: оффлайн + установка на домашний экран ====
+let swUpdating=false;   // true только когда пользователь сам нажал «Обновить» (чтобы не перезагружаться на первом запуске)
+function showUpdateToast(reg){
+  const t=document.getElementById('updateToast');if(!t)return;
+  t.classList.add('show');
+  document.getElementById('updateBtn').onclick=()=>{
+    t.classList.remove('show');                              // сразу прячем тост, не дожидаясь перезагрузки
+    swUpdating=true;
+    if(reg&&reg.waiting)reg.waiting.postMessage('skipWaiting'); // активируем новую версию → controllerchange → reload
+    else location.reload();                                  // запасной путь, если ждущего воркера нет
+  };
+}
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  // новый SW встал у руля по нашей команде — перезагружаемся один раз на свежую версию
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(swUpdating){swUpdating=false;location.reload();}
+  });
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      // вдруг обновление уже скачано и ждёт (например, со времени прошлой сессии)
+      if(reg.waiting&&navigator.serviceWorker.controller)showUpdateToast(reg);
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing;if(!nw)return;
+        nw.addEventListener('statechange',()=>{
+          // новый SW установился, а страница уже была под управлением SW → это обновление (не первый запуск)
+          if(nw.state==='installed'&&navigator.serviceWorker.controller)showUpdateToast(reg);
+        });
+      });
+    }).catch(()=>{});
+  });
 }
 let deferredPrompt=null;
 const installBtn=document.getElementById('installBtn');

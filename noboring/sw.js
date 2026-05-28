@@ -1,5 +1,7 @@
-// Service worker для PWA «Мои Задания» — оффлайн-кэш оболочки приложения.
-const CACHE = 'noboring-v28';
+// Service worker для PWA «Мои Задания».
+// HTML — network-first (свежий код сразу после релиза, без возни с версиями), офлайн-фолбэк из кэша.
+// Шрифты/иконки/манифест — cache-first (мгновенно).
+const CACHE = 'noboring-v33';
 const ASSETS = [
   './',
   './index.html',
@@ -16,9 +18,14 @@ self.addEventListener('install', (e) => {
     caches.open(CACHE)
       // кэшируем файлы по отдельности: сбой одного не отменяет кэширование остальных
       .then((c) => Promise.allSettled(ASSETS.map((a) => c.add(a))))
-      .then(() => self.skipWaiting())
       .catch(() => {})
   );
+  // НЕ вызываем skipWaiting здесь: новый SW ждёт, пока пользователь нажмёт «Обновить» (тост).
+});
+
+// страница просит активировать новую версию (клик по «Обновить») → встаём на место старого SW
+self.addEventListener('message', (e) => {
+  if (e.data === 'skipWaiting') self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
@@ -29,17 +36,36 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Cache-first: мгновенно из кэша, иначе сеть (и кладём в кэш). Без сети — отдаём главную страницу.
+// навигация/HTML-документ?
+function isHtml(req) {
+  return req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+}
+
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((resp) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+
+  // HTML: сначала сеть (свежий код), копию кладём в кэш; без сети — отдаём кэшированную оболочку.
+  if (isHtml(req)) {
+    e.respondWith(
+      fetch(req).then((resp) => {
         const copy = resp.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
         return resp;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => caches.match(req).then((c) => c || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // Остальное: cache-first, иначе сеть (и кладём в кэш).
+  e.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return resp;
+      }).catch(() => undefined);
     })
   );
 });
