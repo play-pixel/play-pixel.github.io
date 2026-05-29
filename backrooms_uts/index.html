@@ -87,7 +87,7 @@
       background-image: 
         radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%),
         url("media/wallpaper.svg");
-      background-size: auto, 69px 130px;
+      background-size: auto, 138px 130px;
       color:#1a1a1a; overflow:hidden; position:relative; 
     }
     
@@ -325,6 +325,15 @@
     .bottom-choices button.choice-optional:active { background:#8c8c8c; }
     .bottom-choices button.choice-optional .choice-txt { color:#3a3a3a; }
 
+    /* Paywall — unlock the full story */
+    .paywall { display:flex; flex-direction:column; gap:10px; padding:6px 0 2px; text-align:center; }
+    .paywall-title { font-size:18px; font-weight:700; color:#f0ead8; }
+    .paywall-body { font-size:14px; line-height:1.4; color:#b9b29c; padding:0 4px; }
+    .bottom-choices button.paywall-buy { justify-content:center; text-align:center; font-weight:700; background:#e9c46a; color:#1a1a1a; margin-top:2px; }
+    .bottom-choices button.paywall-buy:active { background:#dcb858; }
+    .bottom-choices button.paywall-restore { justify-content:center; text-align:center; font-size:14px; font-weight:500; background:none; box-shadow:none; color:#9a937e; padding:4px; }
+    .bottom-choices button.paywall-restore:active { background:none; }
+
     .wait-skip { padding:6px 18px; border:1px solid var(--border); border-radius:16px; background:none; color:var(--text-muted); font-size:11px; cursor:pointer; display:inline-block; margin-top:2px; }
 
     .input-row { display:flex; gap:6px; padding:0 4px; }
@@ -398,7 +407,7 @@
     [data-theme="light"] .chat-area {
       background-color:#b3a742;
       background-image: url("media/wallpaper.svg");
-      background-size: 69px 130px;
+      background-size: 138px 130px;
     }
     /* NPC bubble is a dark brutalist block — needs light text. Player bubble is pale cream. */
     [data-theme="light"] .msg-row.npc .msg-bubble { color:#dccf8f; }
@@ -423,9 +432,10 @@
     [data-theme="light"] .contacts-list {
       background-color:#b3a742;
       background-image: url("media/wallpaper.svg");
-      background-size: 69px 130px;
+      background-size: 138px 130px;
       padding:12px; display:flex; flex-direction:column; gap:8px;
     }
+
     [data-theme="light"] .contact-item {
       background:#1f1d12; border:1px solid #8e822d; border-radius:3px;
       box-shadow:0 2px 0 rgba(0,0,0,.3); padding:12px 14px;
@@ -632,6 +642,7 @@
       <div class="settings-row"><div class="settings-row-label">Язык интерфейса</div><div class="lang-options"><button class="lang-opt active" id="langRu">RU</button><button class="lang-opt" id="langEn">EN</button></div></div>
       <div class="settings-section">Разработка</div>
       <div class="settings-row"><div class="settings-row-label">Режим тестирования<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Ускоряет время в 60x. Выбор — 1 мин вместо 1 часа</div></div><label class="toggle"><input type="checkbox" id="testToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+      <div class="settings-row"><div class="settings-row-label">Разблокировать всё<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Открывает Акт 2/3 без покупки (тест пейволла)</div></div><label class="toggle"><input type="checkbox" id="devUnlockToggle"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
       <div class="settings-section">Прогресс</div>
       <div class="settings-row"><div class="settings-row-label">Сбросить прогресс</div><button style="padding:8px 16px;border:1px solid var(--border);border-radius:10px;background:none;color:#e74c3c;font-size:13px;cursor:pointer;" id="settingsReset">Сбросить</button></div>
       <div class="settings-version">Backrooms: Chat v0.5.0</div>
@@ -748,6 +759,12 @@
       node_label:       { en:'Node:', ru:'Нода:' },
       story_label:      { en:'Story:', ru:'История:' },
       jump_to_node:     { en:'Jump to node...', ru:'Перейти к ноде...' },
+      paywall_title:    { en:'Continue the story', ru:'Продолжить историю' },
+      paywall_body:     { en:'You\'ve reached the end of the free part. Unlock the full story — Act 2, Act 3 and all endings.', ru:'Это конец бесплатной части. Открой полную историю — Акт 2, Акт 3 и все концовки.' },
+      paywall_unlock:   { en:'Unlock — {price}', ru:'Открыть — {price}' },
+      paywall_restore:  { en:'Restore purchase', ru:'Восстановить покупку' },
+      paywall_restored_none: { en:'No purchase found to restore', ru:'Покупка для восстановления не найдена' },
+      paywall_failed:   { en:'Purchase failed. Try again.', ru:'Не удалось купить. Попробуй ещё раз.' },
     };
 
     function t(key) { return (STRINGS[key] && STRINGS[key][prefs.lang]) || (STRINGS[key] && STRINGS[key].en) || key; }
@@ -774,8 +791,115 @@
     }
 
     let scenario = null; // alias for activeScenario, set on story activation
-    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true, notifications: true };
+    let prefs = { theme: 'light', lang: 'en', testMode: false, playerName: '', vibration: true, notifications: true, devUnlock: false };
     function vibrate(ms) { if (prefs.vibration && navigator.vibrate) navigator.vibrate(ms); }
+
+    // ── Purchase / IAP / Entitlements ────────────────────────────────
+    // Players own a SET of products, not a single flag. A product GRANTS access to
+    // one or more stories — or "*" = everything (all stories, current AND future).
+    // Access to gated content = owning a granting product, OR the all-access
+    // product, OR devUnlock. Adding a story = one line in PRODUCTS + one product in
+    // Play Console; the engine below never changes. The engine talks only to
+    // `Billing`: a mock in the browser/editor, the native CdvPurchase adapter on
+    // device (see setupNativeBilling).
+    const ENTITLE_KEY = 'backrooms_entitlements';
+
+    // Product catalog. All non-consumable (buy once, forever).
+    // `grants`: '*' (all stories) or an array of story ids.
+    const PRODUCTS = {
+      unlock_all: { grants: '*',       name: { en: 'Unlock everything',     ru: 'Открыть всё' } },
+      unlock_zoe: { grants: ['zoe'],   name: { en: "Unlock Zoe's story",    ru: 'Открыть историю Зои' } },
+      // Future: unlock_story2: { grants: ['story2'], name: {...} },
+    };
+
+    let entitlements = new Set();   // owned product ids
+    let priceCache = {};            // productId -> localized price string from the store
+    function loadEntitlements() {
+      try { const a = JSON.parse(localStorage.getItem(ENTITLE_KEY)); if (Array.isArray(a)) entitlements = new Set(a); } catch(e){}
+    }
+    function saveEntitlements() { try { localStorage.setItem(ENTITLE_KEY, JSON.stringify([...entitlements])); } catch(e){} }
+    function grantProduct(productId) { if (PRODUCTS[productId]) { entitlements.add(productId); saveEntitlements(); } }
+
+    // Does the player have access to a story's gated content?
+    function hasAccess(storyId) {
+      if (prefs.devUnlock === true) return true;
+      for (const id of entitlements) {
+        const g = PRODUCTS[id] && PRODUCTS[id].grants;
+        if (g === '*') return true;
+        if (Array.isArray(g) && g.includes(storyId)) return true;
+      }
+      return false;
+    }
+
+    // Per-story paywall config from stories.json: { fromScene, grants, products }.
+    function paywallConfig(storyId) {
+      const meta = (typeof storiesMeta !== 'undefined' ? storiesMeta : []).find(s => s.id === storyId);
+      const pw = meta && meta.paywall;
+      if (!pw || !scenario || !scenario.scenes) return null;
+      const fromScene = scenario.scenes.find(s => s.id === pw.fromScene);
+      return { fromOrder: fromScene ? fromScene.order : Infinity, grants: pw.grants || storyId, products: pw.products || [] };
+    }
+    // Is this scene behind the active story's paywall?
+    function isPaidScene(sceneId) {
+      const cfg = paywallConfig(state.activeStory);
+      if (!cfg || !scenario || !scenario.scenes) return false;
+      const sc = scenario.scenes.find(s => s.id === sceneId);
+      return !!sc && sc.order >= cfg.fromOrder;
+    }
+
+    // Browser/editor billing: grants instantly, fake prices.
+    // SAFETY: never grants on a real device — if native billing failed to init and
+    // Billing is still this mock, a purchase must fail rather than unlock for free.
+    function onNativePlatform() { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }
+    const mockBilling = {
+      async getProduct(id) { const fake = { unlock_all: '$4.99', unlock_zoe: '$2.99' }; return { id, price: fake[id] || '$2.99' }; },
+      async purchase(id) {
+        if (onNativePlatform()) { console.warn('[IAP] native billing not ready — purchase blocked'); return false; }
+        grantProduct(id); return true;
+      },
+      async restore() { return !onNativePlatform() && entitlements.size > 0; },
+    };
+    let Billing = mockBilling;   // swapped for the native adapter on device
+
+    // Native (Capacitor) billing via cordova-plugin-purchase (CdvPurchase).
+    // Registers the whole catalog, reflects store prices into priceCache, and on a
+    // verified purchase adds the product to entitlements. UNTESTED in browser —
+    // must be verified on a Play internal-testing track with a license-tester account.
+    function setupNativeBilling() {
+      try {
+        const cap = window.Capacitor;
+        if (!cap || !(cap.isNativePlatform && cap.isNativePlatform())) return;
+        const CdvPurchase = window.CdvPurchase;
+        if (!CdvPurchase) { console.warn('[IAP] CdvPurchase not available'); return; }
+        const { store, ProductType, Platform, LogLevel } = CdvPurchase;
+        if (LogLevel) store.verbosity = LogLevel.WARNING;
+        store.register(Object.keys(PRODUCTS).map(id => ({ id, type: ProductType.NON_CONSUMABLE, platform: Platform.GOOGLE_PLAY })));
+        const productOf = (id) => store.get(id, Platform.GOOGLE_PLAY);
+        const reconcileOwned = () => Object.keys(PRODUCTS).forEach(id => { const p = productOf(id); if (p && p.owned) grantProduct(id); });
+        store.when()
+          .productUpdated(p => { if (p && p.id && p.pricing && p.pricing.price) priceCache[p.id] = p.pricing.price; })
+          .approved(tx => tx.verify())
+          .verified(receipt => {
+            receipt.finish();
+            reconcileOwned();
+            if (state.phase === 'paywall' && hasAccess(state.activeStory)) unlockAndContinue();
+          });
+        store.error(err => console.warn('[IAP] error', err && err.code, err && err.message));
+        store.initialize([Platform.GOOGLE_PLAY]);
+        Billing = {
+          async getProduct(id) { const p = productOf(id); return { id, price: (p && p.pricing && p.pricing.price) || priceCache[id] || '' }; },
+          async purchase(id) {
+            const p = productOf(id);
+            const offer = p && (typeof p.getOffer === 'function' ? p.getOffer() : (p.offers && p.offers[0]));
+            if (!offer) return false;
+            await store.order(offer);
+            return hasAccess(state.activeStory);   // real grant happens in the verified handler
+          },
+          async restore() { await store.restorePurchases(); reconcileOwned(); return entitlements.size > 0; },
+        };
+        console.log('[IAP] native billing ready');
+      } catch (e) { console.warn('[IAP] setup failed', e); }
+    }
 
     // Glitch effect — clean signal-interference burst (RGB split + jitter) on the active screen
     let glitchTimer = null;
@@ -901,6 +1025,7 @@
       $('vibToggle').checked = prefs.vibration !== false;
       $('notifToggle').checked = prefs.notifications !== false;
       $('testToggle').checked = prefs.testMode || false;
+      $('devUnlockToggle').checked = prefs.devUnlock || false;
     }
 
     function applyLang() {
@@ -1053,6 +1178,26 @@
       for (const rule of node.nextScene) {
         if (!rule.if) return rule.scene;
         if (checkCondition(rule.if)) return rule.scene;
+      }
+      return null;
+    }
+
+    // Resolve where a scene-end node leads: { sceneId, entry } or null. Handles new
+    // style (type:scene_end + transitions/defaultNextScene) and old style
+    // (sceneEnd + nextScene). Used by both the wait path and the scene_end branch.
+    function sceneTransitionTarget(node) {
+      let nextSceneId = null;
+      if (node.type === 'scene_end') {
+        for (const tr of (node.transitions || [])) {
+          if (tr.choiceTag && (state.choices || []).includes(tr.choiceTag)) { nextSceneId = tr.nextScene; break; }
+        }
+        if (!nextSceneId) nextSceneId = node.defaultNextScene || null;
+      } else if (node.sceneEnd && node.nextScene) {
+        nextSceneId = resolveSceneTransition(node);
+      }
+      if (nextSceneId && scenario && scenario.scenes) {
+        const sm = scenario.scenes.find(s => s.id === nextSceneId);
+        if (sm && sm.entry) return { sceneId: nextSceneId, entry: sm.entry };
       }
       return null;
     }
@@ -1234,6 +1379,16 @@
     function scheduleNode(nodeId, startTime) {
       const node = scenario.nodes[nodeId];
       if (!node) { state.phase = 'done'; save(); return; }
+      // Paywall gate — block entry into paid content unless the player has access.
+      // Sits at node entry and keys off scene ownership, so it catches EVERY route
+      // in (next / wait+next / scene_end / admin jump). Once access is granted,
+      // hasAccess() is true and the gate passes — no crossing-state bookkeeping.
+      if (isPaidScene(node.scene) && !hasAccess(state.activeStory)) {
+        state.pendingNode = nodeId;
+        state.phase = 'paywall';
+        save();
+        return;
+      }
       console.log('[schedule]', nodeId, 'at +' + ((startTime - Date.now())/1000).toFixed(1) + 's', 'msgs:', node.messages?.length);
 
       let t = startTime;
@@ -1280,35 +1435,19 @@
         state.phase = 'choice';
       } else if (node.wait) {
         state.waitUntil = t + scaleWait(node.wait);
-        state.waitNextNode = node.next;
+        // After the wait, follow `next` OR, if this is a scene-end wait node, the
+        // scene transition (e.g. Zoe goes silent for days at the end of Act 2, then
+        // crosses into Act 3 where the paywall gate catches her).
+        let after = node.next;
+        if (!after) { const tr = sceneTransitionTarget(node); if (tr) { state.currentScene = tr.sceneId; after = tr.entry; } }
+        state.waitNextNode = after;
         state.waitChatNode = node.waitChat ? nodeId : null;
         state.phase = 'wait';
       } else if (node.next) {
         scheduleNode(node.next, t); return;
       } else if (node.type === 'scene_end' || (node.sceneEnd && node.nextScene)) {
-        // Scene transition — new style (type: scene_end) or old style (sceneEnd + nextScene)
-        let nextSceneId = null;
-        if (node.type === 'scene_end') {
-          // Check transitions — match choice tags against state.choices
-          const transitions = node.transitions || [];
-          for (const tr of transitions) {
-            if (tr.choiceTag && (state.choices || []).includes(tr.choiceTag)) {
-              nextSceneId = tr.nextScene;
-              break;
-            }
-          }
-          if (!nextSceneId) nextSceneId = node.defaultNextScene || null;
-        } else {
-          nextSceneId = resolveSceneTransition(node);
-        }
-        if (nextSceneId && scenario.scenes) {
-          const sceneMeta = scenario.scenes.find(s => s.id === nextSceneId);
-          if (sceneMeta && sceneMeta.entry) {
-            state.currentScene = nextSceneId;
-            scheduleNode(sceneMeta.entry, t + 500);
-            return;
-          }
-        }
+        const tr = sceneTransitionTarget(node);
+        if (tr) { state.currentScene = tr.sceneId; scheduleNode(tr.entry, t + 500); return; }
         state.phase = 'done';
       } else {
         state.phase = 'done';
@@ -1827,6 +1966,10 @@
         scroll();
       } else if (state.phase === 'wait' && state.waitUntil) {
         renderWaitPanel(now);
+      } else if (state.phase === 'paywall') {
+        bottomStatus.textContent = '';
+        renderPaywall();
+        scroll();
       } else if (state.phase === 'done') {
         bottomStatus.textContent = t('no_new_messages');
         bottomChoices.innerHTML = '';
@@ -1835,6 +1978,69 @@
         bottomStatus.textContent = '';
         bottomChoices.innerHTML = '';
       }
+    }
+
+    // Paywall panel — rendered once when phase==='paywall'. Buttons drive `Billing`
+    // (mock in browser, native in the Capacitor build). On success we resume into
+    // the gated scene via unlockAndContinue().
+    function renderPaywall() {
+      if (bottomChoices.querySelector('.paywall')) return; // render once, no per-tick flicker
+      const cfg = paywallConfig(state.activeStory);
+      const products = (cfg && cfg.products) || [];
+      const label = (pid) => (PRODUCTS[pid] && PRODUCTS[pid].name ? L(PRODUCTS[pid].name) : pid) + ' — ' + (priceCache[pid] || '…');
+      let html =
+        '<div class="paywall">' +
+          '<div class="paywall-title">' + t('paywall_title') + '</div>' +
+          '<div class="paywall-body">' + t('paywall_body') + '</div>';
+      products.forEach(pid => { html += '<button class="paywall-buy" id="pw_' + pid + '">' + label(pid) + '</button>'; });
+      html += '<button class="paywall-restore" id="paywallRestore">' + t('paywall_restore') + '</button></div>';
+      bottomChoices.innerHTML = html;
+
+      products.forEach(pid => {
+        // Fetch live price, patch the label.
+        Billing.getProduct(pid).then(p => {
+          if (p && p.price) priceCache[pid] = p.price;
+          const b = $('pw_' + pid); if (b) b.textContent = label(pid);
+        }).catch(() => {});
+        const btn = $('pw_' + pid);
+        if (btn) btn.onclick = async function(){
+          btn.disabled = true;
+          try {
+            const ok = await Billing.purchase(pid);
+            // Mock grants synchronously; native grants in the verified handler
+            // (which calls unlockAndContinue itself). Continue here only if access
+            // is already granted, else re-enable for the next tap.
+            if (ok && hasAccess(state.activeStory)) { vibrate(20); unlockAndContinue(); }
+            else { btn.disabled = false; }
+          } catch(e) { btn.disabled = false; alert(t('paywall_failed')); }
+        };
+      });
+      $('paywallRestore').onclick = async function(){
+        try {
+          const ok = await Billing.restore();
+          if (ok && hasAccess(state.activeStory)) unlockAndContinue();
+          else alert(t('paywall_restored_none'));
+        } catch(e) {}
+      };
+    }
+
+    function unlockAndContinue() {
+      if (state.phase !== 'paywall') return; // idempotent: native verified-handler + button may both call
+      // Resume at the exact node we were gated on; fall back to the paid scene's
+      // entry if pendingNode didn't survive a reload (it isn't part of saved state).
+      let target = state.pendingNode;
+      if (!target) {
+        const pw = (storiesMeta.find(s => s.id === state.activeStory) || {}).paywall;
+        const sc = pw && scenario.scenes && scenario.scenes.find(s => s.id === pw.fromScene);
+        target = sc && sc.entry;
+      }
+      if (!target) return;
+      state.pendingNode = null;
+      state.phase = 'playing';
+      bottomChoices.innerHTML = '';
+      scheduleNode(target, Date.now() + 500);   // gate passes now that hasAccess() is true
+      save();
+      updateBottomPanel();
     }
 
     function renderChoiceButtons() {
@@ -2345,6 +2551,10 @@
       savePrefs();
     };
     $('testToggle').onchange = (e) => { prefs.testMode = e.target.checked; savePrefs(); };
+    $('devUnlockToggle').onchange = (e) => {
+      prefs.devUnlock = e.target.checked; savePrefs();
+      if (e.target.checked && state.phase === 'paywall') unlockAndContinue();
+    };
     $('langRu').onclick = () => { prefs.lang='ru'; savePrefs(); applyLang(); };
     $('langEn').onclick = () => { prefs.lang='en'; savePrefs(); applyLang(); };
     $('playerNameInput').value = prefs.playerName || '';
@@ -2365,6 +2575,11 @@
     // ── Boot ────────────────────────
     (async () => {
       loadPrefs();
+      loadEntitlements();
+      // On device, wire native Play billing once Cordova plugins are ready.
+      if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+        document.addEventListener('deviceready', setupNativeBilling, { once: true });
+      }
       // Load stories meta
       const resp = await fetch('./data/stories.json');
       const data = await resp.json();

@@ -8,6 +8,11 @@
       "scenario": "data/story_zoe.json",
       "unlocked": true,
       "order": 1,
+      "paywall": {
+        "fromScene": "deeper",
+        "grants": "zoe",
+        "products": ["unlock_zoe", "unlock_all"]
+      },
       "pacing": {
         "readDelay":     [1800, 4500],
         "postReadPause": [20000, 60000],

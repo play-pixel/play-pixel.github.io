@@ -952,7 +952,7 @@
         },
         {
           "type": "text",
-          "text": { "en": "phone. battery 67%", "ru": "телефон. батарея 67%" },
+          "text": { "en": "phone. you", "ru": "телефон. ты" },
           "delay": 4000
         },
         {

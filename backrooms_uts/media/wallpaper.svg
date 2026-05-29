@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="138" height="260" viewBox="0 0 138 260">
-  <rect width="138" height="260" fill="#b3a742"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="276" height="260" viewBox="0 0 276 260">
+  <rect width="276" height="260" fill="#b3a742"/>
+
+  <!-- ═══ LEFT HALF (x 0..138) — exact copy of wallpaper.svg ═══ -->
 
   <!-- vertical bars -->
   <g fill="#a89d3d">
@@ -8,11 +10,11 @@
   </g>
 
   <g fill="#9c9138">
-    <!-- WIDE stripe: big UP arrow — long upper chevron + short lower chevron -->
+    <!-- big UP chevrons, centred x=98.5, no Y shift -->
     <path d="M98.5 20 L127.5 56.75 L127.5 116.5 L98.5 82.5 L69.5 116.5 L69.5 56.75 Z"/>
     <path d="M98.5 98 L127.5 134.75 L127.5 160.5 L98.5 126.5 L69.5 160.5 L69.5 134.75 Z"/>
 
-    <!-- NARROW stripe: small DOWN double-chevrons, stacked tight -->
+    <!-- small DOWN chevrons, centred x=29.5 -->
     <path d="M29.5 49 L19.4 36.2 L19.4 15.3 L29.5 27.2 L39.6 15.3 L39.6 36.2 Z"/>
     <path d="M29.5 21.8 L19.4 9 L19.4 0 L29.5 11.9 L39.6 0 L39.6 9 Z"/>
     <path d="M29.5 101 L19.4 88.2 L19.4 67.3 L29.5 79.2 L39.6 67.3 L39.6 88.2 Z"/>
@@ -23,5 +25,35 @@
     <path d="M29.5 177.8 L19.4 165 L19.4 156 L29.5 167.9 L39.6 156 L39.6 165 Z"/>
     <path d="M29.5 257 L19.4 244.2 L19.4 223.3 L29.5 235.2 L39.6 223.3 L39.6 244.2 Z"/>
     <path d="M29.5 229.8 L19.4 217 L19.4 208 L29.5 219.9 L39.6 208 L39.6 217 Z"/>
+  </g>
+
+  <!-- ═══ RIGHT HALF (x 138..276) — bars and small chevrons: +138 X, no Y shift ═══ -->
+
+  <!-- vertical bars -->
+  <g fill="#a89d3d">
+    <rect x="138" y="0" width="10" height="260"/>
+    <rect x="187" y="0" width="10" height="260"/>
+  </g>
+
+  <g fill="#9c9138">
+    <!-- small DOWN chevrons, centred x=167.5 (=29.5+138), no Y shift -->
+    <path d="M167.5 49 L157.4 36.2 L157.4 15.3 L167.5 27.2 L177.6 15.3 L177.6 36.2 Z"/>
+    <path d="M167.5 21.8 L157.4 9 L157.4 0 L167.5 11.9 L177.6 0 L177.6 9 Z"/>
+    <path d="M167.5 101 L157.4 88.2 L157.4 67.3 L167.5 79.2 L177.6 67.3 L177.6 88.2 Z"/>
+    <path d="M167.5 73.8 L157.4 61 L157.4 52 L167.5 63.9 L177.6 52 L177.6 61 Z"/>
+    <path d="M167.5 153 L157.4 140.2 L157.4 119.3 L167.5 131.2 L177.6 119.3 L177.6 140.2 Z"/>
+    <path d="M167.5 125.8 L157.4 113 L157.4 104 L167.5 115.9 L177.6 104 L177.6 113 Z"/>
+    <path d="M167.5 205 L157.4 192.2 L157.4 171.3 L167.5 183.2 L177.6 171.3 L177.6 192.2 Z"/>
+    <path d="M167.5 177.8 L157.4 165 L157.4 156 L167.5 167.9 L177.6 156 L177.6 165 Z"/>
+    <path d="M167.5 257 L157.4 244.2 L157.4 223.3 L167.5 235.2 L177.6 223.3 L177.6 244.2 Z"/>
+    <path d="M167.5 229.8 L157.4 217 L157.4 208 L167.5 219.9 L177.6 208 L177.6 217 Z"/>
+
+    <!-- big UP chevrons, centred x=236.5 (=98.5+138), Y shifted +130 (half-drop) -->
+    <!-- Primary set: Y+130 -->
+    <path d="M236.5 150 L265.5 186.75 L265.5 246.5 L236.5 212.5 L207.5 246.5 L207.5 186.75 Z"/>
+    <path d="M236.5 228 L265.5 264.75 L265.5 290.5 L236.5 256.5 L207.5 290.5 L207.5 264.75 Z"/>
+    <!-- Wrap-around set: Y+130-260 = Y-130, for seamless vertical tiling -->
+    <path d="M236.5 -110 L265.5 -73.25 L265.5 -13.5 L236.5 -47.5 L207.5 -13.5 L207.5 -73.25 Z"/>
+    <path d="M236.5 -32 L265.5 4.75 L265.5 30.5 L236.5 -3.5 L207.5 30.5 L207.5 4.75 Z"/>
   </g>
 </svg>
