@@ -2006,6 +2006,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,bumpWakeLock,{passive:true,capture:true}));
 bumpWakeLock();
 
+// долгое нажатие на мобильном не должно вызывать браузерное контекст-меню (Скачать/Поделиться/Печать); в полях ввода оставляем (вставка)
+document.addEventListener('contextmenu',(e)=>{if(e.target.closest('input,textarea'))return;e.preventDefault();});
+
 //==== сохранность данных: постоянное хранилище + восстановление из IndexedDB ====
 // Просим ОС не вычищать наши данные (на установленном PWA обычно даётся автоматически).
 if(navigator.storage&&navigator.storage.persist){

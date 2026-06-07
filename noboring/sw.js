@@ -1,7 +1,7 @@
 // Service worker для PWA «Мои Задания».
 // HTML — network-first (свежий код сразу после релиза, без возни с версиями), офлайн-фолбэк из кэша.
 // Шрифты/иконки/манифест — cache-first (мгновенно).
-const CACHE = 'noboring-v34';
+const CACHE = 'noboring-v35';
 const ASSETS = [
   './',
   './index.html',
